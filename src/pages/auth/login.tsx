@@ -12,7 +12,7 @@ import { loginSchema } from "./schema/login-schema";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import ScreenLoader from "@/components/ui/screen-loader";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useState } from "react";
 import {
   Form,
@@ -23,6 +23,7 @@ import {
   FormMessage,
 } from "@/components/form";
 import type { z } from "zod";
+import BrandedLayout from "./branded-layout";
 
 type T_LoginSchema = z.infer<typeof loginSchema>;
 
@@ -46,7 +47,7 @@ export function LogIn() {
       const nextPath =
         raw.startsWith("/") && !raw.startsWith("//") ? raw : "/dashboard";
       navigate(nextPath);
-    } catch (error: any) {
+    } catch (error) {
       console.log(error);
     } finally {
       setIsLoading(false);
@@ -54,8 +55,9 @@ export function LogIn() {
   } // ← properly closed
 
   return (
-    <div className="w-screen h-screen flex justify-center items-center">
-      <Card className="w-full max-w-md h-90">
+    <div className="w-screen h-screen flex justify-center items-center gap-16">
+      <BrandedLayout />
+      <Card className="w-full max-w-md h-85">
         {isLoading && <ScreenLoader />}
         <CardHeader>
           <CardTitle>Login to your account</CardTitle>
@@ -74,7 +76,7 @@ export function LogIn() {
                     <FormLabel>Email Address</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="you@email.com"
+                        placeholder="johndoe@gmail.com"
                         type="email"
                         autoComplete="email"
                         autoFocus
@@ -109,8 +111,9 @@ export function LogIn() {
               <Button type="submit" className="w-9/10">
                 Login
               </Button>
+
               <Button type="button" variant="outline" className="w-9/10">
-                Register
+                <Link to="/register">Register</Link>
               </Button>
             </div>
           </form>

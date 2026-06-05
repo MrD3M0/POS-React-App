@@ -107,18 +107,12 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   // Register
   const register = useCallback(
-    async (
-      username: string,
-      email: string,
-      password: string,
-      confirmPassword: string,
-    ) => {
+    async (username: string, email: string, password: string) => {
       try {
         const res = await axiosInstance.post(UrlConstants.REGISTER_URL, {
           username,
           email,
           password,
-          confirmPassword,
         });
         const authData: AuthModel = res.data;
         saveAuth(authData);

@@ -76,9 +76,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             {open && (
               <SidebarMenuButton className="w-full flex justify-between">
-                <span className="flex gap-2">
-                  ZapPOS <StoreIcon className="size-5!" />
-                </span>
+                <span>ZapPOS</span>
                 <SidebarTrigger />
               </SidebarMenuButton>
             )}

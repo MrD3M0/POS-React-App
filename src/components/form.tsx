@@ -160,7 +160,10 @@ function FormMessage({
     <div
       data-slot="form-message"
       id={formMessageId}
-      className={cn("-mt-0.5 text-xs font-normal text-destructive", className)}
+      className={cn(
+        "-mt-0.5 text-sm font-normal text-destructive leading-0 pt-0.5",
+        className,
+      )}
       {...props}
     >
       {body}
