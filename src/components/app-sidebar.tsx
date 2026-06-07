@@ -6,7 +6,6 @@ import {
   PackageIcon,
   TagsIcon,
   TruckIcon,
-  StoreIcon,
   ShelvingUnit,
 } from "lucide-react";
 import { NavMain } from "@/components/nav-main";
@@ -40,7 +39,7 @@ const posSidebarData = {
     },
     {
       title: "Categories",
-      url: "/categories",
+      url: "/category",
       icon: TagsIcon,
     },
     {
@@ -76,7 +75,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             {open && (
               <SidebarMenuButton className="w-full flex justify-between">
-                <span>ZapPOS</span>
+                <span>Zap Point Of Sale</span>
                 <SidebarTrigger />
               </SidebarMenuButton>
             )}
