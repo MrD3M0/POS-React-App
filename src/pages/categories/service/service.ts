@@ -19,7 +19,7 @@ export const getAllCategories = async (args: {
       params: {
         page: args.page,
         limit: args.limit,
-        search: args.search,
+        search: args.search || "",
       },
     });
   return response.data;
