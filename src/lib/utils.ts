@@ -1,8 +1,7 @@
 import type { T_UseQueryError } from "@/types/common";
 import type { AxiosError } from "axios";
 import { clsx, type ClassValue } from "clsx";
-import type { UseFormSetError } from "react-hook-form";
-import type { Path } from "react-router";
+import { type Path, type UseFormSetError } from 'react-hook-form';
 import { twMerge } from "tailwind-merge";
 import moment from 'moment';
 

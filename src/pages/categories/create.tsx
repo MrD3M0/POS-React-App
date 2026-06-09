@@ -1,42 +1,43 @@
+// components/category/create-category.tsx
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { AxiosError } from "axios";
-import { Form, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
 
 import { mapFieldsOnError } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-
 import { Input } from "@/components/ui/input";
-import ActiveStatusField from "@/components/common/active-status-field";
 import PageHeader from "@/components/common/page-header";
 import {
-  MealTypeSchema,
-  MealTypeSchemaDefaultValues,
-  MealTypeSchemaType,
-} from "./schema/meal-schema";
-import { createMeal } from "./services/services";
-import {
+  Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/form";
+import {
+  CategorySchema,
+  CategorySchemaDefaultValues,
+  type T_CategorySchema,
+} from "./schema/schema";
+import { createCategory } from "./service/service";
+import type { T_UseQueryError } from "@/types/common";
 
-const CreateMeal = () => {
+const CreateCategory = () => {
   const navigate = useNavigate();
-  const form = useForm<MealTypeSchemaType>({
-    resolver: zodResolver(MealTypeSchema),
-    defaultValues: { ...MealTypeSchemaDefaultValues },
+  const form = useForm<T_CategorySchema>({
+    resolver: zodResolver(CategorySchema),
+    defaultValues: { ...CategorySchemaDefaultValues },
   });
 
-  const createMealMutation = useMutation({
-    mutationFn: createMeal,
+  const createCategoryMutation = useMutation({
+    mutationFn: createCategory,
     onSuccess: () => {
-      toast.success("Meal created successfully.");
-      return navigate("/meals");
+      toast.success("Category created successfully.");
+      return navigate("/category");
     },
     onError: (error: AxiosError<T_UseQueryError>) => {
       mapFieldsOnError(error, form.setError);
@@ -45,21 +46,21 @@ const CreateMeal = () => {
   });
 
   return (
-    <div>
-      <title>Create Meal | Sajilo HMS</title>
+    <div className="p-5">
+      <title>Create Category | Billing System</title>
       <PageHeader
-        title="Create Meal"
+        title="Create Category"
         breadCrumbItems={[
           { title: "Home", link: "/" },
-          { title: "Meals", link: "/meals" },
-          { title: "Create", link: "/meals/create" },
+          { title: "Categories", link: "/category" },
+          { title: "Create", link: "/category/create" },
         ]}
       />
 
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit((data) => {
-            createMealMutation.mutate(data);
+            createCategoryMutation.mutate(data);
           })}
         >
           <div className="grid sm:grid-cols-2 grid-rows-2 sm:gap-x-3 gap-y-3">
@@ -68,14 +69,17 @@ const CreateMeal = () => {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Meal Name</FormLabel>
+                  <FormLabel>Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Eg: Breakfast, Lunch" {...field} />
+                    <Input
+                      placeholder="Eg: Electronics, Groceries"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
-            ></FormField>
+            />
 
             <FormField
               control={form.control}
@@ -84,39 +88,19 @@ const CreateMeal = () => {
                 <FormItem>
                   <FormLabel>Short Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Eg: br1, lu1" {...field} />
+                    <Input placeholder="Eg: ELC, GRO" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
-            ></FormField>
-
-            <FormField
-              control={form.control}
-              name="price"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Selling Price</FormLabel>
-                  <FormControl>
-                    <Input type="number" placeholder="Eg: 100" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            ></FormField>
-
-            <ActiveStatusField
-              control={form.control}
-              name="status"
-              className="sm:col-span-2 w-full"
             />
           </div>
 
           <div className="flex justify-end items-center space-x-3 mb-5 mt-5">
-            <Link to={"/meals"}>
+            <Link to={"/categories"}>
               <Button
                 type="button"
-                disabled={createMealMutation.isPending}
+                disabled={createCategoryMutation.isPending}
                 variant={"secondary"}
               >
                 Cancel
@@ -124,8 +108,8 @@ const CreateMeal = () => {
             </Link>
             <Button
               type="submit"
-              loading={createMealMutation.isPending}
-              disabled={createMealMutation.isPending}
+              loading={createCategoryMutation.isPending}
+              disabled={createCategoryMutation.isPending}
             >
               Create
             </Button>
@@ -136,4 +120,4 @@ const CreateMeal = () => {
   );
 };
 
-export default CreateMeal;
+export default CreateCategory;

@@ -44,7 +44,7 @@ const posSidebarData = {
     },
     {
       title: "Products",
-      url: "/products",
+      url: "/product",
       icon: PackageIcon,
     },
     {
@@ -75,7 +75,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             {open && (
               <SidebarMenuButton className="w-full flex justify-between">
-                <span>Zap Point Of Sale</span>
+                 <span>Zap Point Of Sale</span>
                 <SidebarTrigger />
               </SidebarMenuButton>
             )}

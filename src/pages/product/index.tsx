@@ -1,3 +1,4 @@
+// components/product/products.tsx
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useDebounce } from "use-debounce";
@@ -16,22 +17,22 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import ConfirmDeleteDialog from "@/components/dialog/delete-dialog";
+import { QUERY_KEYS } from "@/lib/query-keys";
 
 import {
-  getAllCategories,
-  removeCategory,
-  type T_Categories,
+  getAllProducts,
+  removeProduct,
+  type T_Products,
 } from "./service/service";
-import { QUERY_KEYS } from "@/lib/query-keys";
-import ConfirmDeleteDialog from "@/components/dialog/delete-dialog";
 
 const LIMIT = 10;
 
-const Categories = () => {
+const Products = () => {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedItemId, setselectedItemId] = useState("");
+  const [selectedItemId, setSelectedItemId] = useState("");
   const [debouncedSearch] = useDebounce(search, 500);
   const navigate = useNavigate();
 
@@ -40,16 +41,15 @@ const Categories = () => {
     isLoading,
     isError,
   } = useQuery({
-    queryKey: [QUERY_KEYS.CATEGORY_LIST, debouncedSearch, page],
+    queryKey: [QUERY_KEYS.PRODUCT_LIST, debouncedSearch, page],
     queryFn: () =>
-      getAllCategories({ page, limit: LIMIT, search: debouncedSearch }),
+      getAllProducts({ page, limit: LIMIT, search: debouncedSearch }),
   });
 
-  const rows: T_Categories[] = result?.data?.data ?? [];
+  const rows: T_Products[] = result?.data?.data ?? [];
   const total: number = result?.data?.pagination?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / LIMIT));
 
-  // Reset to page 1 when search changes
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
     setPage(1);
@@ -58,31 +58,32 @@ const Categories = () => {
   return (
     <div className="p-5">
       <PageHeader
-        title="Categories"
+        title="Products"
         breadCrumbItems={[
           { title: "Home", link: "/" },
-          { title: "Categories", link: "/category" },
+          { title: "Products", link: "/product" },
         ]}
-        createPage="/category/create"
+        createPage="/product/create"
       />
+
       <div className="px-8">
-        {" "}
-        {/* wrap content separately */}
-        {/* Search */}
         <div className="mb-4">
           <Input
             className="w-72"
-            placeholder="Search categories..."
+            placeholder="Search products..."
             value={search}
             onChange={handleSearch}
           />
         </div>
+
         {isLoading && <ScreenLoader />}
+
         {isError && (
           <div className="flex items-center justify-center py-10 text-destructive">
-            Failed to load categories.
+            Failed to load products.
           </div>
         )}
+
         {!isLoading && !isError && (
           <div className="space-y-3">
             <div className="w-full overflow-x-auto border rounded-md">
@@ -92,6 +93,8 @@ const Categories = () => {
                     <TableHead className="w-16">S.N.</TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>Short Name</TableHead>
+                    <TableHead>Price</TableHead>
+                    <TableHead>Quantity</TableHead>
                     <TableHead>Created At</TableHead>
                     <TableHead>Updated At</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -102,10 +105,10 @@ const Categories = () => {
                   {rows.length === 0 ? (
                     <TableRow>
                       <TableCell
-                        colSpan={6}
+                        colSpan={8}
                         className="text-center text-muted-foreground py-8"
                       >
-                        No categories found.
+                        No products found.
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -114,6 +117,8 @@ const Categories = () => {
                         <TableCell>{(page - 1) * LIMIT + idx + 1}</TableCell>
                         <TableCell>{item.name ?? "—"}</TableCell>
                         <TableCell>{item.shortName ?? "—"}</TableCell>
+                        <TableCell>{item.price ?? "—"}</TableCell>
+                        <TableCell>{item.quantity ?? "—"}</TableCell>
                         <TableCell>
                           {item.createdAt?.split("T")[0] ?? "—"}
                         </TableCell>
@@ -125,7 +130,7 @@ const Categories = () => {
                             variant="ghost"
                             size="icon"
                             aria-label="Edit"
-                            onClick={() => navigate(`/category/${item.id}`)}
+                            onClick={() => navigate(`/product/${item.id}`)}
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>
@@ -135,7 +140,7 @@ const Categories = () => {
                             aria-label="Delete"
                             className="text-destructive hover:text-destructive"
                             onClick={() => {
-                              setselectedItemId(item.id);
+                              setSelectedItemId(item.id);
                               setIsDeleteDialogOpen(true);
                             }}
                           >
@@ -177,15 +182,16 @@ const Categories = () => {
           </div>
         )}
       </div>
+
       <ConfirmDeleteDialog
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
-        itemId={selectedItemId ?? ""}
-        onDelete={removeCategory}
-        itemName="Category"
+        itemId={selectedItemId}
+        onDelete={removeProduct}
+        itemName="Product"
       />
     </div>
   );
 };
 
-export default Categories;
+export default Products;

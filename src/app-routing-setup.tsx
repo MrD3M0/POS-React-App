@@ -5,6 +5,12 @@ import { DashboardPage } from "./pages/dashboard/dashboard-page";
 import LayoutPage from "./providers/sidebar-layout";
 import Register from "./pages/auth/register";
 import Categories from "./pages/categories";
+import CreateCategory from "./pages/categories/create";
+import UpdateCategory from "./pages/categories/edit";
+import Products from "./pages/product";
+import CreateProduct from "./pages/product/create";
+import EditProduct from "./pages/product/edit";
+import BillGeneration from "./pages/billing/create";
 
 const AppRoutingSetup = () => {
   return (
@@ -17,6 +23,12 @@ const AppRoutingSetup = () => {
         <Route element={<LayoutPage />}>
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/category" element={<Categories />} />
+          <Route path="/category/create" element={<CreateCategory />} />
+          <Route path="/category/:id" element={<UpdateCategory />} />
+          <Route path="/product" element={<Products />} />
+          <Route path="/product/create" element={<CreateProduct />} />
+          <Route path="/product/:id" element={<EditProduct />} />
+          <Route path="/billing" element={<BillGeneration />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="" replace />} />

@@ -12,7 +12,7 @@ import {
 export default function Header() {
   return (
     <header className="w-full border-b bg-background sticky top-0 z-50">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
+      <div className="flex h-16 w-full items-center justify-between px-4">
         {/* Brand Logo */}
         <div className="flex items-center h-14 w-14 ">
           <img

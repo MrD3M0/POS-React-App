@@ -24,7 +24,6 @@ import {
 } from "@/components/form";
 import type { z } from "zod";
 import BrandedLayout from "./branded-layout";
-
 type T_LoginSchema = z.infer<typeof loginSchema>;
 
 export function LogIn() {

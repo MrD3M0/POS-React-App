@@ -6,4 +6,6 @@ export const UrlConstants = {
   ME_URL: "/auth/me",
   //Category Routes
   CATEGORY_URL: "/category",
+  // Product Routes
+  PRODUCT_URL: "/product",
 };
