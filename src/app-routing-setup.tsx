@@ -10,7 +10,8 @@ import UpdateCategory from "./pages/categories/edit";
 import Products from "./pages/product";
 import CreateProduct from "./pages/product/create";
 import EditProduct from "./pages/product/edit";
-import BillGeneration from "./pages/billing/create";
+import CategoryList from "./pages/billing/billing";
+import BillingPage from "./pages/billing/billing";
 
 const AppRoutingSetup = () => {
   return (
@@ -28,7 +29,9 @@ const AppRoutingSetup = () => {
           <Route path="/product" element={<Products />} />
           <Route path="/product/create" element={<CreateProduct />} />
           <Route path="/product/:id" element={<EditProduct />} />
-          <Route path="/billing" element={<BillGeneration />} />
+          <Route path="/billing" element={<BillingPage />} />
+
+          <Route path="/options" element={<CategoryList />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="" replace />} />

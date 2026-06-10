@@ -5,6 +5,7 @@ import type {
 import type { T_ProductSchema } from "../schema/schema";
 import axiosInstance from "@/lib/axios-request";
 import { UrlConstants } from "@/constants/endpoints";
+import type { T_Categories } from "@/pages/categories/service/service";
 
 export type T_Products = {
   id: string;
@@ -15,6 +16,17 @@ export type T_Products = {
   categoryId: string;
   createdAt: string;
   updatedAt: string;
+};
+export type T_ProductsByCategory = {
+  id: string;
+  name: string;
+  shortName: string;
+  price: number;
+  quantity: number;
+  categoryId: string;
+  createdAt: string;
+  updatedAt: string;
+  category: T_Categories;
 };
 
 export const getAllProducts = async (args: {
@@ -62,4 +74,16 @@ export const removeProduct = async (id: string) => {
     `${UrlConstants.PRODUCT_URL}/${id}`,
   );
   return response.data;
+};
+
+export const productsByCategory = async (id: string) => {
+  const response: T_AxiosResponseWithPagination<T_ProductsByCategory> =
+    await axiosInstance.get(`${UrlConstants.PRODUCT_URL}/category/${id}`, {
+      params: {
+        page: 1,
+        limit: 100,
+        search: "",
+      },
+    });
+  return response.data.data;
 };
