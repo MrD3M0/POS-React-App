@@ -1,5 +1,4 @@
 import "./App.css";
-import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "./providers/auth-provider";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/query-keys";
@@ -9,12 +8,10 @@ import { Toaster } from "./components/ui/sonner";
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <Toaster richColors position="top-right" closeButton />
-        <AuthProvider>
-          <AppRoutingSetup />
-        </AuthProvider>
-      </BrowserRouter>
+      <Toaster richColors position="top-right" closeButton />
+      <AuthProvider>
+        <AppRoutingSetup />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

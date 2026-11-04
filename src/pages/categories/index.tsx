@@ -7,7 +7,7 @@ import { Pencil, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import PageHeader from "@/components/common/page-header";
 import ScreenLoader from "@/components/ui/screen-loader";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import Button  from "@/components/ui/button";
 import {
   Table,
   TableBody,

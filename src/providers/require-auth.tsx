@@ -1,18 +1,35 @@
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/auth/context/auth-context";
 import ScreenLoader from "@/components/ui/screen-loader";
-import { getAuthToken } from "@/lib/models";
-import { Navigate, Outlet } from "react-router-dom";
+import type { T_Role } from "@/lib/models";
 
-export const RequireAuth = () => {
-  const { auth, loading } = useAuth();
+interface RequireAuthProps {
+  allowedRoles?: T_Role[];
+}
+
+export function RequireAuth({ allowedRoles }: RequireAuthProps) {
+  const { auth, user, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return <ScreenLoader />;
   }
 
-  if (!getAuthToken(auth)) {
-    return <Navigate to="/login" />;
+  if (!auth?.token) {
+    return (
+      <Navigate
+        to={`/login?next=${encodeURIComponent(location.pathname)}`}
+        replace
+      />
+    );
+  }
+
+  if (allowedRoles && allowedRoles.length > 0) {
+    const userRole = user?.role;
+    if (!userRole || !allowedRoles.includes(userRole)) {
+      return <Navigate to="/dashboard" replace />;
+    }
   }
 
   return <Outlet />;
-};
+}

@@ -5,12 +5,6 @@ export const isItemInCart = (
   actualCart: T_BillingItem[],
   productId: string,
 ): boolean => {
-  if (
-    showCart.some((item) => item.productId === productId) &&
-    actualCart.some((item) => item.productId === productId)
-  ) {
-    return true;
-  } else {
-    return false;
-  }
+  return showCart.some((item) => item.productId === productId) &&
+         actualCart.some((item) => item.productId === productId);
 };

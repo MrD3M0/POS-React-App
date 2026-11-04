@@ -1,5 +1,5 @@
 import { User } from "lucide-react";
-import { Button } from "@/components/ui/button";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/auth/context/auth-context";
+import Button from "./ui/button";
 
 export default function Header() {
   const { logout, auth } = useAuth();

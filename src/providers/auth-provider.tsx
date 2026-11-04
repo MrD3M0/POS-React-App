@@ -1,159 +1,125 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  type PropsWithChildren,
-} from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getAuthToken, type UserModel, type AuthModel } from "@/lib/models";
-import axiosInstance from "@/lib/axios-request";
-import { QUERY_KEYS } from "@/lib/query-keys";
-import { UrlConstants } from "@/constants/endpoints";
+import { useEffect, useState, useCallback, type ReactNode } from "react";
 import { AuthContext } from "@/auth/context/auth-context";
-import { useNavigate } from "react-router";
-import { toast } from "sonner";
+import type { AuthModel, UserModel } from "@/lib/models";
+import {
+  readStoredAuth,
+  writeStoredAuth,
+  clearStoredAuth,
+  AUTH_CHANGED_EVENT,
+} from "@/lib/auth-storage";
 
-import { AxiosError } from "axios";
+import ScreenLoader from "@/components/ui/screen-loader";
+import { getCurrentUser, loginUser, logoutUser, registerUser } from "@/auth/service/service";
 
-async function fetchCurrentUser(): Promise<UserModel> {
-  const res = await axiosInstance.get(UrlConstants.ME_URL);
-  return res.data.data as UserModel;
+interface AuthProviderProps {
+  children: ReactNode;
 }
 
-function readStoredAuth(): AuthModel | undefined {
-  try {
-    const raw = localStorage.getItem("token");
-    return raw ? (JSON.parse(raw) as AuthModel) : undefined;
-  } catch {
-    return undefined;
-  }
-}
-function applyTokenToAxios(token: string | undefined) {
-  if (token) {
-    axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-  } else {
-    delete axiosInstance.defaults.headers.common["Authorization"];
-  }
-}
+export function AuthProvider({ children }: AuthProviderProps) {
+  const [auth, setAuth] = useState<AuthModel | undefined>(() =>
+    readStoredAuth(),
+  );
+  const [user, setUser] = useState<UserModel | undefined>(
+    () => readStoredAuth()?.user,
+  );
+  const [loading, setLoading] = useState<boolean>(true);
 
-export function AuthProvider({ children }: PropsWithChildren) {
-  const qc = useQueryClient();
-  const navigate = useNavigate();
-  const [auth, setAuth] = useState<AuthModel | undefined>(() => {
-    const stored = readStoredAuth();
-    return stored;
-  });
-  const token = getAuthToken(auth);
-
-  const { data: currentUser, isLoading: userLoading } = useQuery<UserModel>({
-    queryKey: [QUERY_KEYS.CURRENT_USER],
-    queryFn: fetchCurrentUser,
-    // Only run whule we actually have a token.
-    enabled: !!token,
-    // Consider the user data fresh for 5 minutes; background-refetch after that.
-    staleTime: 5 * 60 * 1000,
-    // Keep the cached value in memory for 10 minutes after the component unmounts.
-    gcTime: 10 * 60 * 1000,
-    // Don't hammer the server on transient network blips.
-    retry: 1,
-  });
-
-  // loading is true only during the intial silent token verification
-  const loading = !!token && userLoading && !currentUser;
-
-  const isAdmin = currentUser?.role === "Admin";
-
-  // ── keep axios header in sync whenever auth changes ───────────────────────
+  // Sync auth state across tabs and local storage updates
   useEffect(() => {
-    applyTokenToAxios(token);
-  }, [token]);
+    const handleStorageChange = () => {
+      const stored = readStoredAuth();
+      setAuth(stored);
+      setUser(stored?.user);
+    };
 
-  // saveAuth
-  const saveAuth = useCallback(
-    (next: AuthModel | undefined) => {
-      setAuth(next);
-      if (next) {
-        localStorage.setItem("token", JSON.stringify(next));
-        applyTokenToAxios(getAuthToken(next));
-        // If the login response already carries the user, seed the cache
-        // directly so we never need to fire an extra /me request.
-        if (next.user) {
-          qc.setQueryData([QUERY_KEYS.CURRENT_USER], next.user);
+    window.addEventListener(AUTH_CHANGED_EVENT, handleStorageChange);
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener(AUTH_CHANGED_EVENT, handleStorageChange);
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
+
+  // Rehydrate session on app load
+  useEffect(() => {
+    const initAuth = async () => {
+      const stored = readStoredAuth();
+      if (stored?.token) {
+        try {
+          const freshUser = await getCurrentUser();
+          setUser(freshUser);
+          writeStoredAuth({ ...stored, user: freshUser });
+        } catch {
+          clearStoredAuth();
+          setAuth(undefined);
+          setUser(undefined);
         }
-      } else {
-        localStorage.removeItem("token");
-        applyTokenToAxios(undefined);
-        // Wipe the cached user so stale data can't leak to a next session.
-        qc.removeQueries({ queryKey: [QUERY_KEYS.CURRENT_USER] });
       }
-    },
-    [qc],
-  );
-  const logout = useCallback(async () => {
-    try {
-      const res = await axiosInstance.get(UrlConstants.LOGOUT_URL);
-      toast.success(res.data?.message ?? "Logged out successfully");
-    } catch (error) {
-      const message =
-        error instanceof AxiosError
-          ? (error.response?.data?.message ?? error.message)
-          : "Logout failed";
-      toast.error(message);
-    } finally {
-      saveAuth(undefined);
-      navigate("/login", { replace: true });
-    }
-  }, [saveAuth, navigate]);
-  // login
-  const login = useCallback(
-    async (email: string, password: string) => {
-      try {
-        const res = await axiosInstance.post(UrlConstants.LOGIN_URL, {
-          email,
-          password,
-        });
-        const authData: AuthModel = res.data;
-        saveAuth(authData);
-      } catch (error) {
-        saveAuth(undefined);
-        throw error;
-      }
-    },
-    [saveAuth],
-  );
+      setLoading(false);
+    };
 
-  // Register
+    initAuth();
+  }, []);
+
+  const login = useCallback(async (email: string, password: string) => {
+    setLoading(true);
+    try {
+      const data = await loginUser(email, password);
+      const authModel: AuthModel = {
+        token: data.token,
+        refreshToken: data.refreshToken,
+        user: data.user,
+      };
+      writeStoredAuth(authModel);
+      setAuth(authModel);
+      setUser(data.user);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const logout = useCallback(async () => {
+    setLoading(true);
+    try {
+      await logoutUser();
+    } catch {
+      // Proceed with local cleanup even if server request fails
+    } finally {
+      clearStoredAuth();
+      setAuth(undefined);
+      setUser(undefined);
+      setLoading(false);
+    }
+  }, []);
+
   const register = useCallback(
     async (username: string, email: string, password: string) => {
-      try {
-        const res = await axiosInstance.post(UrlConstants.REGISTER_URL, {
-          username,
-          email,
-          password,
-        });
-        const authData: AuthModel = res.data;
-        saveAuth(authData);
-      } catch (error) {
-        saveAuth(undefined);
-        throw error;
-      }
+      return await registerUser(username, email, password);
     },
-    [saveAuth],
+    [],
   );
 
-  const value = useMemo(
-    () => ({
-      auth,
-      login,
-      register,
-      isAdmin,
-      loading,
-      saveAuth,
-      logout,
-    }),
-    [auth, login, register, isAdmin, loading, saveAuth, logout],
-  );
+  const isAdmin =
+    user?.role === "ADMIN" || user?.email?.includes("admin") || false;
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  if (loading && !auth?.token) {
+    return <ScreenLoader />;
+  }
+
+  return (
+    <AuthContext.Provider
+      value={{
+        login,
+        logout,
+        register,
+        auth,
+        user,
+        isAdmin,
+        loading,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 }

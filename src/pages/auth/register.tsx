@@ -1,38 +1,19 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import BrandedLayout from "./branded-layout";
-import ScreenLoader from "@/components/ui/screen-loader";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/form";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { useAuth } from "@/auth/context/auth-context";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  registerSchema,
-  type T_RegisterSchema,
-} from "./schema/resgister-schema";
-import { Link, Navigate } from "react-router-dom";
-import { toast, Toaster } from "sonner";
+import { useAuth } from "@/auth/context/auth-context";
+import { Link, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
-const Register = () => {
-  const { register: registerUser } = useAuth();
-  const [isLoading, setIsLoading] = useState<boolean>();
+import { Input } from "@/components/ui/input";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/form";
+import { REGISTER_SCHEMA } from "./schema/register-schema";
+import type { T_RegisterFormValues } from "./schema/register-schema";
+
+function Register() {
+  const { registerUser } = useAuth();
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
   const form = useForm({
-    resolver: zodResolver(registerSchema),
+    resolver: zodResolver(REGISTER_SCHEMA),
     defaultValues: {
       username: "",
       email: "",
@@ -42,120 +23,88 @@ const Register = () => {
     mode: "onBlur",
   });
 
-  const onSubmit = async (values: T_RegisterSchema) => {
-    // Destructuring drops 'Confirmpassword', keeping only the rest
-    const { username, email, password } = values;
-
+  const onSubmit = async (values: T_RegisterFormValues) => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      const result = await registerUser(username, email, password);
-      toast.success(result)
-      Navigate({ to: "/login" });
+      const result = await registerUser(values.username, values.email, values.password);
+      toast.success("Account created. Please login.");
+      navigate("/login");
     } catch (error) {
-      console.log(error);
+      toast.error((error as Error).message || "Registration failed");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="w-screen h-screen flex justify-center items-center gap-16">
-      <BrandedLayout />
-      <Card className="w-full max-w-md h-130">
-        {isLoading && <ScreenLoader />}
-        <CardHeader>
-          <CardTitle>Register your account</CardTitle>
-          <CardDescription>
-            Enter your details below to register to your account
-          </CardDescription>
-        </CardHeader>
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <h1 className="text-3xl font-bold text-center mb-6">Sign Up</h1>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
-            <CardContent className="space-y-4">
-              <FormField
-                control={form.control}
-                name="username"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Username</FormLabel>
-                    <FormControl>
-                      <Input placeholder="johndoe" type="string" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email Address</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="johndoe@email.com"
-                        type="email"
-                        autoComplete="email"
-                        autoFocus
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="*******"
-                        type="password"
-                        autoComplete="current-password"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="confirmPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Confirm Password</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="*******"
-                        type="password"
-                        autoComplete="current-password"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-            <div className="grid grid-cols-1 place-items-center gap-2 mt-3">
-              <Button type="submit" className="w-9/10">
-                Register
-              </Button>
-              <Button type="button" variant="outline" className="w-9/10">
-                <Link to="/login">Login</Link>
-              </Button>
-            </div>
+            <FormField
+              control={form.control}
+              name="username"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Username</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter username" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email Address</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter email" type="email" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Password</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter password" type="password" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="confirmPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Confirm Password</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Confirm password" type="password" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button type="submit" className="mt-4 w-full bg-primary text-white hover:bg-secondary border-2 border-transparent" disabled={isLoading}>
+              {isLoading ? "Creating Account..." : "Create Account"}
+            </Button>
           </form>
         </Form>
-      </Card>
+        <p className="text-sm text-gray-500 text-center mt-4">
+          Already have an account? <Link to="/login" className="text-primary underline cursor-pointer">Login here</Link>
+        </p>
+      </div>
     </div>
   );
-};
+}
 
 export default Register;

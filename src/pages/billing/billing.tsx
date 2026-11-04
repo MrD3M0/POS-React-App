@@ -28,7 +28,7 @@ import {
 import { billingItemSchema } from "./schema/schema";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@/components/ui/button";
+import Button  from "@/components/ui/button";
 import { Link } from "react-router";
 import { mapFieldsOnError } from "@/lib/utils";
 import type { T_UseQueryError } from "@/types/common";

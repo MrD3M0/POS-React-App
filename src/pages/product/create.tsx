@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { type T_UseQueryError } from "@/types/common";
 import { QUERY_KEYS } from "@/lib/query-keys";
 import { mapFieldsOnError } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import Button  from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import PageHeader from "@/components/common/page-header";
 
@@ -180,9 +180,6 @@ const CreateProduct = () => {
               <Button
                 type="submit"
                 loading={createProductMutation.isPending}
-                disabled={
-                  createProductMutation.isPending || categoriesQuery.isLoading
-                }
               >
                 Create
               </Button>

@@ -8,7 +8,7 @@ import { Link, useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
 
 import { mapFieldsOnError } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import Button  from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import PageHeader from "@/components/common/page-header";
 import {

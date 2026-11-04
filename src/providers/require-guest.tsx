@@ -1,13 +1,17 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/auth/context/auth-context";
-import { getAuthToken } from "@/lib/models";
+import ScreenLoader from "@/components/ui/screen-loader";
 
-const RequireGuest = () => {
-  const { auth } = useAuth();
+export function RequireGuest() {
+  const { auth, loading } = useAuth();
 
-  if (getAuthToken(auth)) return <Navigate to="/dashboard" replace />;
+  if (loading) {
+    return <ScreenLoader />;
+  }
+
+  if (auth?.token) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   return <Outlet />;
-};
-
-export default RequireGuest;
+}
