@@ -1,7 +1,6 @@
 import { useState } from "react";
 import Button  from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Trash2 } from "lucide-react";
 
 interface ConfirmDeleteDialogProps {
   open: boolean;
@@ -33,7 +32,7 @@ export default function ConfirmDeleteDialog({ open, onOpenChange, itemId, itemNa
         <div className="flex justify-end gap-2 mt-4">
           <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button variant="destructive" size="sm" disabled={!reason.trim()}
-            onClick={async () => { await onDelete(itemId); if (!onOpenChange(false)) {} }}>
+            onClick={async () => { await onDelete(itemId); onOpenChange(false); onSuccess?.(); }}>
             Delete
           </Button>
         </div>

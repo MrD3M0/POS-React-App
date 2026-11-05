@@ -15,7 +15,7 @@ type AlertVariant = "success" | "error" | "warning" | "info";
 interface AppAlertProps {
   variant: AlertVariant;
   title?: string;
-  message: string;
+  message?: string;
   dismissible?: boolean;
   className?: string;
 }
@@ -64,7 +64,7 @@ export default function AlertHandler({
       <span className="mt-0.5 shrink-0">{icon}</span>
       <div className="flex-1">
         {title && <p className="font-semibold">{title}</p>}
-        <p>{message}</p>
+        {message ? <p>{message}</p> : null}
       </div>
       {dismissible && (
         <button

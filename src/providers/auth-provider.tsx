@@ -48,8 +48,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (stored?.token) {
         try {
           const freshUser = await getCurrentUser();
-          setUser(freshUser);
-          writeStoredAuth({ ...stored, user: freshUser });
+          setUser(freshUser.data);
+          writeStoredAuth({ ...stored, user: freshUser.data });
         } catch {
           clearStoredAuth();
           setAuth(undefined);
@@ -74,6 +74,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       writeStoredAuth(authModel);
       setAuth(authModel);
       setUser(data.user);
+      return authModel;
     } finally {
       setLoading(false);
     }

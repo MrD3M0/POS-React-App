@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useAuth } from "@/auth/context/auth-context";
-import { Link } from "react-router-dom";
 import Button  from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/form";
 import type { Role } from "../shared/role-login-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { roleLoginSchema } from "../shared/role-login-schema";
+import { useForm } from "react-hook-form";
+import { roleLoginSchema, type TRoleLoginSchema } from "../shared/role-login-schema";
 
 const ROLE_TITLE: Record<Role, string> = {
   ADMIN: "Admin",
@@ -16,7 +16,7 @@ const ROLE_TITLE: Record<Role, string> = {
   STAFF: "Staff",
 };
 
-type TRoleLoginFormValues = z.infer<typeof roleLoginSchema>;
+type TRoleLoginFormValues = TRoleLoginSchema;
 
 function LoginForm({ role }: { role: Role }) {
   const { login } = useAuth();

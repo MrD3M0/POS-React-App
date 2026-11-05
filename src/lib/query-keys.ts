@@ -63,6 +63,31 @@ export const QUERY_KEYS = {
   STAFF_PROFILE: "staff-profile",
   STAFF_PAYSLOPS: "staff-payslips",
   STAFF_ATTENDANCE: "staff-attendance",
+  // Admin detail/list keys per backend module
+  ADMIN_BATCH_TERM_LIST: "admin-batch-terms",
+  ADMIN_BATCH_TERM_GET: "admin-batch-term",
+  ADMIN_EXAM_LIST: "admin-exams",
+  ADMIN_EXAM_GET: "admin-exam",
+  ADMIN_EXAM_TYPE_LIST: "admin-exam-types",
+  ADMIN_GUARDIAN_LIST: "admin-guardians",
+  ADMIN_FISCALYEAR_LIST: "admin-fiscal-years",
+  ADMIN_FISCALYEAR_GET: "admin-fiscal-year",
+  ADMIN_ACCOUNT_LIST: "admin-accounts",
+  ADMIN_TAX_SLAB_LIST: "admin-tax-slabs",
+  ADMIN_TEACHER_LIST: "admin-teachers",
+  ADMIN_TEACHER_GET: "admin-teacher",
+  ADMIN_PAYROLL_LIST: "admin-payrolls",
+  ADMIN_PAYSLIP_LIST: "admin-payslips",
+  ADMIN_RESULT_LIST: "admin-results",
+  ADMIN_SALARY_STRUCTURE_LIST: "admin-salary-structures",
+  TEACHER_EXPRESS_TEACHING_ASSIGNMENT: "teacher-mine",
+  TEACHER_BATCH_PAY_LIST: "teacher-batch-pay",
+  ACCOUNTANT_FEE_STRUCTURE_LIST: "accountant-fee-structure-items",
+  ACCOUNTANT_STUDENT_FEE_LIST: "accountant-student-fees",
+  ACCOUNTANT_FEE_PAYMENT_LIST: "accountant-fee-payments",
+  ACCOUNTANT_JOURNAL_LINE_LIST: "accountant-journal-lines",
 } as const;
+
+export default QUERY_KEYS;
 
 export const queryClient = new QueryClient();

@@ -4,32 +4,6 @@ import Button  from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 
-const BARS = [
-  { w: 2, h: 48, g: 2 },
-  { w: 1, h: 48, g: 1 },
-  { w: 3, h: 48, g: 2 },
-  { w: 1, h: 44, g: 1 },
-  { w: 2, h: 48, g: 2 },
-  { w: 1, h: 48, g: 1 },
-  { w: 4, h: 48, g: 2 },
-  { w: 1, h: 42, g: 1 },
-  { w: 2, h: 48, g: 2 },
-  { w: 3, h: 48, g: 1 },
-  { w: 1, h: 44, g: 2 },
-  { w: 2, h: 48, g: 1 },
-  { w: 2, h: 48, g: 2 },
-  { w: 1, h: 48, g: 1 },
-  { w: 3, h: 48, g: 2 },
-  { w: 1, h: 42, g: 1 },
-  { w: 2, h: 48, g: 2 },
-  { w: 4, h: 48, g: 1 },
-  { w: 1, h: 48, g: 2 },
-  { w: 2, h: 44, g: 1 },
-  { w: 3, h: 48, g: 2 },
-  { w: 1, h: 48, g: 1 },
-  { w: 2, h: 48, g: 0 },
-];
-
 const ErrorPage: React.FC = () => {
   const navigate = useNavigate();
 

@@ -5,7 +5,7 @@ PROJECT EXPORT FOR LLMs
 PROJECT INFORMATION:
 --------------------------------------------------
 Project Name: POS-React-App
-Generated On: 2026-11-04 19:55:48 (Asia/Katmandu / GMT+06:45)
+Generated On: 2026-11-04 20:01:22 (Asia/Katmandu / GMT+06:45)
 Total Files Processed: 209
 Export Tool: Easy Whole Project to Single Text File for LLMs v1.1.0
 Tool Author: Jota / José Guilherme Pandolfi
@@ -254,7 +254,7 @@ PROJECT STRUCTURE
 │   │   │   │   └── 📄 schema.ts (1.09 KB)
 │   │   │   ├── 📁 service/
 │   │   │   │   └── 📄 service.ts (2.11 KB)
-│   │   │   ├── 📄 create.tsx (5.78 KB)
+│   │   │   ├── 📄 create.tsx (5.82 KB)
 │   │   │   ├── 📄 edit.tsx (7.3 KB)
 │   │   │   └── 📄 index.tsx (6.29 KB)
 │   │   ├── 📁 billing/
@@ -18924,15 +18924,15 @@ FILE: src/pages/batch/create.tsx
 
 FILE INFORMATION:
 ----------------------------------------
-Size: 5.78 KB
+Size: 5.82 KB
 Extension: .tsx
 Language: typescript
 Location: src/pages/batch/create.tsx
 Relative Path: src/pages/batch
 Created: 2026-11-04 16:34:20 (Asia/Katmandu / GMT+06:45)
-Modified: 2026-11-04 19:55:47 (Asia/Katmandu / GMT+06:45)
-MD5: 83a0325ad196b03c8a5b0b92e9288699
-SHA256: f52e82aab927ac5ae46b7918142ea8ed026722b49eed120e0fea0713a349fae5
+Modified: 2026-11-04 20:01:21 (Asia/Katmandu / GMT+06:45)
+MD5: e2c0b46b2c368166f07c2624764c57bd
+SHA256: 89fb11e680c5c2d32810cab59064c672e38465e810b5a7d53eb1b4bf2fb47121
 Encoding: ASCII
 
 FILE CONTENT:
@@ -19049,6 +19049,7 @@ const CreateBatch = () => {
                         value={field.value}
                         onChange={field.onChange}
                         valueFormat="ad"
+                        lang="en"
                       />
                     </FormControl>
                     <FormMessage />

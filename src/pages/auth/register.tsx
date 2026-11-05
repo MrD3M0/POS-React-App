@@ -1,15 +1,18 @@
 import { useState } from "react";
 import { useAuth } from "@/auth/context/auth-context";
 import { Link, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/form";
+import Button from "@/components/ui/button";
 import { REGISTER_SCHEMA } from "./schema/register-schema";
 import type { T_RegisterFormValues } from "./schema/register-schema";
 
 function Register() {
-  const { registerUser } = useAuth();
+  const { register } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const form = useForm({
@@ -26,7 +29,7 @@ function Register() {
   const onSubmit = async (values: T_RegisterFormValues) => {
     setIsLoading(true);
     try {
-      const result = await registerUser(values.username, values.email, values.password);
+      await register(values.username, values.email, values.password);
       toast.success("Account created. Please login.");
       navigate("/login");
     } catch (error) {

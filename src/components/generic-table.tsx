@@ -109,7 +109,12 @@ const stringify = (value: unknown) => {
 const renderValue = (raw: unknown): ReactNode => {
   const value = toDisplayValue(raw);
 
-  if (typeof value === "boolean") return <StatusBadge status={value} />;
+  if (typeof value === "boolean")
+    return (
+      <StatusBadge variant={value ? "success" : "outline"}>
+        {value ? "active" : "inactive"}
+      </StatusBadge>
+    );
   if (isDateValue(value))
     return (
       <span className="tabular-nums text-muted-foreground">

@@ -5,7 +5,7 @@ import { ChevronDown, Loader2 } from "lucide-react";
 import { Slot as SlotPrimitive } from "radix-ui";
 import { cn } from "@/lib/utils";
 
-const buttonVariants = cva(
+export const buttonVariants = cva(
   "cursor-pointer group focus-visible:outline-hidden inline-flex items-center justify-center has-data-[arrow=true]:justify-between whitespace-nowrap text-sm font-medium ring-offset-background transition-[color,box-shadow] disabled:pointer-events-none disabled:opacity-60 [&_svg]:shrink-0",
   {
     variants: {
@@ -370,7 +370,7 @@ const buttonVariants = cva(
   },
 );
 
-function Button({
+export function Button({
   className,
   selected,
   variant,

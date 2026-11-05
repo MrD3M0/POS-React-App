@@ -1,4 +1,5 @@
-import type { AuthModel } from "@/lib/models";
+import { createContext, useContext } from "react";
+import type { AuthModel, UserModel } from "@/lib/models";
 
 export interface AuthContextType {
   login: (email: string, password: string) => Promise<AuthModel>;
@@ -10,23 +11,8 @@ export interface AuthContextType {
   loading: boolean;
 }
 
-// Re-export UserModel for convenience
-interface UserModel {
-  id?: string;
-  username?: string | null;
-  email?: string;
-  role?: T_Role;
-}
-
-type T_Role =
-  | "ADMIN"
-  | "PRINCIPAL"
-  | "ACCOUNTANT"
-  | "TEACHER"
-  | "STAFF";
-
 const defaultContext: AuthContextType = {
-  login: async () => {},
+  login: async () => ({}),
   register: async () => "",
   auth: undefined,
   user: undefined,
@@ -36,8 +22,5 @@ const defaultContext: AuthContextType = {
 };
 
 export const AuthContext = createContext<AuthContextType>(defaultContext);
-
-// Local import to avoid circular deps
-import { createContext } from "react";
 
 export const useAuth = () => useContext(AuthContext);

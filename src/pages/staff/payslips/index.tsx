@@ -44,7 +44,7 @@ function GenericTableHelper({ status, search }: { status: T_PAYSLEFT[]; search: 
     { key: "netPay", headName: "Net Pay", minWidth: 160 },
     { key: "status", headName: "Status", minWidth: 140, render: (r: any) => <Badge variant={r.status === "PAID" ? "success" : r.status === "PENDING" ? "warning" : "outline"}>{r.status}</Badge> },
   ];
-  const [pag, setPag] = useState({ page: 1, limit: LIMIT, total: status.length, onPageChange: () => {} });
+  const [pag, setPage] = useState({ page: 1, limit: LIMIT, total: status.length, onPageChange: () => {} });
   return <GenericTable head={head} data={status} pagination={pag} searchPlaceholder={search ? `Search (${search.slice(0, 10)}...)` : "Search payslips..."} emptyTitle="" />;
 }
 

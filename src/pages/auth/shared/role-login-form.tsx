@@ -1,15 +1,16 @@
 import { useState } from "react";
-import { FormField, FormControl, FormItem, FormLabel, FormMessage } from "@/components/form";
+import { Form, FormField, FormControl, FormItem, FormLabel, FormMessage } from "@/components/form";
 import { Input } from "@/components/ui/input";
 import Button  from "@/components/ui/button";
 import ScreenLoader from "@/components/ui/screen-loader";
+import { useAuth } from "@/auth/context/auth-context";
 import { useNavigate, Link } from "react-router-dom";
-import { toast } from "sonner";
 import type { Role } from "./role-login-schema";
 import type { TRoleLoginSchema } from "./role-login-schema";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { roleLoginSchema } from "./role-login-schema";
-import { Card, CardHeader, CardDescription, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardDescription, CardTitle } from "@/components/ui/card";
 
 interface RoleLoginFormProps {
   role: Role;
@@ -21,7 +22,7 @@ interface RoleLoginFormProps {
 export function RoleLoginForm({ role, nextPath = "/dashboard" }: RoleLoginFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  void navigate;
+  const { login } = useAuth();
 
   const form = useForm<TRoleLoginSchema>({
     resolver: zodResolver(roleLoginSchema),
@@ -83,8 +84,8 @@ export function RoleLoginForm({ role, nextPath = "/dashboard" }: RoleLoginFormPr
               />
             </CardContent>
             <div className="grid grid-cols-1 place-items-center gap-2 mt-3">
-              <Button type="submit" className="w-9/10">
-                Login
+              <Button type="submit" className="w-9/10" disabled={isLoading}>
+                {isLoading ? "Logging in..." : "Login"}
               </Button>
 
               <Button type="button" variant="outline" className="w-9/10">

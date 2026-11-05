@@ -104,8 +104,7 @@ export const PERMISSION_MAP = {
   "system:fiscalYear:read": ["ADMIN"],
 } as const;
 
-type PermissionKey = keyof typeof PERMISSION_MAP;
-type PermissionValue = readonly T_Role[];
+export type PermissionKey = keyof typeof PERMISSION_MAP;
 
 function hasPermission(role: T_Role | undefined, permission: PermissionKey): boolean {
   if (!role) return false;

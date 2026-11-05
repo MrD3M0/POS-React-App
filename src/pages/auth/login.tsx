@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/auth/context/auth-context";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Button from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -14,10 +14,13 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import type { Role } from "@/pages/auth/shared/role-login-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { roleLoginSchema } from "@/pages/auth/shared/role-login-schema";
+import {
+  roleLoginSchema,
+  type TRoleLoginSchema,
+} from "@/pages/auth/shared/role-login-schema";
 import { useForm } from "react-hook-form";
 
-type TRoleLoginFormValues = z.infer<typeof roleLoginSchema>;
+type TRoleLoginFormValues = TRoleLoginSchema;
 
 const ROLE_TITLE: Record<Role, string> = {
   ADMIN: "Admin",
@@ -29,6 +32,7 @@ const ROLE_TITLE: Record<Role, string> = {
 
 function LoginForm({ role }: { role: Role }) {
   const { login } = useAuth();
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const form = useForm<TRoleLoginFormValues>({
     resolver: zodResolver(roleLoginSchema),
@@ -40,7 +44,7 @@ function LoginForm({ role }: { role: Role }) {
     setIsLoading(true);
     try {
       await login(values.email, values.password);
-      window.location.href = "/dashboard";
+      navigate("/dashboard");
     } catch (error) {
       console.error(error);
     } finally {

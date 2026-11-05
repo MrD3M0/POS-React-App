@@ -2,7 +2,7 @@ import { useState } from "react";
 import Button  from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { genericResponse, toast } from "@/utils/frontend-shared";
+import { toast } from "sonner";
 
 interface NewItemDialogProps {
   title: string;

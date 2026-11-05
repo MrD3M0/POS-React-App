@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Button  from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { BsDatePicker } from "@/components/bs-datepicker";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
@@ -49,7 +49,7 @@ export default function AddStudentDialog({ mode, onClose }: AddStudentDialogProp
               </select>
             </Field>
             <Field label="DOB (BS)">
-              <Input value={form.dobBs} onChange={(e) => setForm({ ...form, dobBs: e.target.value })} placeholder="YYYY-MM-DD" />
+              <BsDatePicker value={form.dobBs} onChange={(e) => setForm({ ...form, dobBs: e.target.value })} valueFormat="bs" lang="en" />
             </Field>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -123,4 +123,5 @@ function RejectionReasons({ reason, onUpdate }: { reason: string; onUpdate: (v: 
 
 // --- Service ---
 import { createStudent as createStudentFn, updateStudent as updateStudentFn } from "../service/service";
+import { Input } from "@/components/ui/input";
 void createStudentFn; void updateStudentFn;

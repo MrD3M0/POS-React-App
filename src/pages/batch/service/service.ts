@@ -5,6 +5,15 @@ import type {
   T_AxiosResponseWithPagination,
 } from "@/types/common";
 import type { T_BatchSchema } from "../schema/schema";
+import { toBatchPayload } from "../schema/schema";
+
+export type T_Course = {
+  id: string;
+  code: string;
+  name: string;
+  system: "SEMESTER" | "YEARLY";
+  totalTerms: number;
+};
 
 export type T_Batch = {
   id: string;
@@ -15,6 +24,7 @@ export type T_Batch = {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  course?: T_Course;
 };
 
 export const getAllBatches = async (args: {
@@ -42,13 +52,7 @@ export const removeBatch = async (id: string) => {
 
 export const createBatch = async (data: T_BatchSchema) => {
   const response: T_AxiosResponseWithoutPagination<T_Batch> =
-    await axiosInstance.post(`${UrlConstants.BATCH_URL}`, {
-      courseId: data.courseId,
-      name: data.name,
-      startDateBs: data.startDateBs || undefined,
-      currentTermNumber: data.currentTermNumber,
-      isActive: data.isActive,
-    });
+    await axiosInstance.post(`${UrlConstants.BATCH_URL}`, toBatchPayload(data));
   return response.data;
 };
 
@@ -63,12 +67,9 @@ export const updateBatch = async (args: {
   id: string;
 }) => {
   const response: T_AxiosResponseWithoutPagination<T_Batch> =
-    await axiosInstance.patch(`${UrlConstants.BATCH_URL}/${args.id}`, {
-      courseId: args.data.courseId,
-      name: args.data.name,
-      startDateBs: args.data.startDateBs || undefined,
-      currentTermNumber: args.data.currentTermNumber,
-      isActive: args.data.isActive,
-    });
+    await axiosInstance.patch(
+      `${UrlConstants.BATCH_URL}/${args.id}`,
+      toBatchPayload(args.data),
+    );
   return response.data;
 };

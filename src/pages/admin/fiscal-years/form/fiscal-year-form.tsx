@@ -2,6 +2,7 @@ import { useState } from "react";
 import Button  from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { BsDatePicker } from "@/components/bs-datepicker";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { createFiscalYear, updateFiscalYear } from "../service/service";
@@ -40,11 +41,11 @@ export default function FiscalYearFormDialog({ mode, onClose, initial, id }: Fis
           </div>
           <div className="space-y-1.5">
             <label className="block text-xs font-medium text-muted-foreground">Start Date (BS)</label>
-            <Input value={form.startDateBs} onChange={(e) => setForm({ ...form, startDateBs: e.target.value })} placeholder="YYYY-MM-DD" />
+            <BsDatePicker value={form.startDateBs} onChange={(e) => setForm({ ...form, startDateBs: e.target.value })} valueFormat="bs" lang="en" />
           </div>
           <div className="space-y-1.5">
             <label className="block text-xs font-medium text-muted-foreground">End Date (BS)</label>
-            <Input value={form.endDateBs} onChange={(e) => setForm({ ...form, endDateBs: e.target.value })} placeholder="YYYY-MM-DD" />
+            <BsDatePicker value={form.endDateBs} onChange={(e) => setForm({ ...form, endDateBs: e.target.value })} valueFormat="bs" lang="en" />
           </div>
         </div>
         <div className="flex justify-end gap-2 mt-4">

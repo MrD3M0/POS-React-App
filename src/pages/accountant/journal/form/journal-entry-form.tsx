@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { postJournalEntry, reverseJournalEntry } from "../service/service";
+import { postJournalEntry } from "../service/service";
 import type { T_JOURNAL_LINE } from "../service/service";
 
 interface JournalEntryFormProps {
@@ -21,9 +21,6 @@ export default function JournalEntryForm({ onClose }: JournalEntryFormProps) {
   // Live totals — must balance on submit
   const debitTotal = lines.filter((l) => l.direction === "DEBIT").reduce((s, l) => s + l.amount, 0);
   const creditTotal = lines.filter((l) => l.direction === "CREDIT").reduce((s, l) => s + l.amount, 0);
-
-  // Block submit unless equal
-  if (debitTotal !== creditTotal) return null;
 
   const handleSubmit = async () => {
     setSubmitting(true);
@@ -75,7 +72,7 @@ export default function JournalEntryForm({ onClose }: JournalEntryFormProps) {
 
           <div className="flex justify-end gap-2 mt-4">
             <Button variant="outline" size="sm" onClick={onClose}>Cancel</Button>
-            <Button variant="primary" size="sm" disabled={!debitTotal || creditTotal || submitting} onClick={handleSubmit}>
+            <Button variant="primary" size="sm" disabled={!debitTotal || debitTotal !== creditTotal || submitting} onClick={handleSubmit}>
               {submitting ? "Posting..." : "Post"}
             </Button>
           </div>

@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import PageHeader from "@/components/common/page-header";
+import { toast } from "sonner";
 import ScreenLoader from "@/components/ui/screen-loader";
+import { BsDatePicker } from "@/components/bs-datepicker";
 import AlertHandler from "@/components/common/alert-handler";
 import Input from "@/components/ui/input";
 import Button from "@/components/ui/button";
@@ -73,7 +75,7 @@ function SimpleFormDialog({ fields, mode, onClose, submitText, service }: {
   mode: "create" | "edit";
   onClose: () => void;
   submitText?: string;
-  fields: { key: string; label: string; type?: "number" | "text"; required?: boolean; placeholder?: string }[];
+  fields: { key: string; label: string; type?: "number" | "text" | "bs-date"; required?: boolean; placeholder?: string }[];
   service: (vals: Record<string, string>) => Promise<{ message?: string }>;
 }) {
   return <SubjectFormDialog mode={mode} onClose={onClose} submitText={submitText ?? "Save"} fields={fields} service={service} />;
@@ -83,13 +85,13 @@ function SubjectFormDialog({ mode, onClose, submitText, fields, service }: {
   mode: "create" | "edit";
   onClose: () => void;
   submitText: string;
-  fields: { key: string; label: string; type?: "number" | "text"; required?: boolean; placeholder?: string }[];
+  fields: { key: string; label: string; type?: "number" | "text" | "bs-date"; required?: boolean; placeholder?: string }[];
   service: (vals: Record<string, string>) => Promise<{ message?: string }>;
 }) {
   const [values, setValues] = useState<Record<string, string>>({});
   const mutation = useMutation({
     mutationFn: async () => { await service(values); },
-    onSuccess: () => { useAuth2().logout(); },
+    onSuccess: () => { toast.success("Saved"); onClose(); },
   });
 
   return (
@@ -100,10 +102,15 @@ function SubjectFormDialog({ mode, onClose, submitText, fields, service }: {
           {fields.map((f) => (
             <div key={f.key} className="space-y-1">
               <label className="block text-xs font-medium text-muted-foreground">{f.label}{f.required && <span className="text-destructive"> *</span>}</label>
-              <input type={f.type ?? "text"} value={values[f.key] ?? ""} placeholder={f.placeholder ?? ""}
-                className="w-full rounded border px-3 py-2 text-sm"
-                required={f.required}
-                onChange={(e) => setValues((v) => ({ ...v, [f.key]: e.target.value }))} />
+              {f.type === "bs-date" ? (
+                <BsDatePicker value={values[f.key] ?? ""} valueFormat="bs" lang="en"
+                  onChange={(v) => setValues((prev) => ({ ...prev, [f.key]: typeof v === "string" ? v : "" }))} />
+              ) : (
+                <input type={f.type ?? "text"} value={values[f.key] ?? ""} placeholder={f.placeholder ?? ""}
+                  className="w-full rounded border px-3 py-2 text-sm"
+                  required={f.required}
+                  onChange={(e) => setValues((v) => ({ ...v, [f.key]: e.target.value }))} />
+              )}
             </div>
           ))}
         </div>
@@ -118,5 +125,3 @@ function SubjectFormDialog({ mode, onClose, submitText, fields, service }: {
   );
 }
 
-import { useAuth } from "@/auth/context/auth-context";
-function useAuth2(): typeof useAuth { return useAuth(); }

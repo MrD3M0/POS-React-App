@@ -3,6 +3,7 @@ import {
   Sidebar,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarHeader,
@@ -27,12 +28,10 @@ import {
   UserCircle2,
   FileCheck,
   ClipboardSignature,
-  PiggyBank,
   Banknote,
   BookText,
   Calculator,
   PieChart,
-  Clipboard,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 
@@ -132,7 +131,7 @@ function visibleFor(role?: string): NavItemType[] {
 }
 
 export default function AppSidebarMenu() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const location = useLocation();
   const { state } = useSidebar();
   const items = visibleFor(user?.role);
@@ -187,7 +186,7 @@ export default function AppSidebarMenu() {
           <SidebarMenuItem>
             <SidebarMenuButton
               tooltip="Logout"
-              onClick={() => useAuth.getState?.().logout?.()}
+              onClick={() => { void logout(); }}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"

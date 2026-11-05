@@ -2,6 +2,7 @@ import {
   createBrowserRouter,
   Navigate,
   RouterProvider,
+  useNavigate,
 } from "react-router-dom";
 import { AuthProvider } from "@/providers/auth-provider";
 import { RequireAuth } from "@/providers/require-auth";
@@ -9,7 +10,7 @@ import { RequireGuest } from "@/providers/require-guest";
 import SidebarLayout from "@/providers/sidebar-layout";
 import { Can } from "@/auth/permissions";
 
-import LogIn from "@/pages/auth/login";
+import { LogIn } from "@/pages/auth/login";
 import Register from "@/pages/auth/register";
 
 import RoleAdminLogin from "@/pages/auth/admin/login";
@@ -76,11 +77,11 @@ const router = createBrowserRouter([
       // Per-role login surfaces (guest-accessible). Each validates role implicitly via
       // the shared login endpoint returning the user's real role; this page does not
       // change on submit, so a principal can log in as teacher by navigating /auth/teacher.
-      { path: "/auth/admin", element: <RoleAdminLogin /> },
-      { path: "/auth/principal", element: <RolePrincipalLogin /> },
-      { path: "/auth/teacher", element: <RoleTeacherLogin /> },
-      { path: "/auth/accountant", element: <RoleAccountantLogin /> },
-      { path: "/auth/staff", element: <RoleStaffLogin /> },
+      { path: "/auth/admin", element: <RoleAdminLogin role="ADMIN" /> },
+      { path: "/auth/principal", element: <RolePrincipalLogin role="PRINCIPAL" /> },
+      { path: "/auth/teacher", element: <RoleTeacherLogin role="TEACHER" /> },
+      { path: "/auth/accountant", element: <RoleAccountantLogin role="ACCOUNTANT" /> },
+      { path: "/auth/staff", element: <RoleStaffLogin role="STAFF" /> },
     ],
   },
 
@@ -119,6 +120,7 @@ const router = createBrowserRouter([
           { path: "/accountant/ledgers", element: <AccountantLedgersPage /> },
           { path: "/accountant/payroll/wizard", element: <AccountantPayrollWizardPage /> },
           { path: "/accountant/payslips", element: <AccountantPayslipsPage /> },
+          { path: "/accountant/attendance", element: <AccountantAttendancePage /> },
           { path: "/billing", element: <BillingPage /> },
           // --- Teacher modules ---
           { path: "/teacher/my-classes", element: <TeacherMyClassesPage /> },
@@ -127,7 +129,7 @@ const router = createBrowserRouter([
           { path: "/teacher/marks", element: <TeacherMarksEntryPage /> },
           { path: "/teacher/results", element: <TeacherResultsPage /> },
           { path: "/teacher/students", element: <TeacherStudentsPage /> },
-          { path: "/teacher/students/add", element: <AddStudentPage /> },
+          { path: "/teacher/students/add", element: <AddStudentRoute /> },
           // --- Staff modules ---
           { path: "/staff/profile", element: <StaffProfilePage /> },
           { path: "/staff/payslips", element: <StaffPayslipsPage /> },
@@ -145,6 +147,11 @@ const router = createBrowserRouter([
 
 function DefaultRedirect() {
   return <Navigate to="/dashboard" replace />;
+}
+
+function AddStudentRoute() {
+  const navigate = useNavigate();
+  return <AddStudentPage mode="create" onClose={() => navigate("/teacher/students")} />;
 }
 
 function AppRoutingSetup() {

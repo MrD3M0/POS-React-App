@@ -185,3 +185,5 @@ export {
   inputVariants,
   InputWrapper,
 };
+
+export default Input;

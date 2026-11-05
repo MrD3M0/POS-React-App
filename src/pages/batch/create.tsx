@@ -110,6 +110,7 @@ const CreateBatch = () => {
                         value={field.value}
                         onChange={field.onChange}
                         valueFormat="ad"
+                        lang="en"
                       />
                     </FormControl>
                     <FormMessage />
@@ -128,8 +129,10 @@ const CreateBatch = () => {
                         type="number"
                         min={1}
                         placeholder="Eg: 1"
-                        value={field.value as number}
-                        onChange={field.onChange}
+                        value={field.value}
+                        onChange={(e) =>
+                          field.onChange(e.target.valueAsNumber)
+                        }
                       />
                     </FormControl>
                     <FormMessage />

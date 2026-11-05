@@ -8,7 +8,7 @@ import { AxiosError } from "axios";
 import { mapFieldsOnError } from "@/lib/utils";
 import { QUERY_KEYS } from "@/lib/query-keys";
 import type { T_UseQueryError } from "@/types/common";
-import { BatchSchema, type T_BatchSchema } from "./schema/schema";
+import { BatchSchema, bsToDate, type T_BatchSchema } from "./schema/schema";
 import { getBatchById, updateBatch } from "./service/service";
 import PageHeader from "@/components/common/page-header";
 import ScreenLoader from "@/components/ui/screen-loader";
@@ -32,7 +32,7 @@ import {
   FormMessage,
   FormDescription,
 } from "@/components/form";
-import { DatePicker } from "@/components/ui/date-picker";
+import { BsDatePicker } from "@/components/bs-datepicker";
 
 export default function EditBatchPage() {
   const { id } = useParams<{ id: string }>();
@@ -60,7 +60,7 @@ export default function EditBatchPage() {
       form.reset({
         courseId: batch.courseId,
         name: batch.name,
-        startDateBs: batch.startDateBs || "",
+        startDate: bsToDate(batch.startDateBs),
         currentTermNumber: batch.currentTermNumber,
         isActive: batch.isActive,
       });
@@ -152,19 +152,20 @@ export default function EditBatchPage() {
 
               <FormField
                 control={form.control}
-                name="startDateBs"
+                name="startDate"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel isOptional>Start Date (BS)</FormLabel>
                     <FormControl>
-                      <DatePicker
-                        {...field}
+                      <BsDatePicker
                         value={field.value}
                         onChange={field.onChange}
+                        valueFormat="ad"
+                        lang="en"
                       />
                     </FormControl>
                     <FormDescription>
-                      Bikram Sambat date format (e.g. 2081-04-01)
+                      Selected date is converted to Bikram Sambat on save.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -178,7 +179,14 @@ export default function EditBatchPage() {
                   <FormItem>
                     <FormLabel>Current Term Number</FormLabel>
                     <FormControl>
-                      <Input type="number" min={1} {...field} />
+                      <Input
+                        type="number"
+                        min={1}
+                        value={field.value}
+                        onChange={(e) =>
+                          field.onChange(e.target.valueAsNumber)
+                        }
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

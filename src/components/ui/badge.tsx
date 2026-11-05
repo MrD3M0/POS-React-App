@@ -19,6 +19,8 @@ const badgeVariants = cva(
         ghost:
           "hover:bg-muted hover:text-muted-foreground dark:hover:bg-muted/50",
         link: "text-primary underline-offset-4 hover:underline",
+        success: "bg-emerald-500 text-white [a]:hover:bg-emerald-600",
+        warning: "bg-amber-500 text-white [a]:hover:bg-amber-600",
       },
     },
     defaultVariants: {
@@ -46,4 +48,5 @@ function Badge({
   );
 }
 
+export { Badge, badgeVariants };
 export default Badge;

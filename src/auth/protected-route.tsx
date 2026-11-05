@@ -14,7 +14,7 @@ import { useCan } from "@/auth/permissions";
  * Front-end checks are UX only — the backend enforces everything again.
  */
 export function ProtectedRoute({ permission }: { permission: PermissionKey }) {
-  const { auth, user, loading } = useAuth();
+  const { auth, loading } = useAuth();
   const location = useLocation();
   const can = useCan(permission);
 
