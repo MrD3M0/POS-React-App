@@ -1,29 +1,24 @@
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import PageHeader from "@/components/common/page-header";
 import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
 import Badge from "@/components/ui/badge";
-import GenericTable, { type T_TableHead } from "@/components/generic-table";
+import GenericTable from "@/components/generic-table";
 import Button from "@/components/ui/button";
-import Input from "@/components/ui/input";
-import { toast } from "sonner";
 import QUERY_KEYS from "@/lib/query-keys";
-import { isClosed } from "@/pages/admin/fiscal-years/service/service"; // wait — separate accountant fiscal year check
-import ConfirmDeleteDialog from "@/components/dialog/confirm-delete";
+import { listJournalEntries } from "./service/service";
 import JournalEntryDialog from "./form/journal-entry-form";
+import { useState } from "react";
 
 const LIMIT = 20;
 
 export default function AccountantJournalPage() {
   const [page, setPage] = useState(1);
   const [createOpen, setCreateOpen] = useState(false);
-  const [closedFYId, setClosedFYId] = useState<string | null>(null);
-  const qc = useQueryClient();
 
   const query = useQuery({
     queryKey: [QUERY_KEYS.ACCOUNTANT_JOURNAL, page],
-    queryFn: () => ({ journalUrl: "/accountant/journal" }),
+    queryFn: () => listJournalEntries({ page, limit: LIMIT }),
   });
 
   if (query.isLoading) return <ScreenLoader />;
@@ -48,20 +43,18 @@ export default function AccountantJournalPage() {
           { key: "debitTotal", headName: "Debit Total", minWidth: 140 },
           { key: "creditTotal", headName: "Credit Total", minWidth: 140 },
           { key: "balance", headName: "Balance", minWidth: 140 },
-          { key: "groupAccount", headName: "Group Account", minWidth: 180, render: (j) => <Badge variant="outline">{j.groupAccount ?? "—"}</Badge> },
+          { key: "groupAccount", headName: "Group Account", minWidth: 180, render: (j: T_JOURNAL_ENTRY) => <Badge variant="outline">{j.groupAccount ?? "—"}</Badge> },
           { key: "dateBs", headName: "Date (BS)", minWidth: 180 },
         ]}
         data={rows}
         emptyTitle="No journal entries."
-        pagination={{ page, limit: LIMIT, total: 0, onPageChange: setPage }}
-        renderRow={(j) => ({ description: j.description, debitTotal: j.debitTotal, creditTotal: j.creditTotal, balance: j.balance ?? "0", groupAccount: j.groupAccount ?? "" } as Record<string, React.ReactNode>)}
+        pagination={{ page, limit: LIMIT, total: query.data?.data?.pagination?.total ?? 0, onPageChange: setPage }}
+        renderRow={(j: T_JOURNAL_ENTRY) => ({
+          description: j.description, debitTotal: j.debitTotal, creditTotal: j.creditTotal, balance: j.balance ?? "0", groupAccount: j.groupAccount ?? "",
+        } as Record<string, React.ReactNode>)}
       />
 
-      {closedFYId && (
-        <ConfirmDeleteDialog open onOpenChange={(o) => !o && setClosedFYId(null)} itemId={closedFYId} itemName="Fiscal Year" onDelete={async () => { void isClosed({ fiscalYearId: closedFYId! }); setClosedFYId(null); }} />
-      )}
-
-      {createOpen && <JournalEntryForm onClose={() => setCreateOpen(false)} />}
+      {createOpen && <JournalEntryDialog onClose={() => setCreateOpen(false)} />}
     </div>
   );
 }
@@ -72,6 +65,6 @@ type T_JOURNAL_ENTRY = {
   debitTotal: number;
   creditTotal: number;
   balance?: number;
-  groupAccount?: boolean; // true if a group account — cannot post to these
+  groupAccount?: boolean;
   dateBs?: string;
 };

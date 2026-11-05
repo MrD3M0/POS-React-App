@@ -51,7 +51,7 @@ import AccountantLedgersPage from "@/pages/accountant/ledgers/index";
 import AccountantPayrollWizardPage from "@/pages/accountant/payroll/wizard/index";
 import AccountantPayslipsPage from "@/pages/accountant/payslips/index";
 import AccountantAttendancePage from "@/pages/accountant/attendance/index";
-import BillingPage from "@/pages/billing/billing";
+import AccountantPaymentsPage from "@/pages/accountant/payments/index";
 
 // --- Teacher pages ---
 import TeacherMyClassesPage from "@/pages/teacher/my-classes/index";
@@ -121,7 +121,7 @@ const router = createBrowserRouter([
           { path: "/accountant/payroll/wizard", element: <AccountantPayrollWizardPage /> },
           { path: "/accountant/payslips", element: <AccountantPayslipsPage /> },
           { path: "/accountant/attendance", element: <AccountantAttendancePage /> },
-          { path: "/billing", element: <BillingPage /> },
+          { path: "/accountant/payments", element: <AccountantPaymentsPage /> },
           // --- Teacher modules ---
           { path: "/teacher/my-classes", element: <TeacherMyClassesPage /> },
           { path: "/teacher/take-attendance", element: <TeacherTakeAttendancePage /> },

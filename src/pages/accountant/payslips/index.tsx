@@ -1,14 +1,14 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import PageHeader from "@/components/common/page-header";
 import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
 import Badge from "@/components/ui/badge";
-import GenericTable, { type T_TableHead } from "@/components/generic-table";
+import GenericTable from "@/components/generic-table";
 import Button from "@/components/ui/button";
 import Input from "@/components/ui/input";
-import { toast } from "sonner";
 import QUERY_KEYS from "@/lib/query-keys";
+import { markPaid } from "@/pages/accountant/payroll/wizard/service/service";
 
 const LIMIT = 20;
 
@@ -16,11 +16,20 @@ export default function AccountantPayslipsPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [payrollId, setPayrollId] = useState("");
-  const qc = useQueryClient();
 
-  const query = useQuery({
+  const query = useQuery<{ data: { data: T_PAYSLEFT[]; pagination: { page: number; limit: number; total: number } } }>({
     queryKey: [QUERY_KEYS.ACCOUNTANT_PAYSLIPS, search, page],
-    queryFn: () => ({ payslipsUrl: "/accountant/payslips" }),
+    queryFn: async () => {
+      try {
+        const res = await fetch("/accountant/payroll/pending", {
+          headers: { "Authorization": `Bearer ${localStorage.getItem("auth")}` },
+        });
+        const data = await res.json();
+        return data as { data: { data: T_PAYSLEFT[]; pagination: { page: number; limit: number; total: number } } };
+      } catch {
+        return { data: { data: [], pagination: { page: 1, limit: LIMIT, total: 0 } } };
+      }
+    },
   });
 
   if (query.isLoading) return <ScreenLoader />;
@@ -28,19 +37,9 @@ export default function AccountantPayslipsPage() {
 
   const rows: T_PAYSLEFT[] = query.data?.data?.data ?? [];
 
-  // Mark payroll as paid
   const markPaidMut = useMutation({
-    mutationFn: async ({ payrollId }) => markPaid(payrollId),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: [QUERY_KEYS.ACCOUNTANT_PAYSLIPS] }); toast.success("Payroll marked as paid"); },
+    mutationFn: async ({ payrollId }: { payrollId: string }) => markPaid(payrollId),
   });
-
-  const head: T_TableHead<T_PAYSLEFT>[] = [
-    { key: "employeeName", headName: "Employee", minWidth: 200 },
-    { key: "month", headName: "Month", minWidth: 160 },
-    { key: "grossPay", headName: "Gross Pay", minWidth: 140 },
-    { key: "netPay", headName: "Net Pay", minWidth: 140 },
-    { key: "status", headName: "Status", minWidth: 140, render: (p) => <Badge variant={p.status === "PAID" ? "success" : p.status === "PENDING" ? "warning" : "outline"}>{p.status}</Badge> },
-  ];
 
   return (
     <div className="p-5">
@@ -54,12 +53,17 @@ export default function AccountantPayslipsPage() {
       </div>
 
       <GenericTable
-        tableHeads={head}
+        tableHeads={[
+          { key: "employeeName", headName: "Employee", minWidth: 200 },
+          { key: "month", headName: "Month", minWidth: 160 },
+          { key: "grossPay", headName: "Gross Pay", minWidth: 140 },
+          { key: "netPay", headName: "Net Pay", minWidth: 140 },
+          { key: "status", headName: "Status", minWidth: 140, render: (p) => <Badge variant={p.status === "PAID" ? "success" : p.status === "PENDING" ? "warning" : "outline"}>{p.status}</Badge> },
+        ]}
         data={rows}
         emptyTitle="No payslips."
         pagination={{ page, limit: LIMIT, total: 0, onPageChange: setPage }}
         searchPlaceholder="Search payslips..."
-        renderRow={(p) => ({ employeeName: p.employeeName, month: p.month, grossPay: `₹${p.grossPay}`, netPay: `₹${p.netPay}`, status: p.status } as Record<string, React.ReactNode>)}
       />
 
       {payrollId && (
@@ -85,11 +89,3 @@ type T_PAYSLEFT = {
   netPay: number;
   status: "DRAFT" | "PENDING" | "APPROVED" | "PAID";
 };
-
-async function markPaid(payrollId: string): Promise<{ message: string }> {
-  await fetch(`/accountant/payroll/${payrollId}/mark-paid`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${localStorage.getItem("auth")}` },
-    body: JSON.stringify({ paymentMethod: "", paidDate: "" }),
-  });
-}

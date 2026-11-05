@@ -8,7 +8,9 @@ import Button from "@/components/ui/button";
 import Badge from "@/components/ui/badge";
 import GenericTable, { type T_TableHead } from "@/components/generic-table";
 import ConfirmDeleteDialog from "@/components/dialog/delete-dialog";
+import { mapFieldsOnError } from "@/lib/utils";
 import { QUERY_KEYS } from "@/lib/query-keys";
+import type { T_UseQueryError } from "@/types/common";
 import type { ReactNode } from "react";
 
 import { listEmployees, createEmployee, updateEmployee, deleteEmployee } from "./service/service";
@@ -131,7 +133,10 @@ function EmployeeFormDialog({ mode, employeeId, onClose }: { mode: "create" | "e
     onSuccess: () => {
       useAuth2().logout();
     },
-    onError: () => {},
+    onError: (error: AxiosError<T_UseQueryError>) => {
+      mapFieldsOnError(error, form.setError);
+      return toast.error(error.response?.data.message);
+    }
     onSettled: () => {},
   });
 

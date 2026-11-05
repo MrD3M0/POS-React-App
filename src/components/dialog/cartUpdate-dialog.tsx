@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import type {
   T_BillingItem,
   T_ShowBillingItem,
-} from "@/pages/billing/types/types";
+} from "@/components/dialog/cartUpdate-dialog-types";
 import { toast } from "sonner";
 
 type T_cartUpdateDialogProps = {

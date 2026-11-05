@@ -24,7 +24,10 @@ export default function BatchFormDialog({ mode, onClose, initial, batchId }: Bat
       if (batchId) return updateBatch(batchId, form);
     },
     onSuccess: () => { toast.success("Saved"); onClose(); },
-    onError: () => {},
+    onError: (error: AxiosError<T_UseQueryError>) => {
+      mapFieldsOnError(error, form.setError);
+      return toast.error(error.response?.data.message);
+    },
   });
 
   const handleSubmit = () => mutation.mutate();

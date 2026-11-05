@@ -1,6 +1,5 @@
 import axiosInstance from "@/lib/axios-request";
 import { UrlConstants } from "@/constants/endpoints";
-import type { T_EMPLOYEE } from "../users/service/service";
 
 export type T_STUDENT_STATUS = "ACTIVE" | "GRADUATED" | "DROPPED" | "SUSPENDED";
 export type T_STUDENT_APPROVAL = "PENDING" | "APPROVED" | "REJECTED";
@@ -59,4 +58,9 @@ export async function changeStudentStatus(
 }
 
 // Backwards-compat: keep an alias that matches the existing Employee service signature shape.
-export type T_EmployeeView = T_EMPLOYEE;
+export type T_EmployeeView = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+};
