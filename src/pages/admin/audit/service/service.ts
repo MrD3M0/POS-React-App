@@ -12,6 +12,6 @@ export type T_AUDIT_LOG = {
 };
 
 export async function listAuditLogs(params: { page: number; limit: number; search?: string }) {
-  const res = await axiosInstance.get(`${UrlConstants.AUDIT_LOG_URL}`, { params });
-  return res.data as never;
+  const res = await axiosInstance.get(`${UrlConstants.ADMIN_AUDIT_LOG_URL}`, { params });
+  return res.data;
 }

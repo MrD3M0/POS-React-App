@@ -6,7 +6,7 @@ import Badge from "@/components/ui/badge";
 import GenericTable from "@/components/generic-table";
 import Button from "@/components/ui/button";
 import Input from "@/components/ui/input";
-import QUERY_KEYS from "@/lib/query-keys";
+import { QUERY_KEYS } from "@/lib/query-keys";
 import { listPayments } from "./service/service";
 import SplitPaymentDialog from "./dialog/split-payment-dialog";
 import { useState } from "react";

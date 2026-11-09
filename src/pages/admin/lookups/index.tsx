@@ -1,30 +1,38 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import PageHeader from "@/components/common/page-header";
 import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
-import Input from "@/components/ui/input";
 import Button from "@/components/ui/button";
 import Badge from "@/components/ui/badge";
 import GenericTable, { type T_TableHead } from "@/components/generic-table";
-import QUERY_KEYS from "@/lib/query-keys";
-import type { ReactNode } from "react";
-
-import { listLookups, createLookup, updateLookup, deleteLookup } from "./service/service";
-import LookupFormDialog from "./dialog/lookup-form";
+import ConfirmDeleteDialog from "@/components/dialog/confirm-delete";
+import { QUERY_KEYS } from "@/lib/query-keys";
+import { listLookups, deleteLookup, type T_LOOKUP } from "./service/service";
 
 const LIMIT = 10;
-const SECTIONS = ["Leave Types", "Exam Types", "Grade Scales", "Fee Heads", "Payment Methods", "Salary Components", "Chart Accounts"];
+const SECTIONS = [
+  { label: "Leave Types", type: "leaveType", queryKey: QUERY_KEYS.ADMIN_LOOKUP_LEAVE },
+  { label: "Periods", type: "period", queryKey: QUERY_KEYS.ADMIN_LOOKUP_PERIOD },
+  { label: "Exam Types", type: "examType", queryKey: QUERY_KEYS.ADMIN_LOOKUP_EXAM },
+  { label: "Grade Scales", type: "gradeScale", queryKey: QUERY_KEYS.ADMIN_LOOKUP_GRADE },
+  { label: "Fee Heads", type: "feeHead", queryKey: QUERY_KEYS.ADMIN_LOOKUP_FEEHEAD },
+  { label: "Payment Methods", type: "paymentMethod", queryKey: QUERY_KEYS.ADMIN_LOOKUP_METHOD },
+  { label: "Salary Components", type: "salaryComponent", queryKey: QUERY_KEYS.ADMIN_LOOKUP_COMPONENT },
+  { label: "Chart Accounts", type: "chartAccount", queryKey: QUERY_KEYS.ADMIN_LOOKUP_ACCOUNT },
+] as const;
 
 export default function AdminLookupsPage() {
-  const [tab, setTab] = useState<number>(0);
+  const [tab, setTab] = useState(0);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  const [createOpen, setCreateOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const active = SECTIONS[tab] ?? SECTIONS[0];
 
   const query = useQuery({
-    queryKey: [QUERY_KEYS.ADMIN_LOOKUP_LEAVE, search, page],
-    queryFn: () => listLookups({ type: "leaveType", page, limit: LIMIT, search }),
+    queryKey: [active.queryKey, active.type, search, page],
+    queryFn: () => listLookups({ type: active.type, page, limit: LIMIT, search }),
   });
 
   if (query.isLoading) return <ScreenLoader />;
@@ -32,12 +40,26 @@ export default function AdminLookupsPage() {
 
   const rows: T_LOOKUP[] = query.data?.data?.data ?? [];
   const total = query.data?.data?.pagination?.total ?? 0;
-  const totalPages = Math.max(1, Math.ceil(total / LIMIT));
 
   const head: T_TableHead<T_LOOKUP>[] = [
-    { key: "code", headName: "Code", minWidth: 160 },
-    { key: "name", headName: "Name", minWidth: 240 },
-    { key: "active", headName: "Status", minWidth: 100, render: (l) => <Badge variant={l.active ? "default" : "destructive"}>{l.active ? "Active" : "Inactive"}</Badge> },
+    {
+      key: "code",
+      headName: active.type === "period" ? "Period #" : active.type === "gradeScale" ? "Grade" : "Code",
+      render: (l) => l.code ?? (l.periodNumber ? `#${l.periodNumber}` : l.grade ?? "—"),
+    },
+    { key: "name", headName: "Name", render: (l) => l.name ?? (l.grade ? `Grade ${l.grade}` : "—") },
+    {
+      key: "isActive",
+      headName: "Status",
+      render: (l) => {
+        const activeVal = l.isActive ?? l.active ?? true;
+        return (
+          <Badge variant={activeVal ? "default" : "destructive"}>
+            {activeVal ? "Active" : "Inactive"}
+          </Badge>
+        );
+      },
+    },
   ];
 
   return (
@@ -45,39 +67,54 @@ export default function AdminLookupsPage() {
       <PageHeader
         title="Lookups"
         breadCrumbItems={[{ title: "Admin", link: "/admin" }, { title: "Lookups", link: "/admin/lookups" }]}
+        actions={
+          <Link to={`/admin/lookups/create?type=${active.type}`}>
+            <Button variant="primary" size="sm">
+              New {active.label.replace(/s$/, "")}
+            </Button>
+          </Link>
+        }
       />
       <div className="flex flex-wrap gap-2 mb-4">
         {SECTIONS.map((s, i) => (
-          <button key={s} onClick={() => setTab(i)} className={`rounded px-3 py-1 text-sm font-medium ${tab === i ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground hover:bg-secondary/80"}`}>
-            {s}
+          <button
+            key={s.type}
+            onClick={() => {
+              setTab(i);
+              setPage(1);
+              setSearch("");
+            }}
+            className={`rounded px-3 py-1 text-sm font-medium ${
+              tab === i ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+            }`}
+          >
+            {s.label}
           </button>
         ))}
-      </div>
-      <div className="flex flex-wrap gap-3 w-full max-w-4xl mb-4">
-        <Input placeholder="Search lookups..." onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
-        <Button variant="outline" size="sm" onClick={() => setCreateOpen(true)}>New Lookup</Button>
       </div>
 
       <GenericTable
         tableHeads={head}
         data={rows}
-        onSearch={setSearch}
-        emptyTitle="No lookups found."
+        onDelete={(l) => setDeleteId(l.id)}
+        onSearch={(value) => {
+          setSearch(value);
+          setPage(1);
+        }}
+        emptyTitle={`No ${active.label.toLowerCase()} found.`}
         pagination={{ page, limit: LIMIT, total, onPageChange: setPage }}
-        searchPlaceholder="Search lookups..."
+        searchPlaceholder={`Search ${active.label.toLowerCase()}...`}
       />
 
-      {createOpen && <LookupFormDialog type="leaveType" onClose={() => setCreateOpen(false)} />}
+      {deleteId && (
+        <ConfirmDeleteDialog
+          open
+          onOpenChange={(o) => !o && setDeleteId(null)}
+          itemId={deleteId}
+          itemName={active.label.replace(/s$/, "")}
+          onDelete={(id) => deleteLookup(active.type, id)}
+        />
+      )}
     </div>
   );
 }
-
-type T_LOOKUP = {
-  id: string;
-  code: string;
-  name: string;
-  active?: boolean;
-};
-
-import { createLookup as crLookup, updateLookup as updLookup, deleteLookup as delLookup } from "./service/service";
-void crLookup; void updLookup; void delLookup;

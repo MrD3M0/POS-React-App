@@ -37,6 +37,7 @@ export const QUERY_KEYS = {
   ADMIN_SETTING_ALL: "admin-settings",
   ADMIN_SETTING_GET: "admin-setting",
   ADMIN_NOTICE_LIST: "admin-notices",
+  ADMIN_NOTICE_GET: "admin-notice-get",
   ADMIN_AUDIT_LOG: "admin-audit-log",
   // Principal
   PRINCIPAL_ATTENDANCE: "principal-attendance",
@@ -52,13 +53,32 @@ export const QUERY_KEYS = {
   ACCOUNTANT_LEDGERS: "accountant-ledgers",
   ACCOUNTANT_PAYROLL: "accountant-payroll",
   ACCOUNTANT_PAYSLIPS: "accountant-payslips",
-  // Teacher
+  // Teacher (legacy/current routes)
   TEACHER_MY_CLASSES: "teacher-my-classes",
   TEACHER_ATTENDANCE: "teacher-attendance",
   TEACHER_EXAMS: "teacher-exams",
   TEACHER_MARKS: "teacher-marks",
   TEACHER_RESULTS: "teacher-results",
   TEACHER_STUDENTS: "teacher-students",
+  TEACHER_EXAM_SUBJECTS: "teacher-exam-subjects",
+  TEACHER_ATTENDANCE_SESSIONS: "teacher-attendance-sessions",
+  TEACHER_BATCH_PAY: "teacher-batch-pay-page",
+  TEACHER_RESULT_DETAIL: "teacher-result-detail",
+  TEACHER_NOTICES: "teacher-notices",
+  // Teacher (spec-aligned additions; add as pages are implemented/migrated)
+  TEACHER_DASHBOARD: "teacher-dashboard",
+  TEACHER_PROFILE: "teacher-profile",
+  TEACHER_ASSIGNMENTS: "teacher-assignments",
+  TEACHER_STUDENT_DETAIL: "teacher-student-detail",
+  TEACHER_ATTENDANCE_SHEET: "teacher-attendance-sheet",
+  TEACHER_ATTENDANCE_HISTORY: "teacher-attendance-history",
+  TEACHER_ATTENDANCE_LOW: "teacher-attendance-low",
+  TEACHER_MARKS_ANALYSIS: "teacher-marks-analysis",
+  TEACHER_NOTICE_DETAIL: "teacher-notice-detail",
+  TEACHER_PAYSLIPS: "teacher-payslips",
+  TEACHER_PAYSLIP_DETAIL: "teacher-payslip-detail",
+  TEACHER_SALARY_HISTORY: "teacher-salary-history",
+  TEACHER_MY_ATTENDANCE: "teacher-my-attendance",
   // Staff
   STAFF_PROFILE: "staff-profile",
   STAFF_PAYSLOPS: "staff-payslips",
@@ -86,6 +106,12 @@ export const QUERY_KEYS = {
   ACCOUNTANT_STUDENT_FEE_LIST: "accountant-student-fees",
   ACCOUNTANT_FEE_PAYMENT_LIST: "accountant-fee-payments",
   ACCOUNTANT_JOURNAL_LINE_LIST: "accountant-journal-lines",
+  ACCOUNTANT_LIST: "accountant-list",
+  ACCOUNTANT: "accountant",
+  ACCOUNTANT_BILLING: "accountant-billing",
+  ACCOUNTANT_BILLING_INSTALLMENTS: "accountant-billing-installments",
+  ACCOUNTANT_BILLING_PAYMENTS: "accountant-billing-payments",
+  ACCOUNTANT_BILLING_RECEIPT: "accountant-billing-receipt",
 } as const;
 
 export default QUERY_KEYS;

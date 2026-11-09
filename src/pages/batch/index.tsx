@@ -10,7 +10,7 @@ import AlertHandler from "@/components/common/alert-handler";
 import PaginationControls from "@/components/common/PaginationControls";
 import ConfirmDeleteDialog from "@/components/dialog/delete-dialog";
 import Button from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import Input from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,

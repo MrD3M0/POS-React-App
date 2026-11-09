@@ -1,7 +1,7 @@
-import type { T_Sales } from "../schema/schema";
+import type { T_Sales, T_BestProductSellers, T_ProductAlert } from "../schema/schema";
 import axiosInstance from "@/lib/axios-request";
 import { UrlConstants } from "@/constants/endpoints";
-import type { T_AxiosResponseWithoutPagination } from "@/types/common";
+import type { T_AxiosResponseWithoutPagination, T_AxiosResponseWithPagination } from "@/types/common";
 
 export const getLifeTimeSales = async () => {
   // Fetch all fee payments and summarize
@@ -11,7 +11,8 @@ export const getLifeTimeSales = async () => {
   const payments = response.data.data ?? [];
   const totalBills = payments.length;
   const totalSales = payments.reduce(
-    (sum, payment) => sum + (payment.allocations?.reduce((a, c) => a + c.amount, 0) ?? 0),
+    (sum: number, payment: { allocations?: { amount: number }[] }) =>
+      sum + (payment.allocations?.reduce((a: number, c: { amount: number }) => a + c.amount, 0) ?? 0),
     0,
   );
   return {
@@ -35,6 +36,6 @@ export const getBestSellers = async (args: { limit: number; page: number }) => {
 
 export const getStockALert = async () => {
   const response: T_AxiosResponseWithoutPagination<T_ProductAlert[]> =
-    await axiosInstance.get(`${UrlConstants.STUDENT_FEES_URL}/low-stock`);
+    await axiosInstance.get(`${UrlConstants.STUDENT_FEE_URL}/low-stock`);
   return response.data;
 };

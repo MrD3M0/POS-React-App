@@ -1,66 +1,79 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import PageHeader from "@/components/common/page-header";
 import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
-import Badge from "@/components/ui/badge";
 import GenericTable, { type T_TableHead } from "@/components/generic-table";
 import Button from "@/components/ui/button";
-import Input from "@/components/ui/input";
-import QUERY_KEYS from "@/lib/query-keys";
+import { QUERY_KEYS } from "@/lib/query-keys";
+import { listExams, type T_EXAM } from "./service/service";
 
 const LIMIT = 20;
 
+function toRows(raw: unknown): { rows: T_EXAM[]; total: number } {
+  const r = raw as { data?: T_EXAM[] | { data?: T_EXAM[]; pagination?: { total?: number } } };
+  const rows: T_EXAM[] = Array.isArray(r?.data) ? r.data : Array.isArray(r?.data?.data) ? r.data.data : [];
+  const total: number = Number(!Array.isArray(r?.data) ? r?.data?.pagination?.total : undefined) || rows.length;
+  return { rows, total };
+}
+
 export default function TeacherExamsPage() {
-  const [mode, setMode] = useState<"list" | "create">("list");
-  const [examName, setExamName] = useState("");
-  const qc = useQueryClient();
+  const navigate = useNavigate();
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
 
   const query = useQuery({
-    queryKey: [QUERY_KEYS.TEACHER_EXAMS],
-    queryFn: () => ({ examsUrl: "/teacher/exams" }),
+    queryKey: [QUERY_KEYS.TEACHER_EXAMS, page, search],
+    queryFn: () => listExams({ page, limit: LIMIT, search }),
   });
 
   if (query.isLoading) return <ScreenLoader />;
   if (query.isError) return <AlertHandler variant="error" />;
+
+  const { rows, total } = toRows(query.data);
+
+  const head: T_TableHead<T_EXAM>[] = [
+    { key: "name", headName: "Exam Name", minWidth: 240, render: (r) => String(r.name ?? (r as Record<string, unknown>).examName ?? "—") },
+    {
+      key: "examType",
+      headName: "Exam Type",
+      minWidth: 160,
+      render: (r) => String(r.examType?.name ?? "—"),
+    },
+    {
+      key: "batchTerm",
+      headName: "Batch Term",
+      minWidth: 200,
+      render: (r) => {
+        const t = r.batchTerm;
+        if (!t) return "—";
+        return [t.name, t.termNumber != null ? `Term ${t.termNumber}` : null].filter(Boolean).join(" — ") || "—";
+      },
+    },
+    { key: "startDateBs", headName: "Start (BS)", minWidth: 130, render: (r) => String(r.startDateBs ?? "—") },
+    { key: "endDateBs", headName: "End (BS)", minWidth: 130, render: (r) => String(r.endDateBs ?? "—") },
+  ];
 
   return (
     <div className="p-5">
       <PageHeader
         title="Exams"
         breadCrumbItems={[{ title: "Teacher", link: "/teacher" }, { title: "Exams", link: "/teacher/exams" }]}
+        createPage="/teacher/exams/create"
+        createPageTitle="Create Exam"
       />
-      <div className="flex justify-between mb-4">
-        <div className="flex gap-2">
-          <button onClick={() => setMode("list")} className={`rounded px-3 py-1 text-sm font-medium ${mode === "list" ? "bg-primary text-primary-foreground" : "bg-secondary"}`}>List</button>
-          <button onClick={() => setMode("create")} className={`rounded px-3 py-1 text-sm font-medium ${mode === "create" ? "bg-primary text-primary-foreground" : "bg-secondary"}`}>Create Exam</button>
-        </div>
-      </div>
-
-      {mode === "list" && (
-        <GenericTable
-          tableHeads={[
-            { key: "examName", headName: "Exam Name", minWidth: 240 },
-            { key: "termNumber", headName: "Term", minWidth: 100 },
-            { key: "subjectCode", headName: "Subject Code", minWidth: 180 },
-            { key: "createdAt", headName: "Created At", minWidth: 180 },
-          ]}
-          data={[]}
-          emptyTitle="No exams yet."
-          pagination={{ page: 1, limit: LIMIT, total: 0, onPageChange: () => {} }}
-        />
-      )}
-
-      {mode === "create" && (
-        <div className="space-y-4 max-w-xl">
-          <div className="flex flex-wrap gap-3 w-full mb-2">
-            <Input placeholder="Exam name..." value={examName} onChange={(e) => setExamName(e.target.value)} />
-          </div>
-          <Button variant="primary" size="sm" disabled={!examName} onClick={async () => { await fetch(`/teacher/exams`, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${localStorage.getItem("auth")}` }, body: JSON.stringify({ name: examName }) }); setMode("list"); qc.invalidateQueries({ queryKey: ["exams"] }); toast.success("Exam created"); }}>
-            Create
-          </Button>
-        </div>
-      )}
+      <GenericTable
+        tableHeads={head}
+        data={rows}
+        onSearch={(v) => { setSearch(v); setPage(1); }}
+        searchPlaceholder="Search exams..."
+        emptyTitle="No exams yet."
+        pagination={{ page, limit: LIMIT, total, onPageChange: setPage }}
+        renderActions={(r) => (
+          <Button variant="outline" size="sm" onClick={() => navigate(`/teacher/exams/edit/${r.id}`)}>Edit</Button>
+        )}
+      />
     </div>
   );
 }

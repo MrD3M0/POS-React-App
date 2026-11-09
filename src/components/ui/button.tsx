@@ -412,10 +412,16 @@ export function Button({
       {...(selected && { "data-state": "open" })}
       {...props}
       disabled={loading || props.disabled}
-      type={asChild ? undefined : "button"}
+      type={asChild ? undefined : (props.type ?? "button")}
     >
-      {loading && <Loader2 className="animate-spin" />}
-      {props.children}
+      {asChild ? (
+        props.children
+      ) : (
+        <>
+          {loading && <Loader2 className="animate-spin" />}
+          {props.children}
+        </>
+      )}
     </Comp>
   );
 }

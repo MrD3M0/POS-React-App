@@ -2,7 +2,11 @@ import axiosInstance from "@/lib/axios-request";
 import { UrlConstants } from "@/constants/endpoints";
 import type { AuthModel, UserModel } from "@/lib/models";
 
-export const loginUser = async (email: string, password: string): Promise<AuthModel> => {
+export const loginUser = async (
+  email: string,
+  password: string,
+): Promise<AuthModel> => {
+  console.log(email, password);
   const response = await axiosInstance.post(UrlConstants.LOGIN_URL, {
     email,
     password,
@@ -10,7 +14,11 @@ export const loginUser = async (email: string, password: string): Promise<AuthMo
   return response.data;
 };
 
-export const registerUser = async (username: string, email: string, password: string): Promise<string> => {
+export const registerUser = async (
+  username: string,
+  email: string,
+  password: string,
+): Promise<string> => {
   const response = await axiosInstance.post(UrlConstants.REGISTER_URL, {
     username,
     email,
@@ -20,7 +28,7 @@ export const registerUser = async (username: string, email: string, password: st
 };
 
 export const logoutUser = async (): Promise<void> => {
-  await axiosInstance.post(UrlConstants.LOGOUT_URL);
+  await axiosInstance.get(UrlConstants.LOGOUT_URL);
 };
 
 export const getCurrentUser = async (): Promise<{ data: UserModel }> => {

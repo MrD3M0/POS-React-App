@@ -14,7 +14,7 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog"; // Assuming shadcn UI imports
-import { type T_Response, type T_UseQueryError } from "@/types/common";
+import { type T_UseQueryError } from "@/types/common";
 
 type GenericConfirmDeleteDialogProps = {
   open: boolean;
@@ -22,7 +22,7 @@ type GenericConfirmDeleteDialogProps = {
   /** The ID of the item to delete */
   itemId: string;
   /** The generic mutation function to execute */
-  onDelete: (id: string) => Promise<T_Response<any>>;
+  onDelete: (id: string) => Promise<any>;
   /** Array of TanStack Query keys to invalidate upon success */
   queryKeysToInvalidate?: QueryKey[];
   /** Optional custom title. Defaults to "Confirm Deletion" */

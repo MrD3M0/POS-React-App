@@ -13,30 +13,35 @@ import { getBatchById, updateBatch } from "./service/service";
 import PageHeader from "@/components/common/page-header";
 import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
 import Button  from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
+import Input from "@/components/ui/input";
+import { InputWithSwitch } from "@/components/input-with-switch";
+import SelectCommand from "@/components/select-command";
+import { listCourses } from "@/pages/admin/courses/service/service";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
-  FormDescription,
 } from "@/components/form";
 import { BsDatePicker } from "@/components/bs-datepicker";
 
 export default function EditBatchPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+
+  const coursesQuery = useQuery({
+    queryKey: [QUERY_KEYS.ADMIN_COURSE_LIST, "batch-edit", "unlimited"],
+    queryFn: () => listCourses({ page: 1, limit: 999 }),
+  });
+  const courses = (coursesQuery.data?.data?.data ?? coursesQuery.data?.data ?? []) as Array<{
+    id: string;
+    code?: string;
+    name?: string;
+  }>;
 
   const form = useForm({
     resolver: zodResolver(BatchSchema),
@@ -99,7 +104,7 @@ export default function EditBatchPage() {
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-2xl mx-auto">
+    <div className="p-6 space-y-6 w-full">
       <PageHeader
         title="Edit Batch"
         description="Update batch information and status."
@@ -111,12 +116,12 @@ export default function EditBatchPage() {
         ]}
       />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Batch Information</CardTitle>
-          <CardDescription>Modify the details below.</CardDescription>
-        </CardHeader>
-        <CardContent>
+      <div>
+        <div>
+          <div>Batch Information</div>
+          <div>Modify the details below.</div>
+        </div>
+        <div>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
@@ -128,6 +133,7 @@ export default function EditBatchPage() {
                     <FormControl>
                       <Input placeholder="e.g. 2081 Fall" {...field} />
                     </FormControl>
+                    <FormDescription>Display name for this batch/intake.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -138,13 +144,22 @@ export default function EditBatchPage() {
                 name="courseId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Course ID (UUID)</FormLabel>
+                    <FormLabel>Course</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="e.g. c1234567-89ab-cdef-0123-456789abcdef"
-                        {...field}
+                      <SelectCommand
+                        value={field.value}
+                        onChange={field.onChange}
+                        options={courses.map((c) => ({
+                          label: `${c.code ?? ""}${c.code ? " - " : ""}${c.name ?? c.id}`,
+                          value: c.id,
+                          searchValues: `${c.code ?? ""} ${c.name ?? ""}`,
+                        }))}
+                        placeholder={coursesQuery.isLoading ? "Loading courses..." : "Select course..."}
+                        searchPlaceholder="Search courses..."
+                        loading={coursesQuery.isLoading}
                       />
                     </FormControl>
+                    <FormDescription>Select course (ID reference, unlimited options).</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -188,6 +203,7 @@ export default function EditBatchPage() {
                         }
                       />
                     </FormControl>
+                    <FormDescription>Current term/semester number for this batch.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -197,19 +213,17 @@ export default function EditBatchPage() {
                 control={form.control}
                 name="isActive"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                  <FormItem>
+                    <FormLabel>Active Status</FormLabel>
                     <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
+                      <InputWithSwitch
+                        value={!!field.value}
+                        onChange={field.onChange}
+                        labels={{ on: "Active", off: "Inactive" }}
                       />
                     </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>Active Status</FormLabel>
-                      <FormDescription>
-                        Enable this batch for active operations.
-                      </FormDescription>
-                    </div>
+                    <FormDescription>Enable this batch for active operations.</FormDescription>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -234,8 +248,8 @@ export default function EditBatchPage() {
               </div>
             </form>
           </Form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

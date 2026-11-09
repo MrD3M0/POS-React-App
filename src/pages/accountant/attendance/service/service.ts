@@ -20,5 +20,5 @@ export async function listAttendance(params: { employeeId: string; date: string 
 
 export async function markAttendance(input: { employeeId: string; date: string; mark: "PRESENT" | "ABSENT" | "HALF DAY" | "LEAVE" }) {
   const res = await axiosInstance.post(`${UrlConstants.EMPLOYEE_ATTENDANCE_URL}`, input);
-  return res.data as never;
+  return res.data;
 }

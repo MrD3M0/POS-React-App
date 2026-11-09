@@ -6,42 +6,76 @@ import AlertHandler from "@/components/common/alert-handler";
 import Badge from "@/components/ui/badge";
 import GenericTable, { type T_TableHead } from "@/components/generic-table";
 import { toast } from "sonner";
-import QUERY_KEYS from "@/lib/query-keys";
+import { QUERY_KEYS } from "@/lib/query-keys";
+import { listPendingResults, approveResult, rejectResult, type T_PENDING_RESULT } from "./service/service";
 
 const LIMIT = 20;
 
+function getStudentName(r: T_PENDING_RESULT): string {
+  if (r.studentName) return r.studentName;
+  if (r.student) {
+    return [r.student.firstName, r.student.middleName, r.student.lastName].filter(Boolean).join(" ") || "—";
+  }
+  return "—";
+}
+
 export default function PrincipalPendingResultsPage() {
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
   const qc = useQueryClient();
 
   const query = useQuery({
-    queryKey: [QUERY_KEYS.PRINCIPAL_RESULTS_PENDING, page],
-    queryFn: () => fetch("/principal/results/pending").then((r) => r.json()),
+    queryKey: [QUERY_KEYS.PRINCIPAL_RESULTS_PENDING, page, search],
+    queryFn: () => listPendingResults({ page, limit: LIMIT, search }),
+  });
+
+  const approveMut = useMutation({
+    mutationFn: (resultId: string) => approveResult(resultId),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: [QUERY_KEYS.PRINCIPAL_RESULTS_PENDING] }); toast.success("Result approved"); },
+    onError: () => toast.error("Failed to approve result."),
+  });
+
+  const rejectMut = useMutation({
+    mutationFn: (resultId: string) => rejectResult(resultId),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: [QUERY_KEYS.PRINCIPAL_RESULTS_PENDING] }); toast.success("Result rejected"); },
+    onError: () => toast.error("Failed to reject result."),
   });
 
   if (query.isLoading) return <ScreenLoader />;
   if (query.isError) return <AlertHandler variant="error" />;
 
-  const rows: T_PENDING_RESULT[] = query.data?.data?.data ?? [];
-  const total = query.data?.data?.pagination?.total ?? 0;
-  const totalPages = Math.max(1, Math.ceil(total / LIMIT));
+  const rawRows: T_PENDING_RESULT[] = Array.isArray(query.data?.data?.data)
+    ? query.data.data.data
+    : Array.isArray(query.data?.data)
+      ? query.data.data
+      : [];
+  const total = query.data?.data?.pagination?.total ?? rawRows.length;
 
-  const approveMut = useMutation({
-    mutationFn: ({ resultId }) => approveResult(resultId),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: [QUERY_KEYS.PRINCIPAL_RESULTS_PENDING] }); toast.success("Result approved"); },
-  });
-
-  const rejectMut = useMutation({
-    mutationFn: ({ resultId, reason }) => rejectResult(resultId, reason),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: [QUERY_KEYS.PRINCIPAL_RESULTS_PENDING] }); toast.success("Result rejected"); },
-  });
+  const rows: T_PENDING_RESULT[] = rawRows.map((r) => ({
+    ...r,
+    examName: r.examName ?? r.exam?.name ?? "—",
+    batchName: r.batchName ?? r.batch?.name ?? "—",
+    studentName: getStudentName(r),
+    subjectName: r.subjectName ?? r.subject?.name ?? "—",
+  }));
 
   const head: T_TableHead<T_PENDING_RESULT>[] = [
     { key: "examName", headName: "Exam", minWidth: 220 },
     { key: "batchName", headName: "Batch", minWidth: 180 },
     { key: "studentName", headName: "Student", minWidth: 220 },
     { key: "subjectName", headName: "Subject", minWidth: 180 },
-    { key: "status", headName: "Status", minWidth: 160, render: (r) => <Badge variant={r.status === "APPROVED" ? "success" : "warning"}>{r.status}</Badge> },
+    { key: "status", headName: "Status", minWidth: 160, render: (r) => <Badge variant={r.status === "APPROVED" ? "success" : r.status === "REJECTED" ? "destructive" : "warning"}>{r.status}</Badge> },
+    {
+      key: "action",
+      headName: "Action",
+      minWidth: 190,
+      render: (r) => (
+        <div className="flex gap-2">
+          <button className="text-xs font-medium text-primary underline" onClick={() => approveMut.mutate(r.id)}>Approve</button>
+          <button className="text-xs font-medium text-destructive underline" disabled={rejectMut.isPending} onClick={() => rejectMut.mutate(r.id)}>Reject</button>
+        </div>
+      ),
+    },
   ];
 
   return (
@@ -53,26 +87,12 @@ export default function PrincipalPendingResultsPage() {
       <GenericTable
         tableHeads={head}
         data={rows}
+        onSearch={(value) => { setSearch(value); setPage(1); }}
+        searchPlaceholder="Search pending results..."
         pagination={{ page, limit: LIMIT, total, onPageChange: setPage }}
         emptyTitle="No pending results."
-        renderRow={(r) => ({ examName: r.examName, batchName: r.batchName, studentName: r.studentName, subjectName: r.subjectName, status: r.status } as Record<string, React.ReactNode>)}
+        renderRow={(r) => ({ examName: r.examName ?? "—", batchName: r.batchName ?? "—", studentName: r.studentName ?? getStudentName(r), subjectName: r.subjectName ?? "—", status: r.status } as Record<string, React.ReactNode>)}
       />
     </div>
   );
-}
-
-type T_PENDING_RESULT = {
-  id: string;
-  examName: string;
-  batchName: string;
-  studentName: string;
-  subjectName: string;
-  status: "PENDING";
-};
-
-async function approveResult(id: string) {
-  await fetch(`/principal/results/${id}/approve`, { method: "POST", headers: { "Content-Type": "application/json" } });
-}
-async function rejectResult(id: string, reason: string) {
-  await fetch(`/principal/results/${id}/reject`, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${localStorage.getItem("auth")}` } });
 }

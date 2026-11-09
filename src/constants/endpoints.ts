@@ -6,13 +6,13 @@ export const UrlConstants = {
   REFRESH_URL: "/auth/refresh",
   ME_URL: "/auth/me",
 
-  // ── Legacy POS demo routes (billing / products / categories) ───────────
+  // ── Legacy demo routes (billing / products / categories) ───────────────
   // Only used by the legacy demo pages; the backend does not expose these.
   CATEGORY_URL: "/category",
   PRODUCT_URL: "/product",
   BILLING_URL: "/bill",
 
-  // ── Backend: flat REST routes mounted in POS-Backend-Node/src/router.ts ─
+  // ── Backend: flat REST routes mounted in CollegeMS-Backend-Node/src/router.ts ─
   ACCOUNT_URL: "/account",
   ACCOUNTANT_URL: "/accountant",
   ATTENDANCE_SESSION_URL: "/attendance-session",
@@ -115,6 +115,9 @@ export const UrlConstants = {
   TEACHER_STUDENTS_URL: "/student",
   // OCR-free helper: exam subject list endpoint used by teacher pages
   TEACHER_EXAM_SUBJECTS_URL: "/exam-subject",
+  TEACHER_ATTENDANCE_SESSIONS_URL: "/attendance-session",
+  TEACHER_BATCH_PAY_LIST_URL: "/teacher-batch-pay",
+  TEACHER_NOTICES_URL: "/notice",
 
   // ── Staff page-area aliases ──────────────────────────────────────────────
   STAFF_PROFILE_URL: "/staff",

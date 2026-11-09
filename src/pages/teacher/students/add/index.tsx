@@ -1,127 +1,169 @@
-import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import Button  from "@/components/ui/button";
-import { BsDatePicker } from "@/components/bs-datepicker";
-import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { useMemo } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { AxiosError } from "axios";
+import type { T_UseQueryError } from "@/types/common";
+import PageHeader from "@/components/common/page-header";
+import Button from "@/components/ui/button";
+import Input from "@/components/ui/input";
+import { BsDatePicker } from "@/components/bs-datepicker";
+import SelectCommand from "@/components/select-command";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/form";
+import { QUERY_KEYS } from "@/lib/query-keys";
+import { mapFieldsOnError } from "@/lib/utils";
+import { getAllBatches, type T_Batch } from "@/pages/batch/service/service";
 import { createStudent } from "../service/service";
+import { createTeacherStudentSchema, type CreateTeacherStudentValues } from "./schema";
 
-interface AddStudentDialogProps {
-  mode: "create" | "edit";
-  onClose: () => void;
+function toOptional(value: string | undefined) {
+  const t = value?.trim();
+  return t ? t : undefined;
 }
 
-export default function AddStudentDialog({ mode, onClose }: AddStudentDialogProps) {
-  const [form, setForm] = useState({
-    firstName: "", lastName: "", universityRegNo: "", gender: "MALE",
-    dobBs: "", batchId: "", phone: "", email: "", permanentAddress: "", temporaryAddress: "",
-    guardianRelation: "FATHER", guardianName: "", guardianPhone: "", guardianEmail: "", guardianOccupation: "", guardianAddress: "",
-  });
+export default function AddStudentPage() {
+  const navigate = useNavigate();
   const qc = useQueryClient();
+  const form = useForm<CreateTeacherStudentValues>({
+    resolver: zodResolver(createTeacherStudentSchema),
+    defaultValues: {
+      firstName: "", middleName: "", lastName: "", universityRegNo: "", gender: "MALE",
+      dobBs: "", admissionDateBs: "", batchId: "", phone: "", email: "", permanentAddress: "", temporaryAddress: "",
+      guardianRelation: "FATHER", guardianName: "", guardianPhone: "", guardianEmail: "", guardianOccupation: "", guardianAddress: "",
+    },
+  });
+  const guardianRelation = form.watch("guardianRelation");
+
+  const batchQuery = useQuery({ queryKey: [QUERY_KEYS.ADMIN_BATCH_LIST, "teacher-options", "unlimited"], queryFn: () => getAllBatches({ page: 1, limit: 999 }) });
+  const batchOptions = useMemo(() => {
+    const raw = batchQuery.data as unknown as { data?: T_Batch[] | { data?: T_Batch[] } };
+    const rows: T_Batch[] = Array.isArray(raw?.data) ? raw.data : Array.isArray(raw?.data?.data) ? raw.data.data : [];
+    return rows.map((b) => ({ label: `${b.name}${b.course?.code ? ` (${b.course.code})` : ""}`.trim(), value: b.id, searchValues: `${b.name} ${b.course?.code ?? ""} ${b.course?.name ?? ""}` }));
+  }, [batchQuery.data]);
 
   const mutation = useMutation({
-    mutationFn: async () => createStudent(form),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["teacher-students"] }); toast.success("Student added — PENDING approval"); onClose(); },
+    mutationFn: async (values: CreateTeacherStudentValues) => createStudent({
+      firstName: values.firstName.trim(),
+      middleName: toOptional(values.middleName),
+      lastName: values.lastName.trim(),
+      universityRegNo: values.universityRegNo.trim(),
+      gender: values.gender,
+      dobBs: toOptional(values.dobBs),
+      admissionDateBs: values.admissionDateBs,
+      batchId: values.batchId,
+      phone: toOptional(values.phone),
+      email: toOptional(values.email),
+      permanentAddress: toOptional(values.permanentAddress),
+      temporaryAddress: toOptional(values.temporaryAddress),
+      guardian: {
+        relation: values.guardianRelation,
+        fullName: values.guardianName.trim(),
+        phone: toOptional(values.guardianPhone),
+        email: toOptional(values.guardianEmail),
+        occupation: toOptional(values.guardianOccupation),
+        address: toOptional(values.guardianAddress),
+      },
+    }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [QUERY_KEYS.TEACHER_STUDENTS] });
+      toast.success("Student added — pending approval.");
+      navigate("/teacher/students");
+    },
+    onError: (error: AxiosError<T_UseQueryError>) => {
+      mapFieldsOnError(error, form.setError);
+      toast.error(error.response?.data?.message ?? "Failed to add student.");
+    },
   });
 
   return (
-    <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-auto">
-        <DialogHeader>
-          <DialogTitle>{mode === "create" ? "Add Student (Pending)" : "Edit / Resubmit Student"}</DialogTitle>
-          <DialogDescription>While PENDING or REJECTED you can edit. The student does not appear in attendance, fees, exams or results until Admin approves.</DialogDescription>
-        </DialogHeader>
-        <div className="grid grid-cols-1 gap-3">
-          <Field label="First Name *">
-            <Input value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} />
-          </Field>
-          <Field label="Last Name *">
-            <Input value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} />
-          </Field>
-          <Field label="University Reg No *">
-            <Input value={form.universityRegNo} onChange={(e) => setForm({ ...form, universityRegNo: e.target.value })} />
-          </Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Gender">
-              <select value={form.gender} onChange={(e) => setForm({ ...form, gender: e.target.value })} className="rounded border px-3 py-1 text-sm">
-                <option value="MALE">Male</option><option value="FEMALE">Female</option><option value="OTHERS">Others</option>
-              </select>
-            </Field>
-            <Field label="DOB (BS)">
-              <BsDatePicker value={form.dobBs} onChange={(e) => setForm({ ...form, dobBs: e.target.value })} valueFormat="bs" lang="en" />
-            </Field>
+    <div className="space-y-4 p-5">
+      <PageHeader
+        title="Add Student"
+        description="While pending or rejected you can edit. The student is not available in attendance, fees, exams, or results until approved."
+        backPage="/teacher/students"
+        backPageTitle="Back to Students"
+        breadCrumbItems={[
+          { title: "Teacher", link: "/teacher/students" },
+          { title: "Students", link: "/teacher/students" },
+          { title: "Add" },
+        ]}
+      />
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit((values) => mutation.mutate(values))} className="space-y-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <FormField control={form.control} name="firstName" render={({ field }) => (
+              <FormItem><FormLabel>First Name</FormLabel><FormControl><Input {...field} /></FormControl><FormDescription>Student's given name.</FormDescription><FormMessage /></FormItem>
+            )} />
+            <FormField control={form.control} name="middleName" render={({ field }) => (
+              <FormItem><FormLabel isOptional>Middle Name</FormLabel><FormControl><Input {...field} value={field.value ?? ""} /></FormControl><FormDescription>Optional middle name.</FormDescription><FormMessage /></FormItem>
+            )} />
+            <FormField control={form.control} name="lastName" render={({ field }) => (
+              <FormItem><FormLabel>Last Name</FormLabel><FormControl><Input {...field} /></FormControl><FormDescription>Student's family name.</FormDescription><FormMessage /></FormItem>
+            )} />
+            <FormField control={form.control} name="universityRegNo" render={({ field }) => (
+              <FormItem><FormLabel>University Reg. No.</FormLabel><FormControl><Input {...field} /></FormControl><FormDescription>Official university registration number.</FormDescription><FormMessage /></FormItem>
+            )} />
+            <FormField control={form.control} name="gender" render={({ field }) => (
+              <FormItem><FormLabel>Gender</FormLabel><FormControl>
+                <SelectCommand value={field.value} onChange={field.onChange} options={[{ label: "Male", value: "MALE" }, { label: "Female", value: "FEMALE" }, { label: "Others", value: "OTHERS" }]} placeholder="Select gender" hideSearch />
+              </FormControl><FormDescription>Fixed gender options.</FormDescription><FormMessage /></FormItem>
+            )} />
+            <FormField control={form.control} name="batchId" render={({ field }) => (
+              <FormItem><FormLabel>Batch</FormLabel><FormControl>
+                <SelectCommand value={field.value} onChange={field.onChange} options={batchOptions} placeholder={batchQuery.isLoading ? "Loading batches..." : "Select batch"} searchPlaceholder="Search batches..." loading={batchQuery.isLoading} />
+              </FormControl><FormDescription>Select batch (ID reference, unlimited options).</FormDescription><FormMessage /></FormItem>
+            )} />
+            <FormField control={form.control} name="admissionDateBs" render={({ field }) => (
+              <FormItem><FormLabel>Admission Date (BS)</FormLabel><FormControl>
+                <BsDatePicker value={field.value} onChange={(v) => field.onChange(typeof v === "string" ? v : "")} valueFormat="bs" lang="en" placeholder="Select admission date" />
+              </FormControl><FormDescription>Admission date in Bikram Sambat.</FormDescription><FormMessage /></FormItem>
+            )} />
+            <FormField control={form.control} name="dobBs" render={({ field }) => (
+              <FormItem><FormLabel isOptional>Date of Birth (BS)</FormLabel><FormControl>
+                <BsDatePicker value={field.value ?? ""} onChange={(v) => field.onChange(typeof v === "string" ? v : "")} valueFormat="bs" lang="en" placeholder="Select DOB" />
+              </FormControl><FormDescription>Optional date of birth in BS.</FormDescription><FormMessage /></FormItem>
+            )} />
+            <FormField control={form.control} name="phone" render={({ field }) => (
+              <FormItem><FormLabel isOptional>Phone</FormLabel><FormControl><Input {...field} value={field.value ?? ""} /></FormControl><FormDescription>Optional contact number.</FormDescription><FormMessage /></FormItem>
+            )} />
+            <FormField control={form.control} name="email" render={({ field }) => (
+              <FormItem><FormLabel isOptional>Email</FormLabel><FormControl><Input type="email" {...field} value={field.value ?? ""} /></FormControl><FormDescription>Optional email address.</FormDescription><FormMessage /></FormItem>
+            )} />
+            <FormField control={form.control} name="permanentAddress" render={({ field }) => (
+              <FormItem><FormLabel isOptional>Permanent Address</FormLabel><FormControl><Input {...field} value={field.value ?? ""} /></FormControl><FormDescription>Optional permanent address.</FormDescription><FormMessage /></FormItem>
+            )} />
+            <FormField control={form.control} name="temporaryAddress" render={({ field }) => (
+              <FormItem><FormLabel isOptional>Temporary Address</FormLabel><FormControl><Input {...field} value={field.value ?? ""} /></FormControl><FormDescription>Optional temporary address.</FormDescription><FormMessage /></FormItem>
+            )} />
+            <FormField control={form.control} name="guardianRelation" render={({ field }) => (
+              <FormItem><FormLabel>Guardian Relation</FormLabel><FormControl>
+                <SelectCommand value={field.value} onChange={field.onChange} options={[{ label: "Father", value: "FATHER" }, { label: "Mother", value: "MOTHER" }, { label: "Guardian", value: "GUARDIAN" }, { label: "Other", value: "OTHER" }]} placeholder="Select relation" hideSearch />
+              </FormControl><FormDescription>Primary guardian relationship.</FormDescription><FormMessage /></FormItem>
+            )} />
+            <FormField control={form.control} name="guardianName" render={({ field }) => (
+              <FormItem><FormLabel>{guardianRelation} Name</FormLabel><FormControl><Input {...field} /></FormControl><FormDescription>Guardian's full name.</FormDescription><FormMessage /></FormItem>
+            )} />
+            <FormField control={form.control} name="guardianPhone" render={({ field }) => (
+              <FormItem><FormLabel isOptional>Guardian Phone</FormLabel><FormControl><Input {...field} value={field.value ?? ""} /></FormControl><FormDescription>Optional guardian contact.</FormDescription><FormMessage /></FormItem>
+            )} />
+            <FormField control={form.control} name="guardianEmail" render={({ field }) => (
+              <FormItem><FormLabel isOptional>Guardian Email</FormLabel><FormControl><Input type="email" {...field} value={field.value ?? ""} /></FormControl><FormDescription>Optional guardian email.</FormDescription><FormMessage /></FormItem>
+            )} />
+            <FormField control={form.control} name="guardianOccupation" render={({ field }) => (
+              <FormItem><FormLabel isOptional>Occupation</FormLabel><FormControl><Input {...field} value={field.value ?? ""} /></FormControl><FormDescription>Optional guardian occupation.</FormDescription><FormMessage /></FormItem>
+            )} />
+            <FormField control={form.control} name="guardianAddress" render={({ field }) => (
+              <FormItem><FormLabel isOptional>Guardian Address</FormLabel><FormControl><Input {...field} value={field.value ?? ""} /></FormControl><FormDescription>Optional guardian address.</FormDescription><FormMessage /></FormItem>
+            )} />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Batch ID">
-              <Input value={form.batchId} onChange={(e) => setForm({ ...form, batchId: e.target.value })} />
-            </Field>
-            <Field label="Phone">
-              <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
-            </Field>
+          <div className="flex justify-end gap-2 border-t pt-4">
+            <Button type="button" variant="outline" onClick={() => navigate("/teacher/students")} disabled={mutation.isPending}>Cancel</Button>
+            <Button type="submit" variant="primary" loading={mutation.isPending}>Add Student</Button>
           </div>
-          <Field label="Email">
-            <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-          </Field>
-          <Field label="Permanent Address">
-            <textarea value={form.permanentAddress} onChange={(e) => setForm({ ...form, permanentAddress: e.target.value })} rows={2} className="w-full rounded border px-3 py-2 text-sm" />
-          </Field>
-          <Field label="Temporary Address">
-            <textarea value={form.temporaryAddress} onChange={(e) => setForm({ ...form, temporaryAddress: e.target.value })} rows={2} className="w-full rounded border px-3 py-2 text-sm" />
-          </Field>
-
-          {/* Guardians */}
-          <GuardianRow label={`${form.guardianRelation} Name`}>
-            <Input value={form.guardianName} onChange={(e) => setForm({ ...form, guardianName: e.target.value })} />
-          </GuardianRow>
-          <GuardianRow label="Phone">
-            <Input value={form.guardianPhone} onChange={(e) => setForm({ ...form, guardianPhone: e.target.value })} />
-          </GuardianRow>
-          <GuardianRow label="Email">
-            <Input type="email" value={form.guardianEmail} onChange={(e) => setForm({ ...form, guardianEmail: e.target.value })} />
-          </GuardianRow>
-          <GuardianRow label="Occupation">
-            <Input value={form.guardianOccupation} onChange={(e) => setForm({ ...form, guardianOccupation: e.target.value })} />
-          </GuardianRow>
-          <GuardianRow label="Address">
-            <Input value={form.guardianAddress} onChange={(e) => setForm({ ...form, guardianAddress: e.target.value })} />
-          </GuardianRow>
-
-          {mode === "edit" && <RejectionReasons reason={form.rejectionReason ?? ""} onUpdate={(v) => setForm({ ...form, rejectionReason: v })} />}
-        </div>
-        <div className="flex justify-end gap-2 mt-4">
-          <Button variant="outline" size="sm" onClick={onClose}>Cancel</Button>
-          <Button variant="primary" size="sm" disabled={!form.firstName || !form.lastName || mutation.isPending}
-            onClick={async () => { await mutation.mutateAsync(); }}>
-            {mutation.isPending ? "Saving..." : mode === "create" ? "Add Student" : "Resubmit"}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="space-y-1.5">
-      <Label className="text-xs font-medium">{label}</Label>
-      {children}
+        </form>
+      </Form>
     </div>
   );
 }
-function GuardianRow({ label, children }: { label: string; children: React.ReactNode }) {
-  return <Field label={label}>{children}</Field>;
-}
-function RejectionReasons({ reason, onUpdate }: { reason: string; onUpdate: (v: string) => void }) {
-  return (
-    <div className="space-y-1.5">
-      <Label className="text-xs font-medium">Rejection Reason (required if REJECTED)</Label>
-      <textarea value={reason} onChange={(e) => onUpdate(e.target.value)} placeholder="Explain rejection... if any." rows={2} className="w-full rounded border px-3 py-2 text-sm" />
-    </div>
-  );
-}
-
-// --- Service ---
-import { createStudent as createStudentFn, updateStudent as updateStudentFn } from "../service/service";
-import { Input } from "@/components/ui/input";
-void createStudentFn; void updateStudentFn;

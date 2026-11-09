@@ -1,15 +1,18 @@
 import axiosInstance from "@/lib/axios-request";
-import { QUERY_KEYS } from "@/lib/query-keys";
 import { UrlConstants } from "@/constants/endpoints";
-import type { AxiosError, AxiosResponse } from "axios";
+
+export type T_EMPLOYEE_ROLE = "ADMIN" | "PRINCIPAL" | "ACCOUNTANT" | "TEACHER" | "STAFF";
 
 export type T_EMPLOYEE = {
   id: string;
+  userId?: string | null;
+  user?: { id?: string; email?: string | null; role?: T_EMPLOYEE_ROLE | null } | null;
   employeeCode: string;
   firstName: string;
   middleName?: string | null;
   lastName: string;
   gender: "MALE" | "FEMALE" | "OTHERS";
+  role?: T_EMPLOYEE_ROLE | null;
   dobBs?: string | null;
   phone?: string | null;
   email?: string | null;
@@ -35,20 +38,27 @@ export async function listEmployees(params: {
   search?: string;
 }): Promise<{ data: { data: T_EMPLOYEE[]; pagination: { total: number; limit: number; page: number } } }> {
   const res = await axiosInstance.get(`${UrlConstants.ADMIN_EMPLOYEE_URL}`, { params });
-  return res.data as never;
+  return res.data;
 }
 
-export async function createEmployee(payload: Partial<T_EMPLOYEE>): Promise<{ message: string }> {
+export async function createEmployee(
+  payload: Partial<T_EMPLOYEE> & { password?: string },
+): Promise<{ message: string }> {
   const res = await axiosInstance.post(`${UrlConstants.ADMIN_EMPLOYEE_URL}`, payload);
-  return res.data as never;
+  return res.data;
 }
 
 export async function updateEmployee(id: string, payload: Partial<T_EMPLOYEE>): Promise<{ message: string }> {
   const res = await axiosInstance.put(`${UrlConstants.ADMIN_EMPLOYEE_URL}/${id}`, payload);
-  return res.data as never;
+  return res.data;
 }
 
 export async function deleteEmployee(id: string): Promise<{ message: string }> {
   const res = await axiosInstance.delete(`${UrlConstants.ADMIN_EMPLOYEE_URL}/${id}`);
-  return res.data as never;
+  return res.data;
+}
+
+export async function resetUserPassword(userId: string, password: string): Promise<{ message: string }> {
+  const res = await axiosInstance.patch(`${UrlConstants.USER_URL}/${userId}/password`, { password });
+  return res.data;
 }

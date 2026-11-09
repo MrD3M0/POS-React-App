@@ -1,38 +1,41 @@
 import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import PageHeader from "@/components/common/page-header";
 import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
-import Button from "@/components/ui/button";
 import Badge from "@/components/ui/badge";
 import GenericTable, { type T_TableHead } from "@/components/generic-table";
 import ConfirmDeleteDialog from "@/components/dialog/confirm-delete";
+import SelectCommand from "@/components/select-command";
 import { QUERY_KEYS } from "@/lib/query-keys";
 import type { ReactNode } from "react";
-
 import {
   listStudents,
-  updateStudentStatus,
-  approveStudent,
-  rejectStudent,
   deleteStudent,
+  type T_STUDENT,
+  type T_STUDENT_STATUS,
+  type T_STUDENT_APPROVAL,
 } from "./service/service";
-import type { T_STUDENT } from "./service/service";
 
 const LIMIT = 10;
 
 export default function AdminStudentsPage() {
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("");
+  const [approvalFilter, setApprovalFilter] = useState("");
   const [search, setSearch] = useState("");
-  const [editId, setEditId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const qc = useQueryClient();
 
   const listQuery = useQuery({
-    queryKey: [QUERY_KEYS.ADMIN_STUDENT_LIST, statusFilter, search, page],
+    queryKey: [QUERY_KEYS.ADMIN_STUDENT_LIST, statusFilter, approvalFilter, search, page],
     queryFn: () =>
-      listStudents({ page, limit: LIMIT, search, status: statusFilter ? { equals: statusFilter } : undefined }),
+      listStudents({
+        page,
+        limit: LIMIT,
+        search,
+        ...(statusFilter ? { status: statusFilter as T_STUDENT_STATUS } : {}),
+        ...(approvalFilter ? { approvalStatus: approvalFilter as T_STUDENT_APPROVAL } : {}),
+      }),
   });
 
   if (listQuery.isLoading) return <ScreenLoader />;
@@ -40,20 +43,56 @@ export default function AdminStudentsPage() {
 
   const rows: T_STUDENT[] = listQuery.data?.data?.data ?? [];
   const total = listQuery.data?.data?.pagination?.total ?? 0;
-  const totalPages = Math.max(1, Math.ceil(total / LIMIT));
 
   const tableHeads: T_TableHead<T_STUDENT>[] = [
-    { key: "studentCode", headName: "Code", minWidth: 100 },
-    { key: "firstName", headName: "First Name", minWidth: 150 },
-    { key: "middleName", headName: "Middle Name", minWidth: 120 },
-    { key: "lastName", headName: "Last Name", minWidth: 150 },
-    { key: "email", headName: "Email", minWidth: 200 },
-    { key: "phone", headName: "Phone", minWidth: 130 },
-    { key: "gender", headName: "Gender", minWidth: 80, render: (i) => <Badge>{i.gender}</Badge> },
-    { key: "universityRegNo", headName: "Reg No.", minWidth: 120 },
-    { key: "batchId", headName: "Batch", minWidth: 120 },
-    { key: "status", headName: "Status", minWidth: 100 },
-    { key: "actions", headName: "", render: () => <span className="text-xs uppercase text-muted-foreground">Actions</span> },
+    { key: "universityRegNo", headName: "Reg. No." },
+    {
+      key: "firstName",
+      headName: "Name",
+      render: (s) => [s.firstName, s.middleName, s.lastName].filter(Boolean).join(" ") || "—",
+    },
+    {
+      key: "batchId",
+      headName: "Batch",
+      render: (s) => (s.batch ? `${s.batch.name} (${s.batch.course?.code ?? ""})` : s.batchId ?? "—"),
+    },
+    { key: "phone", headName: "Phone" },
+    { key: "email", headName: "Email" },
+    { key: "gender", headName: "Gender", render: (i) => <Badge variant="outline">{i.gender}</Badge> },
+    {
+      key: "status",
+      headName: "Status",
+      render: (s) => (
+        <Badge
+          variant={
+            s.status === "ACTIVE"
+              ? "default"
+              : s.status === "GRADUATED"
+              ? "secondary"
+              : "destructive"
+          }
+        >
+          {s.status}
+        </Badge>
+      ),
+    },
+    {
+      key: "approvalStatus",
+      headName: "Approval",
+      render: (s) => (
+        <Badge
+          variant={
+            s.approvalStatus === "APPROVED"
+              ? "default"
+              : s.approvalStatus === "REJECTED"
+              ? "destructive"
+              : "outline"
+          }
+        >
+          {s.approvalStatus}
+        </Badge>
+      ),
+    },
   ];
 
   return (
@@ -61,37 +100,65 @@ export default function AdminStudentsPage() {
       <PageHeader
         title="Students"
         breadCrumbItems={[{ title: "Admin", link: "/admin" }, { title: "Students", link: "/admin/students" }]}
+        createPage="/admin/students/create"
+        createPageTitle="New Student"
+        actions={
+          <div className="flex min-w-[320px] flex-wrap gap-2">
+            <div className="min-w-[150px]">
+              <SelectCommand
+                value={statusFilter}
+                onChange={(v) => { setStatusFilter(v ?? ""); setPage(1); }}
+                options={[
+                  { label: "All Statuses", value: "" },
+                  { label: "Active", value: "ACTIVE" },
+                  { label: "Graduated", value: "GRADUATED" },
+                  { label: "Dropped", value: "DROPPED" },
+                  { label: "Suspended", value: "SUSPENDED" },
+                ]}
+                placeholder="All Statuses"
+                hideSearch
+              />
+            </div>
+            <div className="min-w-[150px]">
+              <SelectCommand
+                value={approvalFilter}
+                onChange={(v) => { setApprovalFilter(v ?? ""); setPage(1); }}
+                options={[
+                  { label: "All Approvals", value: "" },
+                  { label: "Pending", value: "PENDING" },
+                  { label: "Approved", value: "APPROVED" },
+                  { label: "Rejected", value: "REJECTED" },
+                ]}
+                placeholder="All Approvals"
+                hideSearch
+              />
+            </div>
+          </div>
+        }
       />
-      <div className="flex flex-wrap gap-3 w-full max-w-4xl mb-4">
-        <Input placeholder="Search..." onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
-        <Button variant="outline" size="sm" onClick={() => console.log("create", {})}>New Student</Button>
-        <select
-          className="border rounded px-2 py-1 text-sm bg-background"
-          value={statusFilter}
-          onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-        >
-          <option value="">All Status</option>
-          <option value="ACTIVE">Active</option>
-          <option value="GRADUATED">Graduated</option>
-          <option value="DROPPED">Dropped</option>
-          <option value="SUSPENDED">Suspended</option>
-          <option value="PENDING">Pending</option>
-        </select>
-      </div>
       <GenericTable
         tableHeads={tableHeads}
         data={rows}
-        onEdit={(s) => `/admin/students?id=${s.id}`}
+        onEdit={(s) => `/admin/students/edit/${s.id}`}
         onDelete={(s) => setDeleteId(s.id)}
-        onSearch={setSearch}
+        renderActions={(s) => (
+          <a href={`/admin/students/${s.id}/id-card`} className="px-2 text-xs font-medium text-primary underline">
+            ID Card
+          </a>
+        )}
+        onSearch={(value) => {
+          setSearch(value);
+          setPage(1);
+        }}
         emptyTitle="No students found."
-        renderRow={(s) => ({
-          firstName: `${s.firstName} ${s.lastName}`,
-          middleName: s.middleName ?? "—",
-          email: s.email ?? "—",
-          status: <Badge variant={s.status === "PENDING" ? "destructive" : "default"}>{s.status}</Badge>,
-        } as Record<string, ReactNode>)}
+        renderRow={(s) =>
+          ({
+            email: s.email ?? "—",
+            phone: s.phone ?? "—",
+          } as Record<string, ReactNode>)
+        }
         pagination={{ page, limit: LIMIT, total, onPageChange: setPage }}
+        searchPlaceholder="Search by name, reg no or email..."
       />
       {deleteId && (
         <ConfirmDeleteDialog
@@ -105,5 +172,3 @@ export default function AdminStudentsPage() {
     </div>
   );
 }
-
-import { Input } from "@/components/ui/input";

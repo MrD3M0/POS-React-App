@@ -20,10 +20,31 @@ export type T_FEE_STRUCTURE = {
 
 export async function listFeeStructures(params: { page: number; limit: number }) {
   const res = await axiosInstance.get(`${UrlConstants.ACCOUNTANT_FEES_STRUCTURE_URL}`, { params });
-  return res.data as never;
+  return res.data;
 }
 
 export async function createFeeStructure(input: { courseName: string; batchId?: string; termLabel: string; feeHeadCode: string; amount: number }): Promise<{ message: string }> {
   const res = await axiosInstance.post(`${UrlConstants.ACCOUNTANT_FEES_STRUCTURE_URL}`, input);
-  return res.data as never;
+  return res.data;
 }
+
+export async function assignFeeStructureToStudent(input: { studentId: string; feeStructureId: string }) {
+  const res = await axiosInstance.post(UrlConstants.STUDENT_FEE_URL, input);
+  return res.data;
+}
+
+export async function listFeeHeadOptions() {
+  const res = await axiosInstance.get(UrlConstants.ADMIN_LOOKUP_FEEHEAD_URL, { params: { page: 1, limit: 999 } });
+  return res.data as { data?: { data?: Array<{ id: string; code?: string; name?: string }> } };
+}
+
+export async function listBatchOptions() {
+  const res = await axiosInstance.get(UrlConstants.BATCH_URL, { params: { page: 1, limit: 999 } });
+  return res.data as { data?: { data?: Array<{ id: string; name?: string; batchYear?: number }> } };
+}
+
+export async function listStudentOptions() {
+  const res = await axiosInstance.get(UrlConstants.STUDENT_URL, { params: { page: 1, limit: 999 } });
+  return res.data as { data?: { data?: Array<{ id: string; universityRegNo?: string; firstName?: string; middleName?: string | null; lastName?: string }> } };
+}
+

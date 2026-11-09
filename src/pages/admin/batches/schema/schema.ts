@@ -1,27 +1,23 @@
 import { z } from "zod";
 
-export const COURSE_CREATE_SCHEMA = z.object({
-  code: z.string().min(2).max(20),
-  name: z.string().min(1),
-  system: z.enum(["SEMESTER", "YEARLY"]),
-  totalTerms: z.number().int().min(1).max(24),
-  description: z.string().optional(),
+export const batchSchema = z.object({
+  courseId: z.string().uuid("Please select a course"),
+  name: z.string().trim().min(1, "Batch name is required").max(100, "Batch name is too long"),
+  startDateBs: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD (BS) format")
+    .optional()
+    .or(z.literal("")),
+  currentTermNumber: z.number().int().min(1, "Term number must be at least 1").max(20, "Term number is too high"),
+  isActive: z.boolean(),
 });
 
-export const COURSE_UPDATE_SCHEMA = COURSE_CREATE_SCHEMA.partial();
+export type BatchFormValues = z.infer<typeof batchSchema>;
 
-export const BATCH_CREATE_SCHEMA = z.object({
-  courseId: z.string().uuid(),
-  name: z.string().min(2),
-  startDateBs: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-});
-
-export type T_COURSE = z.infer<typeof COURSE_CREATE_SCHEMA>;
-export type T_COURSE_UPDATE = z.infer<typeof COURSE_UPDATE_SCHEMA>;
-
-export const SUBJECT_CREATE_SCHEMA = z.object({
-  code: z.string().min(2),
-  name: z.string().min(1),
-  description: z.string().optional(),
-});
-export type T_SUBJECT = z.infer<typeof SUBJECT_CREATE_SCHEMA>;
+export const batchDefaultValues: BatchFormValues = {
+  courseId: "",
+  name: "",
+  startDateBs: "",
+  currentTermNumber: 1,
+  isActive: true,
+};

@@ -99,6 +99,10 @@ export const PERMISSION_MAP = {
   "staff:notices:read": ["STAFF"],
 
   // === Cross-role / system ===
+  "system:dashboard:read": ["ADMIN", "PRINCIPAL", "ACCOUNTANT", "TEACHER", "STAFF"],
+  "admin:lookups:read": ["ADMIN"],
+  "admin:settings:read": ["ADMIN"],
+  "admin:notices:read": ["ADMIN", "PRINCIPAL"],
   "system:notices:read": ["ADMIN", "PRINCIPAL", "ACCOUNTANT", "TEACHER", "STAFF"],
   "system:notices:create": ["ADMIN"],
   "system:fiscalYear:read": ["ADMIN"],
@@ -109,7 +113,7 @@ export type PermissionKey = keyof typeof PERMISSION_MAP;
 function hasPermission(role: T_Role | undefined, permission: PermissionKey): boolean {
   if (!role) return false;
   const allowed: readonly string[] = PERMISSION_MAP[permission];
-  return allowed.includes(role as never);
+  return allowed.includes(role);
 }
 
 export function useCan(permission: PermissionKey): boolean {

@@ -47,6 +47,8 @@ type Props<T extends Record<string, any>> = {
   onEdit?: (item: T) => string;
   /** Called when the delete icon is clicked. */
   onDelete?: (item: T) => void;
+  /** Render extra action controls for a row (shown alongside edit/delete). */
+  renderActions?: (item: T, index: number) => ReactNode;
   /** Pass `isLoading` from your useQuery to show skeleton rows. */
   isLoading?: boolean;
   /**
@@ -68,10 +70,14 @@ const isDateValue = (value: unknown): value is string =>
 
 /** Read `item[path]`, falling back to a dot-path walk ("category.name"). */
 const getValue = (item: Record<string, any>, path: string): unknown => {
-  if (path in item) return item[path];
-  return path
+  const direct = path in item ? item[path] : path
     .split(".")
     .reduce<any>((acc, part) => (acc == null ? undefined : acc[part]), item);
+
+  if (direct !== undefined && direct !== null && direct !== "") return direct;
+  if (path === "role") return item.user?.role ?? item.userRole ?? direct;
+  if (path === "email") return item.user?.email ?? item.userEmail ?? direct;
+  return direct;
 };
 
 const LABEL_KEYS = ["name", "title", "label"];
@@ -133,6 +139,7 @@ const GenericTable = <T extends Record<string, any>>({
   renderRow,
   onEdit,
   onDelete,
+  renderActions,
   isLoading = false,
   onSearch,
   searchPlaceholder = "Search…",
@@ -163,7 +170,7 @@ const GenericTable = <T extends Record<string, any>>({
     );
   }, [data, search, onSearch, tableHeads]);
 
-  const hasActions = !!onEdit || !!onDelete;
+  const hasActions = !!onEdit || !!onDelete || !!renderActions;
   const colCount = tableHeads.length + 1 + (hasActions ? 1 : 0);
 
   const startIndex = pagination ? (pagination.page - 1) * pagination.limit : 0;
@@ -203,7 +210,7 @@ const GenericTable = <T extends Record<string, any>>({
       </div>
 
       {/* Table card: always full size, with or without rows */}
-      <div className="flex min-h-80 flex-1 flex-col overflow-hidden rounded-lg border border-border">
+      <div className="flex !min-h-[25rem] flex-1 flex-col overflow-hidden rounded-lg border border-border">
         <div className="flex min-h-0 flex-1 flex-col overflow-auto">
           <div className="shrink-0 [&>div]:overflow-visible">
             <Table>
@@ -277,8 +284,9 @@ const GenericTable = <T extends Record<string, any>>({
                         })}
 
                         {hasActions && (
-                          <TableCell className="w-24 border-b text-right">
+                          <TableCell className="w-auto min-w-24 border-b text-right">
                             <div className="flex items-center justify-end gap-1">
+                              {renderActions?.(item, startIndex + index)}
                               {onEdit && (
                                 <Link
                                   to={onEdit(item)}

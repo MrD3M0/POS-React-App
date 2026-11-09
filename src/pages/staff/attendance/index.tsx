@@ -1,53 +1,80 @@
+import { useState, type ComponentProps } from "react";
 import { useQuery } from "@tanstack/react-query";
 import PageHeader from "@/components/common/page-header";
 import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
 import Badge from "@/components/ui/badge";
-import Input from "@/components/ui/input";
-import Button from "@/components/ui/button";
+import GenericTable, { type T_TableHead } from "@/components/generic-table";
+import { QUERY_KEYS } from "@/lib/query-keys";
+import { getOwnStaff } from "../profile/edit/service/service";
+import { listMyAttendance, type T_EMPLOYEE_ATTENDANCE } from "./service/service";
 
 const LIMIT = 30;
 
 export default function StaffAttendancePage() {
+  const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
 
+  const staffQuery = useQuery({
+    queryKey: [QUERY_KEYS.STAFF_PROFILE],
+    queryFn: getOwnStaff,
+  });
+  const staff = staffQuery.data?.data as Record<string, any> | undefined;
+  const employeeId = (staff?.employeeId ?? staff?.employee?.id) as string | undefined;
+
   const query = useQuery({
-    queryKey: [QUERY_KEYS.STAFF_ATTENDANCE, search],
-    queryFn: () => ({ attendanceUrl: "/staff/attendance" }),
+    queryKey: [QUERY_KEYS.STAFF_ATTENDANCE, employeeId, page, search],
+    queryFn: () => listMyAttendance({ page, limit: LIMIT, search, employeeId }),
+    // Wait for the profile lookup to settle so we can filter by employeeId
+    // when available; if it fails, fall back to listing all records.
+    enabled: staffQuery.isSuccess || staffQuery.isError,
   });
 
-  if (query.isLoading) return <ScreenLoader />;
+  if (staffQuery.isLoading || query.isLoading) return <ScreenLoader />;
   if (query.isError) return <AlertHandler variant="error" />;
 
-  const rows: T_ATTMARK[] = query.data?.data?.data ?? [];
+  const rows: T_EMPLOYEE_ATTENDANCE[] = Array.isArray(query.data?.data?.data)
+    ? query.data.data.data
+    : Array.isArray(query.data?.data)
+      ? query.data.data
+      : [];
+  const total = query.data?.data?.pagination?.total ?? rows.length;
+
+  const head: T_TableHead<T_EMPLOYEE_ATTENDANCE>[] = [
+    { key: "dateBs", headName: "Date (BS)", minWidth: 160 },
+    { key: "status", headName: "Status", minWidth: 140, render: (r) => <Badge variant={mapStatus(r.status)}>{r.status}</Badge> },
+    {
+      key: "leaveType",
+      headName: "Leave Type",
+      minWidth: 180,
+      render: (r) => r.leaveType?.name ?? r.leaveType?.code ?? "—",
+    },
+  ];
 
   return (
     <div className="p-5">
-      <PageHeader title="My Attendance" breadCrumbItems={[{ title: "Staff", link: "/staff" }, { title: "My Attendance", link: "/staff/attendance" }]} />
-      <div className="flex flex-wrap gap-3 w-full max-w-4xl mb-4">
-        <Input placeholder="Filter by date..." onChange={(e) => setSearch(e.target.value)} />
-      </div>
+      <PageHeader title="My Attendance" breadCrumbItems={[{ title: "Staff", link: "/staff/attendance" }, { title: "My Attendance", link: "/staff/attendance" }]} />
 
-      <div className="space-y-2">
-        {rows.map((r, i) => (
-          <div key={r.id ?? i} className="flex items-center justify-between rounded-lg border p-3">
-            <span className="text-sm font-medium">{r.studentName ?? r.employeeName}</span>
-            <Badge variant={mapStatus(r.mark)}>{r.mark}</Badge>
-          </div>
-        ))}
-      </div>
+      <GenericTable
+        tableHeads={head}
+        data={rows}
+        onSearch={(value) => { setSearch(value); setPage(1); }}
+        searchPlaceholder="Search attendance..."
+        pagination={{ page, limit: LIMIT, total, onPageChange: setPage }}
+        emptyTitle="No attendance records."
+        renderRow={(r) => ({
+          dateBs: r.dateBs ?? "—",
+          leaveType: r.leaveType?.name ?? r.leaveType?.code ?? "—",
+        } as Record<string, React.ReactNode>)}
+      />
     </div>
   );
 }
 
-function mapStatus(m: string): Badge["variant"] {
+function mapStatus(m: string): ComponentProps<typeof Badge>["variant"] {
   if (m === "PRESENT") return "default";
   if (m === "ABSENT") return "destructive";
   if (m === "LEAVE") return "secondary";
-  if (m === "HALF DAY") return "warning";
+  if (m === "HALF DAY" || m === "HALF_DAY") return "warning";
   return "outline";
 }
-
-import { useState } from "react";
-type T_ATTMARK = { id?: string; studentName?: string; employeeName?: string; mark: string; date?: string };
-void useState;

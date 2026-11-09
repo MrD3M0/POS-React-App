@@ -1,18 +1,22 @@
 import { z } from "zod";
 
+export const EMPLOYEE_ROLES = ["ADMIN", "PRINCIPAL", "ACCOUNTANT", "TEACHER", "STAFF"] as const;
+
 export const EMPLOYEE_CREATE_SCHEMA = z.object({
-  employeeCode: z.string().min(2),
+  employeeCode: z.string().min(2, "Employee code must be at least 2 characters"),
   firstName: z.string().min(1, "First name required"),
   middleName: z.string().optional(),
   lastName: z.string().min(1, "Last name required"),
   gender: z.enum(["MALE", "FEMALE", "OTHERS"]),
-  dobBs: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  role: z.enum(EMPLOYEE_ROLES, { message: "Role required" }),
+  dobBs: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD").optional().or(z.literal("")),
   phone: z.string().optional(),
-  email: z.string().email().optional(),
+  email: z.string().email("Invalid email"),
+  password: z.string().min(8, "Password must be at least 8 characters").max(128),
   permanentAddress: z.string().optional(),
   temporaryAddress: z.string().optional(),
   designation: z.string().min(1, "Designation required"),
-  joinDateBs: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  joinDateBs: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD"),
   panNo: z.string().optional(),
   ssfNo: z.string().optional(),
   bankName: z.string().optional(),

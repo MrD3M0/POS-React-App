@@ -1,6 +1,6 @@
 // pages/batch/create.tsx
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router";
@@ -10,13 +10,16 @@ import { type T_UseQueryError } from "@/types/common";
 import { QUERY_KEYS } from "@/lib/query-keys";
 import { mapFieldsOnError } from "@/lib/utils";
 import Button from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
+import Input from "@/components/ui/input";
+import { InputWithSwitch } from "@/components/input-with-switch";
 import PageHeader from "@/components/common/page-header";
+import SelectCommand from "@/components/select-command";
+import { listCourses } from "@/pages/admin/courses/service/service";
 
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -29,6 +32,16 @@ import { BsDatePicker } from "@/components/bs-datepicker";
 const CreateBatch = () => {
   const navigate = useNavigate();
   const qc = useQueryClient();
+
+  const coursesQuery = useQuery({
+    queryKey: [QUERY_KEYS.ADMIN_COURSE_LIST, "batch-create", "unlimited"],
+    queryFn: () => listCourses({ page: 1, limit: 999 }),
+  });
+  const courses = (coursesQuery.data?.data?.data ?? coursesQuery.data?.data ?? []) as Array<{
+    id: string;
+    code?: string;
+    name?: string;
+  }>;
 
   const form = useForm({
     resolver: zodResolver(BatchSchema),
@@ -77,6 +90,7 @@ const CreateBatch = () => {
                     <FormControl>
                       <Input placeholder="Eg: 2081 Fall" {...field} />
                     </FormControl>
+                    <FormDescription>Display name for this batch/intake.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -87,13 +101,22 @@ const CreateBatch = () => {
                 name="courseId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Course ID</FormLabel>
+                    <FormLabel>Course</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="Eg: c1234567-89ab-cdef-0123-456789abcdef"
-                        {...field}
+                      <SelectCommand
+                        value={field.value}
+                        onChange={field.onChange}
+                        options={courses.map((c) => ({
+                          label: `${c.code ?? ""}${c.code ? " - " : ""}${c.name ?? c.id}`,
+                          value: c.id,
+                          searchValues: `${c.code ?? ""} ${c.name ?? ""}`,
+                        }))}
+                        placeholder={coursesQuery.isLoading ? "Loading courses..." : "Select course..."}
+                        searchPlaceholder="Search courses..."
+                        loading={coursesQuery.isLoading}
                       />
                     </FormControl>
+                    <FormDescription>Select course (ID reference, unlimited options).</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -113,6 +136,7 @@ const CreateBatch = () => {
                         lang="en"
                       />
                     </FormControl>
+                    <FormDescription>Optional batch start date (BS). Stored as BS date.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -135,6 +159,7 @@ const CreateBatch = () => {
                         }
                       />
                     </FormControl>
+                    <FormDescription>Current term/semester number for this batch.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -144,14 +169,16 @@ const CreateBatch = () => {
                 control={form.control}
                 name="isActive"
                 render={({ field }) => (
-                  <FormItem className="sm:col-span-2 flex flex-row items-center space-x-3 rounded-md border p-4">
+                  <FormItem className="sm:col-span-2">
+                    <FormLabel>Active</FormLabel>
                     <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
+                      <InputWithSwitch
+                        value={!!field.value}
+                        onChange={field.onChange}
+                        labels={{ on: "Active", off: "Inactive" }}
                       />
                     </FormControl>
-                    <FormLabel className="!mt-0">Active</FormLabel>
+                    <FormDescription>Inactive batches are hidden from active workflows where applicable.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

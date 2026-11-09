@@ -5,8 +5,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 
-import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/form";
+import Input from "@/components/ui/input";
+import PasswordInput from "@/components/ui/password-input";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/form";
 import Button from "@/components/ui/button";
 import { REGISTER_SCHEMA } from "./schema/register-schema";
 import type { T_RegisterFormValues } from "./schema/register-schema";
@@ -54,6 +55,7 @@ function Register() {
                   <FormControl>
                     <Input placeholder="Enter username" {...field} />
                   </FormControl>
+                  <FormDescription>Choose a unique username for sign-in.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -67,6 +69,7 @@ function Register() {
                   <FormControl>
                     <Input placeholder="Enter email" type="email" {...field} />
                   </FormControl>
+                  <FormDescription>We’ll use this for account communication.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -78,8 +81,9 @@ function Register() {
                 <FormItem>
                   <FormLabel>Password</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter password" type="password" {...field} />
+                    <PasswordInput placeholder="Enter password" {...field} />
                   </FormControl>
+                  <FormDescription>Use a strong password (minimum as required by policy).</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -91,8 +95,9 @@ function Register() {
                 <FormItem>
                   <FormLabel>Confirm Password</FormLabel>
                   <FormControl>
-                    <Input placeholder="Confirm password" type="password" {...field} />
+                    <PasswordInput placeholder="Confirm password" {...field} />
                   </FormControl>
+                  <FormDescription>Must match the password above.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
