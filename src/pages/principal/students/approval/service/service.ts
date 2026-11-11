@@ -26,7 +26,22 @@ export async function listPendingStudents(params: { page: number; limit: number;
   return res.data;
 }
 
-export async function approveStudent(id: string): Promise<{ message: string }> {
+export type T_FEE_ASSIGNMENT = {
+  assigned: boolean;
+  reason?: "NO_STRUCTURE" | "ALREADY_ASSIGNED" | "DISABLED" | "ERROR";
+  message?: string;
+  feeStructureId?: string;
+  feeStructureName?: string;
+  itemCount?: number;
+  total?: string;
+};
+
+export type T_APPROVE_RESULT = {
+  message?: string;
+  data?: { feeAssignment?: T_FEE_ASSIGNMENT };
+};
+
+export async function approveStudent(id: string): Promise<T_APPROVE_RESULT> {
   const res = await axiosInstance.post(`${UrlConstants.STUDENT_URL}/${id}/approve`);
   return res.data;
 }

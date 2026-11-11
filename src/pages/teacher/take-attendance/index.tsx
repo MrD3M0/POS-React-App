@@ -1,237 +1,297 @@
-import { useEffect, useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { GraduationCap } from "lucide-react";
+import { formatBs, todayBs } from "@/lib/bs-date";
 import PageHeader from "@/components/common/page-header";
-import ScreenLoader from "@/components/ui/screen-loader";
-import AlertHandler from "@/components/common/alert-handler";
-import Button from "@/components/ui/button";
-import SelectCommand from "@/components/select-command";
+import { AttendanceClassPicker } from "./components/attendance-class-picker";
+import { AttendanceClassSelect } from "./components/attendance-class-select";
+import { AttendanceMarkScreen } from "./components/attendance-mark-screen";
+import { AttendanceSaveBar } from "./components/attendance-save-bar";
+import { AttendanceSheetAlerts, SavedSessionBadge } from "./components/attendance-alerts";
+import { AttendanceSummary } from "./components/attendance-summary";
+import { AttendanceTable } from "./components/attendance-table";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { QUERY_KEYS } from "@/lib/query-keys";
-import { listStudentsForTeacher, type T_STUDENT } from "../students/service/service";
+  AttendancePickerSkeleton,
+  AttendanceTableSkeleton,
+} from "./components/attendance-skeleton";
+import { DiscardChangesDialog } from "./components/discard-changes-dialog";
 import {
-  bulkMarkAttendance,
-  listAttendanceSessions,
-  listStudentAttendance,
-  type T_ATTENDANCE_SESSION,
-  type T_STUDENT_ATTENDANCE,
-} from "./service/service";
+  assignmentSubjectLabel,
+  formatBsDate,
+  periodLabel,
+  readStoredAttendanceView,
+  storeAttendanceView,
+  type T_AttendanceView,
+} from "./attendance-utils";
+import { useAttendanceData, type T_AttendanceSelection } from "./hooks/use-attendance-data";
+import { useAttendanceDraft } from "./hooks/use-attendance-draft";
+import { useMediaQuery } from "./hooks/use-media-query";
+import { useSaveAttendance } from "./hooks/use-save-attendance";
+import { useUnsavedChangesGuard } from "./hooks/use-unsaved-changes-guard";
 
-const STATUS_OPTIONS = [
-  { label: "Present", value: "PRESENT" },
-  { label: "Absent", value: "ABSENT" },
-  { label: "Leave", value: "LEAVE" },
-  { label: "Half Day", value: "HALF_DAY" },
-] as const;
-
-type Status = (typeof STATUS_OPTIONS)[number]["value"];
-
-function toRows<T>(raw: unknown): T[] {
-  const r = raw as { data?: T[] | { data?: T[] } };
-  if (Array.isArray(r?.data)) return r.data;
-  return Array.isArray(r?.data?.data) ? r.data.data : [];
-}
-
-function sessionLabel(s: T_ATTENDANCE_SESSION): string {
-  const batch = s.teachingAssignment?.batchTermSubject?.batchTerm?.batch?.name;
-  const term = s.teachingAssignment?.batchTermSubject?.batchTerm?.name;
-  const subject =
-    s.teachingAssignment?.batchTermSubject?.subject?.code ??
-    s.teachingAssignment?.batchTermSubject?.subject?.name;
-  const period = s.period?.name ?? (s.period?.periodNumber != null ? `P${s.period.periodNumber}` : "");
-  return [s.dateBs, batch, term, subject, period].filter(Boolean).join(" · ") || s.id;
-}
-
-function studentName(s: { firstName?: string; middleName?: string | null; lastName?: string; universityRegNo?: string } | null | undefined, fallbackId: string) {
-  const name = [s?.firstName, s?.middleName, s?.lastName].filter(Boolean).join(" ").trim();
-  return name || s?.universityRegNo || fallbackId;
-}
+type TMobileScreen = "select" | "mark";
 
 export default function TeacherTakeAttendancePage() {
-  const qc = useQueryClient();
-  const [sessionId, setSessionId] = useState("");
-  const [statusMap, setStatusMap] = useState<Record<string, Status>>({});
-
-  const sessionsQuery = useQuery({
-    queryKey: [QUERY_KEYS.TEACHER_ATTENDANCE_SESSIONS, "take-attendance", "unlimited"],
-    queryFn: () => listAttendanceSessions({ page: 1, limit: 999 }),
+  const isDesktop = useMediaQuery("(min-width: 768px)");
+  const [selection, setSelection] = useState<T_AttendanceSelection>({
+    assignmentId: "",
+    periodId: "",
+    dateBs: formatBs(todayBs()),
   });
+  const [mobileScreen, setMobileScreen] = useState<TMobileScreen>("select");
+  const [view, setView] = useState<T_AttendanceView>(readStoredAttendanceView);
+  const [showErrors, setShowErrors] = useState(false);
+  const [pendingAction, setPendingAction] = useState<{ run: () => void } | null>(null);
+  const [pickerVersion, setPickerVersion] = useState(0);
 
-  const attendanceQuery = useQuery({
-    queryKey: [QUERY_KEYS.TEACHER_ATTENDANCE, sessionId],
-    queryFn: () => listStudentAttendance({ page: 1, limit: 999, sessionId }),
-    enabled: !!sessionId,
+  const data = useAttendanceData(selection);
+  const draft = useAttendanceDraft(data.rows);
+  const blocker = useUnsavedChangesGuard(draft.isDirty);
+  const save = useSaveAttendance(() => {
+    draft.markSaved();
+    setShowErrors(false);
   });
-
-  const studentsQuery = useQuery({
-    queryKey: [QUERY_KEYS.TEACHER_STUDENTS, "take-attendance-roster", "unlimited"],
-    queryFn: () => listStudentsForTeacher({ page: 1, limit: 999 }),
-    enabled: !!sessionId,
-  });
-
-  const sessions = useMemo(() => toRows<T_ATTENDANCE_SESSION>(sessionsQuery.data), [sessionsQuery.data]);
-  const existing = useMemo(() => toRows<T_STUDENT_ATTENDANCE>(attendanceQuery.data), [attendanceQuery.data]);
-  const students = useMemo(() => toRows<T_STUDENT>(studentsQuery.data), [studentsQuery.data]);
-
-  const selectedSession = sessions.find((s) => s.id === sessionId);
-
-  // Build roster: prefer existing attendance records for the session; merge in loaded students.
-  const roster = useMemo(() => {
-    const byStudent = new Map<string, { studentId: string; name: string; regNo: string; current?: Status }>();
-    for (const a of existing) {
-      const sid = a.studentId ?? a.student?.id;
-      if (!sid) continue;
-      const st = (["PRESENT", "ABSENT", "LEAVE", "HALF_DAY"] as const).includes(a.status as Status)
-        ? (a.status as Status)
-        : undefined;
-      byStudent.set(sid, {
-        studentId: sid,
-        name: studentName(a.student, sid),
-        regNo: a.student?.universityRegNo ?? "",
-        current: st,
-      });
-    }
-    for (const s of students) {
-      if (!byStudent.has(s.id)) {
-        byStudent.set(s.id, {
-          studentId: s.id,
-          name: studentName(s, s.id),
-          regNo: s.universityRegNo ?? "",
-        });
-      }
-    }
-    return Array.from(byStudent.values()).sort((a, b) => a.name.localeCompare(b.name));
-  }, [existing, students]);
 
   useEffect(() => {
-    if (!sessionId) {
-      setStatusMap({});
+    storeAttendanceView(view);
+  }, [view]);
+
+  const readOnly = data.isLocked || Boolean(data.holiday);
+  const saving = save.isPending;
+
+  const applySelection = useCallback(
+    (patch: Partial<T_AttendanceSelection>) => {
+      const apply = () => {
+        setSelection((previous) => ({ ...previous, ...patch }));
+        setShowErrors(false);
+      };
+      if (draft.isDirty) {
+        setPendingAction({ run: apply });
+        return;
+      }
+      apply();
+    },
+    [draft.isDirty],
+  );
+
+  const requestBackToSelect = useCallback(() => {
+    const apply = () => setMobileScreen("select");
+    if (draft.isDirty) {
+      setPendingAction({ run: apply });
       return;
     }
-    const next: Record<string, Status> = {};
-    for (const r of roster) next[r.studentId] = r.current ?? "PRESENT";
-    setStatusMap(next);
-  }, [sessionId, attendanceQuery.data, studentsQuery.data]); // eslint-disable-line react-hooks/exhaustive-deps
+    apply();
+  }, [draft.isDirty]);
 
-  const mutation = useMutation({
-    mutationFn: () => {
-      const records = roster.map((r) => ({
-        studentId: r.studentId,
-        status: statusMap[r.studentId] ?? "PRESENT",
-      }));
-      return bulkMarkAttendance({ sessionId, records });
-    },
-    onSuccess: () => {
-      toast.success("Attendance saved for session.");
-      qc.invalidateQueries({ queryKey: [QUERY_KEYS.TEACHER_ATTENDANCE, sessionId] });
-      qc.invalidateQueries({ queryKey: [QUERY_KEYS.TEACHER_ATTENDANCE] });
-    },
-    onError: (error: unknown) => {
-      const msg = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      toast.error(msg ?? "Failed to save attendance.");
-    },
-  });
+  const handleSave = useCallback(() => {
+    if (!data.assignment || !selection.periodId) return;
+    if (!data.assignment.teacherId) {
+      toast.error("This class has no assigned teacher");
+      return;
+    }
+    if (draft.invalidStudentIds.length > 0) {
+      setShowErrors(true);
+      toast.error("Add a remark for every student on leave");
+      window.requestAnimationFrame(() => {
+        const first = draft.invalidStudentIds[0];
+        const field = document.querySelector<HTMLInputElement>(
+          `[data-remarks-input="${first}"]`,
+        );
+        field?.focus();
+      });
+      return;
+    }
+    save.mutate({
+      sessionId: data.session?.id ?? null,
+      assignmentId: data.assignment.id,
+      teacherId: data.assignment.teacherId,
+      periodId: selection.periodId,
+      dateBs: selection.dateBs,
+      records: draft.toRecords(),
+    });
+  }, [data.assignment, data.session?.id, draft, save, selection]);
 
-  const sessionOptions = sessions.map((s) => ({
-    label: sessionLabel(s),
-    value: s.id,
-    searchValues: `${sessionLabel(s)} ${s.dateBs ?? ""}`,
-  }));
+  const alerts = (
+    <AttendanceSheetAlerts
+      holiday={data.holiday}
+      isLocked={data.isLocked}
+      error={data.isError ? data.error : null}
+      onRetry={data.refetch}
+    />
+  );
 
-  if (sessionsQuery.isLoading) return <ScreenLoader />;
-  if (sessionsQuery.isError) return <AlertHandler variant="error" />;
+  const discardDialog = (
+    <DiscardChangesDialog
+      open={blocker.state === "blocked" || pendingAction !== null}
+      description="You have unsaved attendance changes. Leaving this screen will discard them."
+      onStay={() => {
+        const hadPending = pendingAction !== null;
+        if (blocker.state === "blocked") blocker.reset();
+        setPendingAction(null);
+        if (hadPending) setPickerVersion((version) => version + 1);
+      }}
+      onDiscard={() => {
+        const action = pendingAction?.run;
+        setPendingAction(null);
+        if (blocker.state === "blocked") {
+          blocker.proceed();
+          return;
+        }
+        if (action) {
+          draft.resetDraft();
+          action();
+        }
+      }}
+    />
+  );
+
+  const period = data.periods.find((item) => item.id === selection.periodId);
+  const subtitle = [formatBsDate(selection.dateBs), period ? periodLabel(period) : ""]
+    .filter(Boolean)
+    .join(" · ");
+
+  if (!isDesktop) {
+    if (mobileScreen === "select" || !data.hasSelection) {
+      return (
+        <div className="min-h-screen space-y-5 p-4 pb-10">
+          <div>
+            <h1 className="text-xl font-medium">Take attendance</h1>
+            <p className="text-sm text-muted-foreground">
+              Choose a class, period and date to load the roster.
+            </p>
+          </div>
+
+          {data.isLoading && data.assignments.length === 0 ? (
+            <AttendancePickerSkeleton />
+          ) : data.assignments.length === 0 ? (
+            <EmptyAssignments />
+          ) : (
+            <AttendanceClassSelect
+              key={pickerVersion}
+              assignments={data.assignments}
+              periods={data.periods}
+              value={selection}
+              onChange={applySelection}
+              onContinue={() => setMobileScreen("mark")}
+            />
+          )}
+
+          {alerts}
+          {discardDialog}
+        </div>
+      );
+    }
+
+    return (
+      <>
+        <AttendanceMarkScreen
+          key={`${selection.assignmentId}|${selection.periodId}|${selection.dateBs}`}
+          title={assignmentSubjectLabel(data.assignment)}
+          subtitle={subtitle}
+          rows={data.rows}
+          draft={draft}
+          view={view}
+          onViewChange={setView}
+          holiday={data.holiday}
+          isLocked={data.isLocked}
+          hasSavedSession={Boolean(data.session)}
+          error={data.isError ? data.error : null}
+          onRetry={data.refetch}
+          isLoading={data.isLoading}
+          showErrors={showErrors}
+          saving={saving}
+          onBack={requestBackToSelect}
+          onSave={handleSave}
+        />
+        {discardDialog}
+      </>
+    );
+  }
 
   return (
-    <div className="p-5">
+    <div className="flex min-h-screen flex-col gap-4 p-5">
+      {discardDialog}
       <PageHeader
-        title="Take Attendance"
+        title="Take attendance"
+        description="Mark one class session, then save the whole roster at once."
         breadCrumbItems={[
           { title: "Teacher", link: "/teacher" },
-          { title: "Take Attendance", link: "/teacher/take-attendance" },
+          { title: "Take attendance", link: "/teacher/take-attendance" },
         ]}
       />
 
-      <div className="mb-4 grid w-full max-w-5xl grid-cols-1 gap-3 sm:grid-cols-2">
-        <div className="space-y-1">
-          <p className="text-sm font-medium">Attendance Session</p>
-          <SelectCommand
-            value={sessionId}
-            onChange={(v) => setSessionId(v ?? "")}
-            options={sessionOptions}
-            placeholder={sessionsQuery.isLoading ? "Loading sessions..." : "Select attendance session..."}
-            searchPlaceholder="Search sessions..."
-            loading={sessionsQuery.isLoading}
-          />
-          <p className="text-xs text-muted-foreground">Select a session (ID reference, unlimited options). Backend bulk-marks against the session roster.</p>
-        </div>
-        <div className="flex items-end gap-2">
-          <Button
-            variant="primary"
-            size="sm"
-            disabled={!sessionId || roster.length === 0 || mutation.isPending}
-            loading={mutation.isPending}
-            onClick={() => mutation.mutate()}
-          >
-            Save Attendance
-          </Button>
-          {selectedSession?.isLocked ? (
-            <span className="text-xs text-amber-700">Session is locked; only authorized roles may edit (backend enforced).</span>
-          ) : null}
-        </div>
-      </div>
-
-      {!sessionId ? (
-        <p className="text-sm text-muted-foreground">Select an attendance session to load students and mark attendance.</p>
-      ) : attendanceQuery.isLoading || studentsQuery.isLoading ? (
-        <ScreenLoader />
-      ) : attendanceQuery.isError ? (
-        <AlertHandler variant="error" />
-      ) : roster.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No students found for this session. Ensure the session has an approved/active roster.</p>
+      {data.isLoading && data.assignments.length === 0 ? (
+        <AttendancePickerSkeleton />
       ) : (
+        <AttendanceClassPicker
+          key={pickerVersion}
+          assignments={data.assignments}
+          periods={data.periods}
+          value={selection}
+          onChange={applySelection}
+          loading={data.isLoading && !data.hasSelection}
+          disabled={saving}
+        />
+      )}
+
+      {alerts}
+
+      {!data.isLoading && data.assignments.length === 0 ? <EmptyAssignments /> : null}
+
+      {data.hasSelection && data.isError ? null : data.hasSelection && data.isLoading ? (
+        <AttendanceTableSkeleton />
+      ) : data.hasSelection && data.rows.length === 0 ? (
+        <EmptyStudents />
+      ) : data.hasSelection ? (
         <>
-          <p className="mb-2 text-xs text-muted-foreground">
-            {roster.length} student{roster.length === 1 ? "" : "s"} loaded. Status is an enum selector per row; saving submits bulk records to the backend.
-          </p>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="min-w-[140px]">Reg No</TableHead>
-                  <TableHead className="min-w-[220px]">Student</TableHead>
-                  <TableHead className="min-w-[220px]">Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {roster.map((r) => (
-                  <TableRow key={r.studentId}>
-                    <TableCell className="tabular-nums">{r.regNo || "—"}</TableCell>
-                    <TableCell>{r.name}</TableCell>
-                    <TableCell>
-                      <div className="max-w-[220px]">
-                        <SelectCommand
-                          value={statusMap[r.studentId] ?? "PRESENT"}
-                          onChange={(v) => setStatusMap((m) => ({ ...m, [r.studentId]: (v as Status) || "PRESENT" }))}
-                          options={STATUS_OPTIONS.map((o) => ({ label: o.label, value: o.value }))}
-                          placeholder="Select status"
-                          hideSearch
-                        />
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <AttendanceSummary counts={draft.counts} />
+            {data.session ? <SavedSessionBadge /> : null}
           </div>
+          <AttendanceTable
+            rows={data.rows}
+            draft={draft.draft}
+            onStatus={draft.setStatus}
+            onRemarks={draft.setRemarks}
+            invalidIds={draft.invalidStudentIds}
+            showErrors={showErrors}
+            disabled={readOnly || saving}
+          />
+          <AttendanceSaveBar
+            variant="desktop"
+            counts={draft.counts}
+            total={data.rows.length}
+            saving={saving}
+            disabled={readOnly}
+            onSave={handleSave}
+            onMarkAllPresent={draft.markAllPresent}
+          />
         </>
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          Select a class, period and date to load the roster.
+        </p>
       )}
     </div>
+  );
+}
+
+function EmptyAssignments() {
+  return (
+    <div className="rounded-lg border border-dashed p-8 text-center">
+      <GraduationCap className="mx-auto size-6 text-muted-foreground" />
+      <p className="mt-2 text-sm font-medium">No classes assigned to you yet</p>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Ask an admin to assign you a class.
+      </p>
+    </div>
+  );
+}
+
+function EmptyStudents() {
+  return (
+    <p className="rounded-lg border border-dashed px-3 py-8 text-center text-sm text-muted-foreground">
+      No approved students in this batch.
+    </p>
   );
 }

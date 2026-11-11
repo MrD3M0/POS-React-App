@@ -8,16 +8,25 @@ import GenericTable, { type T_TableHead } from "@/components/generic-table";
 import SelectCommand from "@/components/select-command";
 import { BsDatePicker } from "@/components/bs-datepicker";
 import { QUERY_KEYS } from "@/lib/query-keys";
-import { todayBs, formatBs } from "@/lib/bs-date";
-import { listEmployees, type T_EMPLOYEE } from "@/pages/admin/employees/service/service";
-import { listPrincipalAttendance, type T_PRINCIPAL_ATTENDANCE } from "./service/service";
+import {
+  listEmployees,
+  type T_EMPLOYEE,
+} from "@/pages/admin/employees/service/service";
+import {
+  listPrincipalAttendance,
+  type T_PRINCIPAL_ATTENDANCE,
+} from "./service/service";
 
 const LIMIT = 50;
 
 function getEmployeeName(r: T_PRINCIPAL_ATTENDANCE): string {
   if (r.employeeName) return r.employeeName;
   if (r.employee) {
-    return [r.employee.firstName, r.employee.middleName, r.employee.lastName].filter(Boolean).join(" ") || "—";
+    return (
+      [r.employee.firstName, r.employee.middleName, r.employee.lastName]
+        .filter(Boolean)
+        .join(" ") || "—"
+    );
   }
   return r.employeeId ?? "—";
 }
@@ -27,7 +36,9 @@ function getDesignation(r: T_PRINCIPAL_ATTENDANCE): string {
 }
 
 function getDate(r: T_PRINCIPAL_ATTENDANCE): string {
-  return (r as T_PRINCIPAL_ATTENDANCE & { dateBs?: string }).dateBs ?? r.date ?? "—";
+  return (
+    (r as T_PRINCIPAL_ATTENDANCE & { dateBs?: string }).dateBs ?? r.date ?? "—"
+  );
 }
 
 function getStatus(r: T_PRINCIPAL_ATTENDANCE): string {
@@ -38,22 +49,28 @@ export default function PrincipalAttendancePage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [selectedEmpId, setSelectedEmpId] = useState("");
-  const [dateBs, setDateBs] = useState(() => {
-    try {
-      return formatBs(todayBs());
-    } catch {
-      return "";
-    }
-  });
+  // Default to all dates so existing attendance is visible immediately.
+  const [dateBs, setDateBs] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
 
   const empQuery = useQuery({
-    queryKey: [QUERY_KEYS.ADMIN_EMPLOYEE_LIST, "principal-attendance-filter", "unlimited"],
+    queryKey: [
+      QUERY_KEYS.ADMIN_EMPLOYEE_LIST,
+      "principal-attendance-filter",
+      "unlimited",
+    ],
     queryFn: () => listEmployees({ page: 1, limit: 999 }),
   });
 
   const attQuery = useQuery({
-    queryKey: [QUERY_KEYS.PRINCIPAL_ATTENDANCE, page, search, selectedEmpId, dateBs, statusFilter],
+    queryKey: [
+      QUERY_KEYS.PRINCIPAL_ATTENDANCE,
+      page,
+      search,
+      selectedEmpId,
+      dateBs,
+      statusFilter,
+    ],
     queryFn: () =>
       listPrincipalAttendance({
         page,
@@ -68,12 +85,21 @@ export default function PrincipalAttendancePage() {
   if (attQuery.isLoading) return <ScreenLoader />;
   if (attQuery.isError) return <AlertHandler variant="error" />;
 
-  const employees: T_EMPLOYEE[] = empQuery.data?.data?.data ?? (Array.isArray(empQuery.data?.data) ? empQuery.data.data : []);
+  const employees: T_EMPLOYEE[] =
+    empQuery.data?.data?.data ??
+    (Array.isArray(empQuery.data?.data) ? empQuery.data.data : []);
   const employeeOptions = [
     { label: "All Employees", value: "" },
     ...employees.map((e) => {
-      const name = [e.firstName, e.middleName, e.lastName].filter(Boolean).join(" ") || e.employeeCode || e.id;
-      return { label: name, value: e.id, searchValues: `${name} ${e.employeeCode ?? ""}` };
+      const name =
+        [e.firstName, e.middleName, e.lastName].filter(Boolean).join(" ") ||
+        e.employeeCode ||
+        e.id;
+      return {
+        label: name,
+        value: e.id,
+        searchValues: `${name} ${e.employeeCode ?? ""}`,
+      };
     }),
   ];
   const statusOptions = [
@@ -81,7 +107,7 @@ export default function PrincipalAttendancePage() {
     { label: "Present", value: "PRESENT" },
     { label: "Absent", value: "ABSENT" },
     { label: "Leave", value: "LEAVE" },
-    { label: "Half Day", value: "HALF DAY" },
+    { label: "Late", value: "LATE" },
   ];
 
   const rawData = attQuery.data;
@@ -99,7 +125,10 @@ export default function PrincipalAttendancePage() {
       if (id && id !== selectedEmpId) return false;
     }
     if (dateBs) {
-      const d = r.date ?? r.dateBs ?? "";
+      const d =
+        r.date ??
+        (r as T_PRINCIPAL_ATTENDANCE & { dateBs?: string }).dateBs ??
+        "";
       if (d && !String(d).startsWith(dateBs)) return false;
     }
     if (statusFilter !== "ALL") {
@@ -110,8 +139,18 @@ export default function PrincipalAttendancePage() {
   });
 
   const head: T_TableHead<T_PRINCIPAL_ATTENDANCE>[] = [
-    { key: "employeeName", headName: "Employee", minWidth: 240, render: (r) => getEmployeeName(r) },
-    { key: "designation", headName: "Designation", minWidth: 180, render: (r) => getDesignation(r) },
+    {
+      key: "employeeName",
+      headName: "Employee",
+      minWidth: 240,
+      render: (r) => getEmployeeName(r),
+    },
+    {
+      key: "designation",
+      headName: "Designation",
+      minWidth: 180,
+      render: (r) => getDesignation(r),
+    },
     { key: "date", headName: "Date", minWidth: 180, render: (r) => getDate(r) },
     {
       key: "status",
@@ -128,18 +167,25 @@ export default function PrincipalAttendancePage() {
     <div className="p-5">
       <PageHeader
         title="Employee Attendance"
-        breadCrumbItems={[{ title: "Principal", link: "/principal" }, { title: "Employee Attendance", link: "/principal/attendance" }]}
+        breadCrumbItems={[
+          { title: "Principal", link: "/principal" },
+          { title: "Employee Attendance", link: "/principal/attendance" },
+        ]}
       />
       <div className="mb-4 flex w-full max-w-5xl flex-wrap items-end gap-3">
         <div className="min-w-[220px] flex-1">
           <SelectCommand
             value={selectedEmpId}
-            onChange={(v) => { setSelectedEmpId(v ?? ""); setPage(1); }}
+            onChange={(v) => {
+              setSelectedEmpId(v ?? "");
+              setPage(1);
+            }}
             options={employeeOptions}
-            placeholder={empQuery.isLoading ? "Loading employees..." : "All Employees"}
+            placeholder={
+              empQuery.isLoading ? "Loading employees..." : "All Employees"
+            }
             searchPlaceholder="Search employees..."
             loading={empQuery.isLoading}
-            isClearable
           />
         </div>
         <div className="min-w-[220px]">
@@ -148,13 +194,19 @@ export default function PrincipalAttendancePage() {
             valueFormat="bs"
             lang="en"
             placeholder="Filter by date (BS)"
-            onChange={(v) => { setDateBs(typeof v === "string" ? v : ""); setPage(1); }}
+            onChange={(v) => {
+              setDateBs(typeof v === "string" ? v : "");
+              setPage(1);
+            }}
           />
         </div>
         <div className="min-w-[180px]">
           <SelectCommand
             value={statusFilter}
-            onChange={(v) => { setStatusFilter(v || "ALL"); setPage(1); }}
+            onChange={(v) => {
+              setStatusFilter(v || "ALL");
+              setPage(1);
+            }}
             options={statusOptions}
             placeholder="All Statuses"
             hideSearch
@@ -165,16 +217,21 @@ export default function PrincipalAttendancePage() {
       <GenericTable
         tableHeads={head}
         data={rows}
-        onSearch={(value) => { setSearch(value); setPage(1); }}
+        onSearch={(value) => {
+          setSearch(value);
+          setPage(1);
+        }}
         searchPlaceholder="Search attendance..."
         emptyTitle="No attendance records."
         pagination={{ page, limit: LIMIT, total, onPageChange: setPage }}
-        renderRow={(r) => ({
-          employeeName: getEmployeeName(r),
-          designation: getDesignation(r),
-          date: getDate(r),
-          status: r.status ?? r.mark ?? "—",
-        } as Record<string, React.ReactNode>)}
+        renderRow={(r) =>
+          ({
+            employeeName: getEmployeeName(r),
+            designation: getDesignation(r),
+            date: getDate(r),
+            status: r.status ?? r.mark ?? "—",
+          }) as Record<string, React.ReactNode>
+        }
       />
     </div>
   );
@@ -183,7 +240,7 @@ export default function PrincipalAttendancePage() {
 function mapStatus(s: string): ComponentProps<typeof Badge>["variant"] {
   if (s === "PRESENT") return "default";
   if (s === "ABSENT") return "destructive";
-  if (s === "HALF DAY") return "warning";
+  if (s === "LATE" || s === "LATE DAY") return "warning";
   if (s === "LEAVE") return "secondary";
   return "outline";
 }

@@ -1,238 +1,401 @@
+import { useEffect } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { AxiosError } from "axios";
+import type { T_UseQueryError } from "@/types/common";
+import { QUERY_KEYS } from "@/lib/query-keys";
 import Button from "@/components/ui/button";
 import Input from "@/components/ui/input";
+import { InputWithSwitch } from "@/components/input-with-switch";
 import SelectCommand from "@/components/select-command";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/form";
 import {
-  assignFeeStructureToStudent,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/form";
+import {
   createFeeStructure,
   listBatchOptions,
+  listCourseOptions,
   listFeeHeadOptions,
-  listStudentOptions,
+  updateFeeStructure,
+  type T_FEE_STRUCTURE,
+  type T_FEE_STRUCTURE_INPUT,
 } from "../service/service";
 import {
-  feeStructureAssignSchema,
+  feeStructureCreateDefaultValues,
   feeStructureCreateSchema,
-  type FeeStructureAssignValues,
   type FeeStructureCreateValues,
 } from "../schema/schema";
 
-interface FeeStructureFormProps {
-  mode: "create" | "assign";
-  onClose: () => void;
-  structureId?: string;
-  initial?: { courseName: string; batchId?: string; termLabel: string };
-}
-
-function studentLabel(s: { id: string; universityRegNo?: string; firstName?: string; middleName?: string | null; lastName?: string }) {
-  const name = [s.firstName, s.middleName, s.lastName].filter(Boolean).join(" ").trim();
-  return [name || s.id, s.universityRegNo ? `(${s.universityRegNo})` : ""].filter(Boolean).join(" ");
-}
-
-export default function FeeStructureFormDialog({ mode, onClose, structureId, initial }: FeeStructureFormProps) {
+/** Create / edit a fee structure (a course, an optional batch override, items). */
+export default function FeeStructureFormDialog({
+  open,
+  onOpenChange,
+  structure,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  structure?: T_FEE_STRUCTURE | null;
+}) {
   const qc = useQueryClient();
-  const isAssign = mode === "assign";
+  const isEdit = Boolean(structure);
 
-  const createForm = useForm<FeeStructureCreateValues>({
+  const form = useForm<FeeStructureCreateValues>({
     resolver: zodResolver(feeStructureCreateSchema),
-    defaultValues: {
-      courseName: initial?.courseName ?? "",
-      batchId: initial?.batchId ?? "",
-      termLabel: initial?.termLabel ?? "",
-      feeHeadCode: "",
-      amount: 0,
-    },
+    defaultValues: feeStructureCreateDefaultValues,
   });
+  const courseId = useWatch({ control: form.control, name: "courseId" });
 
-  const assignForm = useForm<FeeStructureAssignValues>({
-    resolver: zodResolver(feeStructureAssignSchema),
-    defaultValues: { studentId: "" },
-  });
-
-  const studentsQuery = useQuery({
-    queryKey: ["accountant-student-options", "unlimited"],
-    queryFn: listStudentOptions,
-    enabled: isAssign,
+  const coursesQuery = useQuery({
+    queryKey: [QUERY_KEYS.ACCOUNTANT_FEE_STRUCTURE_COURSES],
+    queryFn: () => listCourseOptions(),
+    enabled: open,
   });
   const batchesQuery = useQuery({
-    queryKey: ["admin-batch-options", "unlimited"],
-    queryFn: listBatchOptions,
-    enabled: !isAssign,
+    queryKey: [QUERY_KEYS.ACCOUNTANT_FEE_STRUCTURE_BATCHES, courseId],
+    queryFn: () => listBatchOptions(),
+    enabled: open && Boolean(courseId),
   });
-  const feeHeadsQuery = useQuery({
-    queryKey: ["admin-fee-head-options", "unlimited"],
-    queryFn: listFeeHeadOptions,
-    enabled: !isAssign,
+  const headsQuery = useQuery({
+    queryKey: [QUERY_KEYS.ACCOUNTANT_FEE_STRUCTURE_HEADS],
+    queryFn: () => listFeeHeadOptions(),
+    enabled: open,
   });
 
-  const studentOptions = (studentsQuery.data?.data?.data ?? []).map((s) => ({
-    label: studentLabel(s),
-    value: s.id,
-    searchValues: studentLabel(s),
-  }));
-  const batchOptions = (batchesQuery.data?.data?.data ?? []).map((b) => ({
-    label: [b.name, b.batchYear ? `(${b.batchYear})` : ""].filter(Boolean).join(" ") || b.id,
-    value: b.id,
-    searchValues: `${b.name ?? ""} ${b.batchYear ?? ""}`,
-  }));
-  const feeHeadOptions = (feeHeadsQuery.data?.data?.data ?? []).map((h) => ({
-    label: [h.code, h.name].filter(Boolean).join(" - ") || h.id,
-    value: h.code ?? h.id,
-    searchValues: `${h.code ?? ""} ${h.name ?? ""}`,
+  useEffect(() => {
+    if (!open) return;
+    form.reset(
+      structure
+        ? {
+            courseId: structure.courseId ?? "",
+            batchId: structure.batchId ?? "",
+            name: structure.name ?? "",
+            isActive: structure.isActive ?? true,
+            items: (structure.items ?? []).map((item) => ({
+              feeHeadId: item.feeHeadId,
+              termNumber: item.termNumber ?? null,
+              amount: Number(item.amount ?? 0),
+            })),
+          }
+        : feeStructureCreateDefaultValues,
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, structure]);
+
+  const courseOptions = (
+    coursesQuery.data?.data?.data ?? []
+  ).map((course) => ({
+    label: `${course.name}${course.code ? ` (${course.code})` : ""}`,
+    value: course.id,
   }));
 
-  const createMutation = useMutation({
-    mutationFn: (data: FeeStructureCreateValues) =>
-      createFeeStructure({
-        courseName: data.courseName.trim(),
-        batchId: data.batchId?.trim() || undefined,
-        termLabel: data.termLabel.trim(),
-        feeHeadCode: data.feeHeadCode.trim(),
-        amount: Number(data.amount),
-      }),
+  const batchOptions = (batchesQuery.data?.data?.data ?? [])
+    .filter((batch) => !courseId || batch.courseId === courseId)
+    .map((batch) => ({ label: batch.name, value: batch.id }));
+
+  const headOptions = (headsQuery.data?.data?.data ?? []).map((head) => ({
+    label: `${head.name}${head.code ? ` (${head.code})` : ""}`,
+    value: head.id,
+  }));
+
+  const mutation = useMutation({
+    mutationFn: (values: FeeStructureCreateValues) => {
+      const input: T_FEE_STRUCTURE_INPUT = {
+        courseId: values.courseId,
+        batchId: values.batchId || null,
+        name: values.name.trim(),
+        isActive: values.isActive,
+        items: values.items.map((item) => ({
+          feeHeadId: item.feeHeadId,
+          termNumber: item.termNumber ?? null,
+          amount: item.amount,
+        })),
+      };
+      return structure
+        ? updateFeeStructure(structure.id, input)
+        : createFeeStructure(input);
+    },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["fee-structures"] });
-      qc.invalidateQueries({ queryKey: ["accountant-fee-structures"] });
-      toast.success("Fee structure created successfully.");
-      onClose();
+      toast.success(
+        isEdit ? "Fee structure updated." : "Fee structure created.",
+      );
+      qc.invalidateQueries({ queryKey: [QUERY_KEYS.ACCOUNTANT_FEES_STRUCTURE] });
+      onOpenChange(false);
     },
-    onError: () => toast.error("Failed to save fee structure. Please try again."),
+    onError: (error: AxiosError<T_UseQueryError>) => {
+      toast.error(
+        error.response?.data?.message ?? "Failed to save the fee structure.",
+      );
+    },
   });
 
-  const assignMutation = useMutation({
-    mutationFn: (data: FeeStructureAssignValues) => {
-      if (!structureId) throw new Error("Missing fee structure");
-      return assignFeeStructureToStudent({ studentId: data.studentId, feeStructureId: structureId });
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["fee-structures"] });
-      qc.invalidateQueries({ queryKey: ["accountant-fee-structures"] });
-      qc.invalidateQueries({ queryKey: ["accountant-student-fees"] });
-      toast.success("Fee structure assigned successfully.");
-      onClose();
-    },
-    onError: () => toast.error("Failed to assign fee structure. Please try again."),
-  });
-
-  const isPending = createMutation.isPending || assignMutation.isPending;
+  const items = useWatch({ control: form.control, name: "items" });
 
   return (
-    <Dialog open onOpenChange={(o) => !o && !isPending && onClose()}>
-      <DialogContent>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{isAssign ? "Assign Fee Structure" : "New Fee Structure"}</DialogTitle>
+          <DialogTitle>
+            {isEdit ? "Edit Fee Structure" : "New Fee Structure"}
+          </DialogTitle>
           <DialogDescription>
-            {isAssign
-              ? "Select a student to assign this fee structure to."
-              : "Define the fee head and amount for a course/batch term."}
+            A fee structure belongs to a course. Leave the batch empty to make
+            it the default for every batch of that course, or pick a batch to
+            override the default for that batch only.
           </DialogDescription>
         </DialogHeader>
 
-        {isAssign ? (
-          <Form {...assignForm}>
-            <form onSubmit={assignForm.handleSubmit((data) => assignMutation.mutate(data))} className="space-y-4">
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit((values) => mutation.mutate(values))}
+            className="space-y-4"
+          >
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <FormField
-                control={assignForm.control}
-                name="studentId"
+                control={form.control}
+                name="courseId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Student</FormLabel>
+                    <FormLabel>Course</FormLabel>
                     <FormControl>
                       <SelectCommand
                         value={field.value}
-                        onChange={field.onChange}
-                        options={studentOptions}
-                        placeholder={studentsQuery.isLoading ? "Loading students..." : "Select student..."}
-                        searchPlaceholder="Search students..."
-                        loading={studentsQuery.isLoading}
+                        onChange={(value) => {
+                          field.onChange(value);
+                          form.setValue("batchId", "");
+                        }}
+                        options={courseOptions}
+                        placeholder="Select course..."
+                        searchPlaceholder="Search courses..."
+                        loading={coursesQuery.isLoading}
                       />
                     </FormControl>
-                    <FormDescription>Select the student (ID reference, unlimited options loaded).</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <div className="flex justify-end gap-2 border-t pt-4">
-                <Button type="button" variant="outline" size="sm" onClick={onClose} disabled={isPending}>Cancel</Button>
-                <Button type="submit" variant="primary" size="sm" loading={isPending} disabled={!structureId}>Assign</Button>
-              </div>
-            </form>
-          </Form>
-        ) : (
-          <Form {...createForm}>
-            <form onSubmit={createForm.handleSubmit((data) => createMutation.mutate(data))} className="space-y-4">
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <FormField control={createForm.control} name="courseName" render={({ field }) => (
+
+              <FormField
+                control={form.control}
+                name="batchId"
+                render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Course Name</FormLabel>
-                    <FormControl><Input {...field} /></FormControl>
-                    <FormDescription>Course/program name for this structure.</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                <FormField control={createForm.control} name="batchId" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel isOptional>Batch</FormLabel>
+                    <FormLabel isOptional>Batch override</FormLabel>
                     <FormControl>
                       <SelectCommand
-                        value={field.value ?? ""}
+                        value={field.value}
                         onChange={field.onChange}
-                        options={[{ label: "None", value: "" }, ...batchOptions]}
-                        placeholder={batchesQuery.isLoading ? "Loading batches..." : "Select batch (optional)..."}
+                        options={batchOptions}
+                        placeholder={
+                          courseId
+                            ? "Default for the whole course"
+                            : "Select a course first"
+                        }
                         searchPlaceholder="Search batches..."
                         loading={batchesQuery.isLoading}
-                        isClearable
+                        disabled={!courseId}
+                        withClear
                       />
                     </FormControl>
-                    <FormDescription>Optional batch reference (ID, unlimited options).</FormDescription>
+                    <FormDescription>
+                      Empty = the course default.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
-                )} />
-              </div>
-              <FormField control={createForm.control} name="termLabel" render={({ field }) => (
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Term Label</FormLabel>
-                  <FormControl><Input placeholder="e.g. First Semester" {...field} /></FormControl>
-                  <FormDescription>Term/semester label.</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )} />
-              <FormField control={createForm.control} name="feeHeadCode" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Fee Head</FormLabel>
+                  <FormLabel>Name</FormLabel>
                   <FormControl>
-                    <SelectCommand
-                      value={field.value}
-                      onChange={field.onChange}
-                      options={feeHeadOptions}
-                      placeholder={feeHeadsQuery.isLoading ? "Loading fee heads..." : "Select fee head..."}
-                      searchPlaceholder="Search fee heads..."
-                      loading={feeHeadsQuery.isLoading}
+                    <Input
+                      placeholder="e.g. BIT 2081 Semester Fee"
+                      {...field}
                     />
                   </FormControl>
-                  <FormDescription>Select fee head code (unlimited options).</FormDescription>
                   <FormMessage />
                 </FormItem>
-              )} />
-              <FormField control={createForm.control} name="amount" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Amount (NPR)</FormLabel>
-                  <FormControl><Input type="number" min={0} step="0.01" {...field} value={field.value ?? 0} onChange={(e) => field.onChange(e.target.valueAsNumber || 0)} /></FormControl>
-                  <FormDescription>Fee amount for this head.</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )} />
-              <div className="flex justify-end gap-2 border-t pt-4">
-                <Button type="button" variant="outline" size="sm" onClick={onClose} disabled={isPending}>Cancel</Button>
-                <Button type="submit" variant="primary" size="sm" loading={isPending}>Save</Button>
+              )}
+            />
+
+            {/* Fee items */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium">Fee items</p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    form.setValue("items", [
+                      ...items,
+                      { feeHeadId: "", termNumber: null, amount: 0 },
+                    ])
+                  }
+                >
+                  Add item
+                </Button>
               </div>
-            </form>
-          </Form>
-        )}
+
+              {items.map((item, index) => (
+                <div
+                  key={index}
+                  className="grid grid-cols-1 items-start gap-3 rounded-md border p-3 md:grid-cols-[1fr_120px_140px_auto]"
+                >
+                  <FormField
+                    control={form.control}
+                    name={`items.${index}.feeHeadId`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="sr-only">Fee head</FormLabel>
+                        <FormControl>
+                          <SelectCommand
+                            value={field.value}
+                            onChange={field.onChange}
+                            options={headOptions}
+                            placeholder="Select fee head..."
+                            searchPlaceholder="Search fee heads..."
+                            loading={headsQuery.isLoading}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name={`items.${index}.termNumber`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="sr-only">Term</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min={1}
+                            placeholder="One time"
+                            value={field.value ?? ""}
+                            onChange={(event) =>
+                              field.onChange(
+                                event.target.value === ""
+                                  ? null
+                                  : Number(event.target.value),
+                              )
+                            }
+                          />
+                        </FormControl>
+                        <FormDescription className="text-xs">
+                          Empty = one time
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name={`items.${index}.amount`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="sr-only">Amount</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            placeholder="Amount"
+                            value={Number.isFinite(Number(field.value))
+                              ? field.value
+                              : 0}
+                            onChange={(event) =>
+                              field.onChange(Number(event.target.value))
+                            }
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive"
+                    onClick={() =>
+                      form.setValue(
+                        "items",
+                        items.filter((_, itemIndex) => itemIndex !== index),
+                      )
+                    }
+                  >
+                    Remove
+                  </Button>
+                </div>
+              ))}
+              <FormField
+                control={form.control}
+                name="items"
+                render={() => <FormMessage />}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="isActive"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Status</FormLabel>
+                  <FormControl>
+                    <InputWithSwitch
+                      value={field.value}
+                      onChange={field.onChange}
+                      labels={{ on: "Active", off: "Inactive" }}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    An inactive structure is not offered when assigning fees.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => onOpenChange(false)}
+                disabled={mutation.isPending}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" loading={mutation.isPending}>
+                {isEdit ? "Save Changes" : "Create Fee Structure"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

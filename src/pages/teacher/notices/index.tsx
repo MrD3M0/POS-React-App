@@ -6,6 +6,7 @@ import AlertHandler from "@/components/common/alert-handler";
 import Badge from "@/components/ui/badge";
 import GenericTable, { type T_TableHead } from "@/components/generic-table";
 import { QUERY_KEYS } from "@/lib/query-keys";
+import { useCan } from "@/auth/permissions";
 import { listTeacherNotices, type T_NOTICE } from "./service/service";
 
 const LIMIT = 20;
@@ -24,6 +25,7 @@ function toRows(raw: unknown): { rows: T_NOTICE[]; total: number } {
 export default function TeacherNoticesPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const canCreate = useCan("teacher:notices:create");
 
   const query = useQuery({
     queryKey: [QUERY_KEYS.TEACHER_NOTICES, page, search],
@@ -65,7 +67,10 @@ export default function TeacherNoticesPage() {
     <div className="p-5">
       <PageHeader
         title="Notices"
+        description="Notices published for you and the classes you teach."
         breadCrumbItems={[{ title: "Teacher", link: "/teacher" }, { title: "Notices", link: "/teacher/notices" }]}
+        createPage={canCreate ? "/teacher/notices/create" : undefined}
+        createPageTitle="New Notice"
       />
       <GenericTable
         tableHeads={head}

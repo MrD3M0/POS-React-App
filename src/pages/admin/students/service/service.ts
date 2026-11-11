@@ -76,7 +76,7 @@ export async function createStudent(input: {
   admissionDateBs: string;
   status?: T_STUDENT_STATUS;
   approvalStatus?: T_STUDENT_APPROVAL;
-}): Promise<{ message: string }> {
+}): Promise<{ message: string; data?: { feeAssignment?: T_FEE_ASSIGNMENT } }> {
   const res = await axiosInstance.post(`${UrlConstants.ADMIN_STUDENT_URL}`, input);
   return res.data;
 }
@@ -105,16 +105,33 @@ export async function updateStudent(
   return res.data;
 }
 
-export async function approveStudent(id: string): Promise<{ message: string }> {
-  const res = await axiosInstance.patch(`${UrlConstants.ADMIN_STUDENT_URL}/${id}`, {
-    approvalStatus: "APPROVED",
-  });
+/**
+ * The fee the college assigned automatically when the student was approved
+ * (batch override first, then the course default).
+ */
+export type T_FEE_ASSIGNMENT = {
+  assigned: boolean;
+  reason?: "NO_STRUCTURE" | "ALREADY_ASSIGNED" | "DISABLED" | "ERROR";
+  message?: string;
+  feeStructureId?: string;
+  feeStructureName?: string;
+  itemCount?: number;
+  total?: string;
+};
+
+export type T_APPROVE_RESULT = {
+  message?: string;
+  data?: { feeAssignment?: T_FEE_ASSIGNMENT };
+};
+
+/** Approving is a dedicated transition (the fee is assigned automatically). */
+export async function approveStudent(id: string): Promise<T_APPROVE_RESULT> {
+  const res = await axiosInstance.post(`${UrlConstants.STUDENT_URL}/${id}/approve`);
   return res.data;
 }
 
 export async function rejectStudent(id: string, reason: string): Promise<{ message: string }> {
-  const res = await axiosInstance.patch(`${UrlConstants.ADMIN_STUDENT_URL}/${id}`, {
-    approvalStatus: "REJECTED",
+  const res = await axiosInstance.post(`${UrlConstants.STUDENT_URL}/${id}/reject`, {
     rejectionReason: reason,
   });
   return res.data;

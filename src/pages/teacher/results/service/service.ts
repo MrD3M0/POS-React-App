@@ -10,22 +10,39 @@ export type T_RESULT = {
   status?: string;
   exam?: { id?: string; name?: string } | null;
   batch?: { id?: string; name?: string } | null;
-  student?: { id?: string; firstName?: string; middleName?: string | null; lastName?: string } | null;
+  student?: {
+    id?: string;
+    firstName?: string;
+    middleName?: string | null;
+    lastName?: string;
+  } | null;
   [key: string]: unknown;
 };
 
-export async function listResults(params: { page: number; limit: number; search?: string }) {
-  const res = await axiosInstance.get(`${UrlConstants.TEACHER_RESULTS_URL}`, { params });
+export async function listResults(params: {
+  page: number;
+  limit: number;
+  search?: string;
+}) {
+  const res = await axiosInstance.get(`${UrlConstants.TEACHER_RESULTS_URL}`, {
+    params,
+  });
   return res.data;
 }
 
 export async function createResult(input: Record<string, unknown>) {
-  const res = await axiosInstance.post(`${UrlConstants.TEACHER_RESULTS_URL}`, input);
+  const res = await axiosInstance.post(
+    `${UrlConstants.TEACHER_RESULTS_URL}`,
+    input,
+  );
   return res.data;
 }
 
 export async function updateResult(id: string, input: Record<string, unknown>) {
-  const res = await axiosInstance.patch(`${UrlConstants.TEACHER_RESULTS_URL}/${id}`, input);
+  const res = await axiosInstance.patch(
+    `${UrlConstants.TEACHER_RESULTS_URL}/${id}`,
+    input,
+  );
   return res.data;
 }
 
@@ -33,12 +50,27 @@ export type T_RESULT_SUBJECT = {
   id: string;
   resultId?: string;
   examSubjectId?: string;
+  subjectId?: string;
+  subjectName?: string;
+  subjectCode?: string;
   marksObtained?: number | string;
   fullMarks?: number | string;
   creditHour?: number | string;
   gradePoint?: number | string;
-  gradeScale?: { grade?: string; name?: string; gradePoint?: number | string } | null;
-  examSubject?: { id?: string; fullMarks?: number | string; passMarks?: number | string } | null;
+  gradeScale?: {
+    grade?: string;
+    name?: string;
+    gradePoint?: number | string;
+  } | null;
+  examSubject?: {
+    id?: string;
+    fullMarks?: number | string;
+    passMarks?: number | string;
+    batchTermSubject?: {
+      id?: string;
+      subject?: { id?: string; code?: string; name?: string } | null;
+    } | null;
+  } | null;
   [key: string]: unknown;
 };
 
@@ -65,7 +97,14 @@ export async function getResultById(id: string) {
   return res.data;
 }
 
-export async function listResultSubjects(params: { page: number; limit: number; resultId?: string; search?: string }) {
-  const res = await axiosInstance.get(`${UrlConstants.RESULT_SUBJECT_URL}`, { params });
+export async function listResultSubjects(params: {
+  page: number;
+  limit: number;
+  resultId?: string;
+  search?: string;
+}) {
+  const res = await axiosInstance.get(`${UrlConstants.RESULT_SUBJECT_URL}`, {
+    params,
+  });
   return res.data;
 }

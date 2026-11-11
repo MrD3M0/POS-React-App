@@ -5,10 +5,9 @@ import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
 import GenericTable, { type T_TableHead } from "@/components/generic-table";
 import { QUERY_KEYS } from "@/lib/query-keys";
+import { listAuditLogs, type T_AUDIT_LOG } from "./service/service";
 
-import { listAuditLogs } from "./service/service";
-
-const LIMIT = 10;
+const LIMIT = 15;
 
 export default function AdminAuditPage() {
   const [page, setPage] = useState(1);
@@ -16,7 +15,7 @@ export default function AdminAuditPage() {
 
   const query = useQuery({
     queryKey: [QUERY_KEYS.ADMIN_AUDIT_LOG, search, page],
-    queryFn: () => listAuditLogs({ page, limit: LIMIT, search }),
+    queryFn: () => listAuditLogs({ page, limit: LIMIT, search: search || undefined }),
   });
 
   if (query.isLoading) return <ScreenLoader />;
@@ -26,40 +25,46 @@ export default function AdminAuditPage() {
   const total = query.data?.data?.pagination?.total ?? 0;
 
   const head: T_TableHead<T_AUDIT_LOG>[] = [
-    { key: "action", headName: "Action", minWidth: 200 },
-    { key: "entity", headName: "Entity", minWidth: 180 },
-    { key: "entityId", headName: "Entity ID", minWidth: 200 },
-    { key: "actorId", headName: "Actor", minWidth: 200 },
-    { key: "createdAt", headName: "Time", minWidth: 180 },
+    { key: "action", headName: "Action", minWidth: 160 },
+    { key: "entity", headName: "Entity", minWidth: 140 },
+    { key: "entityId", headName: "Entity ID", minWidth: 220 },
+    {
+      key: "actor",
+      headName: "Actor",
+      minWidth: 220,
+      render: (row) => row.user?.email ?? row.userId ?? "—",
+    },
+    {
+      key: "createdAt",
+      headName: "Time",
+      minWidth: 200,
+      render: (row) => (row.createdAt ? new Date(row.createdAt).toLocaleString() : "—"),
+    },
   ];
 
   return (
     <div className="p-5">
       <PageHeader
-        title="Audit Log"
+        title="Audit log"
         breadCrumbItems={[
           { title: "Admin", link: "/admin" },
-          { title: "Audit Log", link: "/admin/audit" },
+          { title: "Audit log", link: "/admin/audit" },
         ]}
       />
+      <p className="text-sm text-muted-foreground mb-4">
+        Read-only security and admin activity trail. Entries cannot be edited or deleted.
+      </p>
       <GenericTable
         tableHeads={head}
         data={rows}
-        onSearch={(value) => { setSearch(value); setPage(1); }}
+        onSearch={(value) => {
+          setSearch(value);
+          setPage(1);
+        }}
         emptyTitle="No audit log entries found."
         pagination={{ page, limit: LIMIT, total, onPageChange: setPage }}
-        searchPlaceholder="Search audit log..."
+        searchPlaceholder="Search entity, action, or entity ID..."
       />
     </div>
   );
 }
-
-type T_AUDIT_LOG = {
-  id: string;
-  action: string;
-  entity: string;
-  entityId?: string;
-  actorId?: string;
-  details?: string;
-  createdAt?: string;
-};

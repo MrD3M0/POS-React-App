@@ -1,9 +1,13 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { AxiosError } from "axios";
+import type { T_UseQueryError } from "@/types/common";
 import PageHeader from "@/components/common/page-header";
 import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
 import Badge from "@/components/ui/badge";
+import Button from "@/components/ui/button";
 import GenericTable, { type T_TableHead } from "@/components/generic-table";
 import ConfirmDeleteDialog from "@/components/dialog/confirm-delete";
 import SelectCommand from "@/components/select-command";
@@ -12,6 +16,7 @@ import type { ReactNode } from "react";
 import {
   listStudents,
   deleteStudent,
+  approveStudent,
   type T_STUDENT,
   type T_STUDENT_STATUS,
   type T_STUDENT_APPROVAL,
@@ -25,6 +30,7 @@ export default function AdminStudentsPage() {
   const [approvalFilter, setApprovalFilter] = useState("");
   const [search, setSearch] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const qc = useQueryClient();
 
   const listQuery = useQuery({
     queryKey: [QUERY_KEYS.ADMIN_STUDENT_LIST, statusFilter, approvalFilter, search, page],
@@ -36,6 +42,28 @@ export default function AdminStudentsPage() {
         ...(statusFilter ? { status: statusFilter as T_STUDENT_STATUS } : {}),
         ...(approvalFilter ? { approvalStatus: approvalFilter as T_STUDENT_APPROVAL } : {}),
       }),
+  });
+
+  // Approving admits the student and assigns the college fee automatically.
+  const approveMut = useMutation({
+    mutationFn: (id: string) => approveStudent(id),
+    onSuccess: (result) => {
+      const fee = result?.data?.feeAssignment;
+      if (fee?.assigned) {
+        toast.success(
+          `Student approved. Fee assigned: ${fee.feeStructureName ?? "fee structure"} (NPR ${fee.total ?? "0"}).`,
+        );
+      } else if (fee?.message) {
+        toast.warning(`Student approved. ${fee.message}`);
+      } else {
+        toast.success("Student approved.");
+      }
+      qc.invalidateQueries({ queryKey: [QUERY_KEYS.ADMIN_STUDENT_LIST] });
+      qc.invalidateQueries({ queryKey: [QUERY_KEYS.ACCOUNTANT_BILLING] });
+    },
+    onError: (error: AxiosError<T_UseQueryError>) => {
+      toast.error(error.response?.data?.message ?? "Failed to approve student.");
+    },
   });
 
   if (listQuery.isLoading) return <ScreenLoader />;
@@ -142,9 +170,21 @@ export default function AdminStudentsPage() {
         onEdit={(s) => `/admin/students/edit/${s.id}`}
         onDelete={(s) => setDeleteId(s.id)}
         renderActions={(s) => (
-          <a href={`/admin/students/${s.id}/id-card`} className="px-2 text-xs font-medium text-primary underline">
-            ID Card
-          </a>
+          <div className="flex items-center gap-3">
+            {s.approvalStatus === "PENDING" ? (
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={approveMut.isPending}
+                onClick={() => approveMut.mutate(s.id)}
+              >
+                Approve
+              </Button>
+            ) : null}
+            <a href={`/admin/students/${s.id}/id-card`} className="px-2 text-xs font-medium text-primary underline">
+              ID Card
+            </a>
+          </div>
         )}
         onSearch={(value) => {
           setSearch(value);

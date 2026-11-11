@@ -7,7 +7,10 @@ import Badge from "@/components/ui/badge";
 import GenericTable, { type T_TableHead } from "@/components/generic-table";
 import { QUERY_KEYS } from "@/lib/query-keys";
 import { getOwnStaff } from "../profile/edit/service/service";
-import { listMyAttendance, type T_EMPLOYEE_ATTENDANCE } from "./service/service";
+import {
+  listMyAttendance,
+  type T_EMPLOYEE_ATTENDANCE,
+} from "./service/service";
 
 const LIMIT = 30;
 
@@ -19,8 +22,9 @@ export default function StaffAttendancePage() {
     queryKey: [QUERY_KEYS.STAFF_PROFILE],
     queryFn: getOwnStaff,
   });
-  const staff = staffQuery.data?.data as Record<string, any> | undefined;
-  const employeeId = (staff?.employeeId ?? staff?.employee?.id) as string | undefined;
+  const staff = staffQuery.data?.data as
+    { employeeId?: string; employee?: { id?: string } } | undefined;
+  const employeeId = staff?.employeeId ?? staff?.employee?.id;
 
   const query = useQuery({
     queryKey: [QUERY_KEYS.STAFF_ATTENDANCE, employeeId, page, search],
@@ -42,7 +46,12 @@ export default function StaffAttendancePage() {
 
   const head: T_TableHead<T_EMPLOYEE_ATTENDANCE>[] = [
     { key: "dateBs", headName: "Date (BS)", minWidth: 160 },
-    { key: "status", headName: "Status", minWidth: 140, render: (r) => <Badge variant={mapStatus(r.status)}>{r.status}</Badge> },
+    {
+      key: "status",
+      headName: "Status",
+      minWidth: 140,
+      render: (r) => <Badge variant={mapStatus(r.status)}>{r.status}</Badge>,
+    },
     {
       key: "leaveType",
       headName: "Leave Type",
@@ -53,19 +62,30 @@ export default function StaffAttendancePage() {
 
   return (
     <div className="p-5">
-      <PageHeader title="My Attendance" breadCrumbItems={[{ title: "Staff", link: "/staff/attendance" }, { title: "My Attendance", link: "/staff/attendance" }]} />
+      <PageHeader
+        title="My Attendance"
+        breadCrumbItems={[
+          { title: "Staff", link: "/staff/attendance" },
+          { title: "My Attendance", link: "/staff/attendance" },
+        ]}
+      />
 
       <GenericTable
         tableHeads={head}
         data={rows}
-        onSearch={(value) => { setSearch(value); setPage(1); }}
+        onSearch={(value) => {
+          setSearch(value);
+          setPage(1);
+        }}
         searchPlaceholder="Search attendance..."
         pagination={{ page, limit: LIMIT, total, onPageChange: setPage }}
         emptyTitle="No attendance records."
-        renderRow={(r) => ({
-          dateBs: r.dateBs ?? "—",
-          leaveType: r.leaveType?.name ?? r.leaveType?.code ?? "—",
-        } as Record<string, React.ReactNode>)}
+        renderRow={(r) =>
+          ({
+            dateBs: r.dateBs ?? "—",
+            leaveType: r.leaveType?.name ?? r.leaveType?.code ?? "—",
+          }) as Record<string, React.ReactNode>
+        }
       />
     </div>
   );
@@ -75,6 +95,6 @@ function mapStatus(m: string): ComponentProps<typeof Badge>["variant"] {
   if (m === "PRESENT") return "default";
   if (m === "ABSENT") return "destructive";
   if (m === "LEAVE") return "secondary";
-  if (m === "HALF DAY" || m === "HALF_DAY") return "warning";
+  if (m === "LATE" || m === "LATE DAY") return "warning";
   return "outline";
 }

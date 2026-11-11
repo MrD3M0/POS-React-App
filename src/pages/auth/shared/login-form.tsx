@@ -41,9 +41,14 @@ export function LoginForm({ nextPath = "/dashboard" }: LoginFormProps) {
   async function onSubmit(values: TLoginSchema) {
     setIsLoading(true);
     try {
-      await login(values.email, values.password);
+      const result = await login(values.email, values.password);
       toast.success("Welcome back!");
-      navigate(next, { replace: true });
+      // Teachers get their own dashboard instead of the generic one.
+      const target =
+        next === "/dashboard" && result.user?.role === "TEACHER"
+          ? "/teacher/dashboard"
+          : next;
+      navigate(target, { replace: true });
     } catch (error) {
       const err = error as AxiosError<T_UseQueryError>;
       toast.error(
@@ -95,12 +100,7 @@ export function LoginForm({ nextPath = "/dashboard" }: LoginFormProps) {
           )}
         />
 
-        <Button
-          type="submit"
-          size="lg"
-          className="w-full"
-          loading={isLoading}
-        >
+        <Button type="submit" size="lg" className="w-full" loading={isLoading}>
           {isLoading ? "Signing in..." : "Sign in"}
         </Button>
       </form>

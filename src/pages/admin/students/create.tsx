@@ -73,7 +73,11 @@ export default function CreateStudentPage() {
         approvalStatus: "APPROVED",
       }),
     onSuccess: () => {
-      toast.success("Student created successfully.");
+      // The student starts PENDING: approving them is a separate step, and
+      // that is where the college fee is assigned.
+      toast.success(
+        "Student created. Approve the student to admit them and assign the college fees.",
+      );
       qc.invalidateQueries({ queryKey: [QUERY_KEYS.ADMIN_STUDENT_LIST] });
       navigate("/admin/students");
     },

@@ -87,6 +87,8 @@ export default function PrincipalNoticesPage() {
           { title: "Principal", link: "/principal/notices" },
           { title: "Notices", link: "/principal/notices" },
         ]}
+        createPage="/principal/notices/create"
+        createPageTitle="New Notice"
       />
       <GenericTable
         tableHeads={head}

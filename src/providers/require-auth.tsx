@@ -27,7 +27,13 @@ export function RequireAuth({ allowedRoles }: RequireAuthProps) {
   if (allowedRoles && allowedRoles.length > 0) {
     const userRole = user?.role;
     if (!userRole || !allowedRoles.includes(userRole)) {
-      return <Navigate to="/dashboard" replace />;
+      // Teachers land on their own dashboard, everyone else on the generic one.
+      return (
+        <Navigate
+          to={userRole === "TEACHER" ? "/teacher/dashboard" : "/dashboard"}
+          replace
+        />
+      );
     }
   }
 

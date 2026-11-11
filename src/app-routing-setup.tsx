@@ -9,9 +9,10 @@ import SidebarLayout from "@/providers/sidebar-layout";
 import { Can } from "@/auth/permissions";
 
 import { LogIn } from "@/pages/auth/login";
-import Register from "@/pages/auth/register";
+// Public registration removed: only ADMIN creates accounts.
 
 import DashboardPage from "@/pages/dashboard/dashboard-page";
+import HelpPage from "@/pages/help/index";
 import ForbiddenPage from "@/pages/errors/403";
 
 // --- Admin module pages ---
@@ -46,6 +47,8 @@ import AdminNoticeEditPage from "@/pages/admin/notices/edit";
 import AdminSettingsPage from "@/pages/admin/settings/index";
 import AdminSettingCreatePage from "@/pages/admin/settings/create";
 import AdminSettingEditPage from "@/pages/admin/settings/edit";
+import AdminAuditPage from "@/pages/admin/audit/index";
+import AdminHolidaysPage from "@/pages/admin/holidays/index";
 import AdminFiscalYearsPage from "@/pages/admin/fiscal-years/index";
 import AdminFiscalYearCreatePage from "@/pages/admin/fiscal-years/create";
 import AdminFiscalYearEditPage from "@/pages/admin/fiscal-years/edit";
@@ -56,6 +59,7 @@ import PendingResultsPage from "@/pages/principal/results/pending/index";
 import PublishResultsPage from "@/pages/principal/results/publish/index";
 import StudentApprovalPage from "@/pages/principal/students/approval/index";
 import PrincipalNoticesPage from "@/pages/principal/notices/index";
+import CreatePrincipalNoticePage from "@/pages/principal/notices/create";
 import PendingPayrollPage from "@/pages/principal/payroll/pending/index";
 import PrincipalReportsPage from "@/pages/principal/reports/index";
 import PrincipalAccountantsPage from "@/pages/principal/accountants/index";
@@ -72,10 +76,18 @@ import AccountantListPage from "@/pages/accountant/accountants/index";
 import AccountantCreatePage from "@/pages/accountant/accountants/create";
 import AccountantEditPage from "@/pages/accountant/accountants/edit";
 import AccountantAttendancePage from "@/pages/accountant/attendance/index";
+import AccountantNoticesPage from "@/pages/accountant/notices/index";
+import CreateAccountantNoticePage from "@/pages/accountant/notices/create";
+import AccountantScholarshipsPage from "@/pages/accountant/scholarships/index";
+import AccountantDashboardPage from "@/pages/accountant/dashboard/index";
 import AccountantBillingPage from "@/pages/accountant/billing/index";
+import AccountantFeePaymentsPage from "@/pages/accountant/billing/payments";
+import AccountantInstallmentsPage from "@/pages/accountant/billing/installments";
+import RecordFeePaymentPage from "@/pages/accountant/billing/record";
 import AccountantBillingReceiptPage from "@/pages/accountant/billing/receipt/index";
 
 // --- Teacher pages ---
+import TeacherDashboardPage from "@/pages/teacher/dashboard/index";
 import TeacherMyClassesPage from "@/pages/teacher/my-classes/index";
 import TeacherTakeAttendancePage from "@/pages/teacher/take-attendance/index";
 import TeacherExamsPage from "@/pages/teacher/exams/index";
@@ -92,6 +104,7 @@ import TeacherAttendanceSessionsPage from "@/pages/teacher/attendance-sessions/i
 import TeacherBatchPayPage from "@/pages/teacher/batch-pay/index";
 import TeacherResultDetailPage from "@/pages/teacher/results/detail/index";
 import TeacherNoticesPage from "@/pages/teacher/notices/index";
+import CreateTeacherNoticePage from "@/pages/teacher/notices/create";
 
 // --- Staff pages ---
 import StaffProfilePage from "@/pages/staff/profile/index";
@@ -108,7 +121,7 @@ const router = createBrowserRouter([
     element: <RequireGuest />,
     children: [
       { path: "/login", element: <LogIn /> },
-      { path: "/register", element: <Register /> },
+      // /register removed: public registration is disabled.
       // Legacy per-role login links all resolve to the single login page.
       { path: "/auth/*", element: <Navigate to="/login" replace /> },
     ],
@@ -122,20 +135,43 @@ const router = createBrowserRouter([
         element: <SidebarLayout />,
         children: [
           { path: "/dashboard", element: <DashboardPage /> },
-          { path: "/notices", element: <Can permission="system:notices:read"><DashboardPage /></Can> },
+          { path: "/help", element: <HelpPage /> },
+          {
+            path: "/notices",
+            element: (
+              <Can permission="system:notices:read">
+                <DashboardPage />
+              </Can>
+            ),
+          },
 
           // --- Admin modules ---
           { path: "/admin/users", element: <AdminUsersPage /> },
           { path: "/admin/users/create", element: <AdminUserCreatePage /> },
 
           { path: "/admin/employees", element: <AdminEmployeesPage /> },
-          { path: "/admin/employees/create", element: <AdminEmployeeCreatePage /> },
-          { path: "/admin/employees/edit/:id", element: <AdminEmployeeEditPage /> },
+          {
+            path: "/admin/employees/create",
+            element: <AdminEmployeeCreatePage />,
+          },
+          {
+            path: "/admin/employees/edit/:id",
+            element: <AdminEmployeeEditPage />,
+          },
 
           { path: "/admin/students", element: <AdminStudentsPage /> },
-          { path: "/admin/students/create", element: <AdminStudentCreatePage /> },
-          { path: "/admin/students/edit/:id", element: <AdminStudentEditPage /> },
-          { path: "/admin/students/:id/id-card", element: <AdminStudentIdCardPage /> },
+          {
+            path: "/admin/students/create",
+            element: <AdminStudentCreatePage />,
+          },
+          {
+            path: "/admin/students/edit/:id",
+            element: <AdminStudentEditPage />,
+          },
+          {
+            path: "/admin/students/:id/id-card",
+            element: <AdminStudentIdCardPage />,
+          },
 
           { path: "/admin/courses", element: <AdminCoursesPage /> },
           { path: "/admin/courses/create", element: <AdminCourseCreatePage /> },
@@ -150,11 +186,23 @@ const router = createBrowserRouter([
           { path: "/admin/terms/edit/:id", element: <AdminTermEditPage /> },
 
           { path: "/admin/subjects", element: <AdminSubjectsPage /> },
-          { path: "/admin/subjects/create", element: <AdminSubjectCreatePage /> },
-          { path: "/admin/subjects/edit/:id", element: <AdminSubjectEditPage /> },
+          {
+            path: "/admin/subjects/create",
+            element: <AdminSubjectCreatePage />,
+          },
+          {
+            path: "/admin/subjects/edit/:id",
+            element: <AdminSubjectEditPage />,
+          },
 
-          { path: "/admin/teaching-assignments", element: <AdminTeachingAssignmentsPage /> },
-          { path: "/admin/teaching-assignments/create", element: <AdminTeachingAssignmentCreatePage /> },
+          {
+            path: "/admin/teaching-assignments",
+            element: <AdminTeachingAssignmentsPage />,
+          },
+          {
+            path: "/admin/teaching-assignments/create",
+            element: <AdminTeachingAssignmentCreatePage />,
+          },
 
           { path: "/admin/lookups", element: <AdminLookupsPage /> },
           { path: "/admin/lookups/create", element: <AdminLookupCreatePage /> },
@@ -164,64 +212,194 @@ const router = createBrowserRouter([
           { path: "/admin/notices/edit/:id", element: <AdminNoticeEditPage /> },
 
           { path: "/admin/settings", element: <AdminSettingsPage /> },
-          { path: "/admin/settings/create", element: <AdminSettingCreatePage /> },
-          { path: "/admin/settings/edit/:id", element: <AdminSettingEditPage /> },
+          {
+            path: "/admin/settings/create",
+            element: <AdminSettingCreatePage />,
+          },
+          {
+            path: "/admin/settings/edit/:id",
+            element: <AdminSettingEditPage />,
+          },
+
+          { path: "/admin/audit", element: <AdminAuditPage /> },
+          { path: "/admin/holidays", element: <AdminHolidaysPage /> },
 
           { path: "/admin/fiscal-years", element: <AdminFiscalYearsPage /> },
-          { path: "/admin/fiscal-years/create", element: <AdminFiscalYearCreatePage /> },
-          { path: "/admin/fiscal-years/edit/:id", element: <AdminFiscalYearEditPage /> },
+          {
+            path: "/admin/fiscal-years/create",
+            element: <AdminFiscalYearCreatePage />,
+          },
+          {
+            path: "/admin/fiscal-years/edit/:id",
+            element: <AdminFiscalYearEditPage />,
+          },
 
           // --- Principal modules ---
-          { path: "/principal/attendance", element: <PrincipalAttendancePage /> },
-          { path: "/principal/results/pending", element: <PendingResultsPage /> },
-          { path: "/principal/results/publish", element: <PublishResultsPage /> },
-          { path: "/principal/students/approval", element: <StudentApprovalPage /> },
+          {
+            path: "/principal/attendance",
+            element: <PrincipalAttendancePage />,
+          },
+          {
+            path: "/principal/results/pending",
+            element: <PendingResultsPage />,
+          },
+          {
+            path: "/principal/results/publish",
+            element: <PublishResultsPage />,
+          },
+          {
+            path: "/principal/students/approval",
+            element: <StudentApprovalPage />,
+          },
           { path: "/principal/notices", element: <PrincipalNoticesPage /> },
-          { path: "/principal/payroll/pending", element: <PendingPayrollPage /> },
+          {
+            path: "/principal/notices/create",
+            element: <CreatePrincipalNoticePage />,
+          },
+          {
+            path: "/principal/payroll/pending",
+            element: <PendingPayrollPage />,
+          },
           { path: "/principal/reports", element: <PrincipalReportsPage /> },
-          { path: "/principal/accountants", element: <PrincipalAccountantsPage /> },
+          {
+            path: "/principal/accountants",
+            element: <PrincipalAccountantsPage />,
+          },
 
           // --- Accountant modules ---
-          { path: "/accountant/fee-structures", element: <AccountantFeeStructuresPage /> },
+          {
+            path: "/accountant/fee-structures",
+            element: <AccountantFeeStructuresPage />,
+          },
           { path: "/accountant/billing", element: <AccountantBillingPage /> },
-          { path: "/accountant/billing/receipt/:id", element: <AccountantBillingReceiptPage /> },
+          {
+            path: "/accountant/billing/payments",
+            element: <AccountantFeePaymentsPage />,
+          },
+          {
+            path: "/accountant/billing/installments",
+            element: <AccountantInstallmentsPage />,
+          },
+          {
+            path: "/accountant/billing/record",
+            element: <RecordFeePaymentPage />,
+          },
+          {
+            path: "/accountant/billing/receipt/:id",
+            element: <AccountantBillingReceiptPage />,
+          },
           { path: "/accountant/payments", element: <AccountantPaymentsPage /> },
           { path: "/accountant/receipts", element: <AccountantReceiptsPage /> },
           { path: "/accountant/journal", element: <AccountantJournalPage /> },
           { path: "/accountant/ledgers", element: <AccountantLedgersPage /> },
-          { path: "/accountant/payroll/wizard", element: <AccountantPayrollWizardPage /> },
+          {
+            path: "/accountant/payroll/wizard",
+            element: <AccountantPayrollWizardPage />,
+          },
           { path: "/accountant/payslips", element: <AccountantPayslipsPage /> },
           { path: "/accountant/accountants", element: <AccountantListPage /> },
           { path: "/accountant/create", element: <AccountantCreatePage /> },
           { path: "/accountant/edit/:id", element: <AccountantEditPage /> },
-          { path: "/accountant/attendance", element: <AccountantAttendancePage /> },
+          {
+            path: "/accountant/attendance",
+            element: <AccountantAttendancePage />,
+          },
+          {
+            // Batch pay management (ADMIN / ACCOUNTANT). Teachers only get the
+            // read-only view at /teacher/batch-pay.
+            path: "/accountant/batch-pay",
+            element: <TeacherBatchPayPage />,
+          },
+          {
+            path: "/accountant/notices",
+            element: <AccountantNoticesPage />,
+          },
+          {
+            path: "/accountant/notices/create",
+            element: <CreateAccountantNoticePage />,
+          },
+          {
+            path: "/accountant/scholarships",
+            element: <AccountantScholarshipsPage />,
+          },
+          {
+            path: "/accountant/dashboard",
+            element: <AccountantDashboardPage />,
+          },
 
           // --- Teacher modules (guarded for TEACHER) ---
           {
             element: <RequireAuth allowedRoles={["TEACHER"]} />,
             children: [
-              { path: "/teacher", element: <Navigate to="/teacher/my-classes" replace /> },
+              {
+                path: "/teacher",
+                element: <Navigate to="/teacher/dashboard" replace />,
+              },
               // Spec-aligned aliases (legacy implementations)
-              { path: "/teacher/assignments", element: <Navigate to="/teacher/my-classes" replace /> },
-              { path: "/teacher/attendance/take", element: <Navigate to="/teacher/take-attendance" replace /> },
-              { path: "/teacher/students/create", element: <Navigate to="/teacher/students/add" replace /> },
+              {
+                path: "/teacher/assignments",
+                element: <Navigate to="/teacher/my-classes" replace />,
+              },
+              {
+                path: "/teacher/attendance/take",
+                element: <Navigate to="/teacher/take-attendance" replace />,
+              },
+              {
+                path: "/teacher/students/create",
+                element: <Navigate to="/teacher/students/add" replace />,
+              },
               // Current teacher routes
-              { path: "/teacher/my-classes", element: <TeacherMyClassesPage /> },
-              { path: "/teacher/take-attendance", element: <TeacherTakeAttendancePage /> },
-              { path: "/teacher/exams/create", element: <TeacherExamCreatePage /> },
-              { path: "/teacher/exams/edit/:id", element: <TeacherExamEditPage /> },
+              { path: "/teacher/dashboard", element: <TeacherDashboardPage /> },
+              {
+                path: "/teacher/my-classes",
+                element: <TeacherMyClassesPage />,
+              },
+              {
+                path: "/teacher/take-attendance",
+                element: <TeacherTakeAttendancePage />,
+              },
+              {
+                path: "/teacher/exams/create",
+                element: <TeacherExamCreatePage />,
+              },
+              {
+                path: "/teacher/exams/edit/:id",
+                element: <TeacherExamEditPage />,
+              },
               { path: "/teacher/exams", element: <TeacherExamsPage /> },
               { path: "/teacher/marks", element: <TeacherMarksEntryPage /> },
               { path: "/teacher/results", element: <TeacherResultsPage /> },
-              { path: "/teacher/results/:id", element: <TeacherResultDetailPage /> },
-              { path: "/teacher/exam-subjects", element: <TeacherExamSubjectsPage /> },
-              { path: "/teacher/attendance-sessions", element: <TeacherAttendanceSessionsPage /> },
+              {
+                path: "/teacher/results/:id",
+                element: <TeacherResultDetailPage />,
+              },
+              {
+                path: "/teacher/exam-subjects",
+                element: <TeacherExamSubjectsPage />,
+              },
+              {
+                path: "/teacher/attendance-sessions",
+                element: <TeacherAttendanceSessionsPage />,
+              },
               { path: "/teacher/batch-pay", element: <TeacherBatchPayPage /> },
               { path: "/teacher/notices", element: <TeacherNoticesPage /> },
+              {
+                path: "/teacher/notices/create",
+                element: <CreateTeacherNoticePage />,
+              },
               { path: "/teacher/students", element: <TeacherStudentsPage /> },
-              { path: "/teacher/students/add", element: <AddTeacherStudentPage /> },
-              { path: "/teacher/students/edit/:id", element: <EditTeacherStudentPage /> },
-              { path: "/teacher/students/:id/id-card", element: <TeacherStudentIdCardPage /> },
+              {
+                path: "/teacher/students/add",
+                element: <AddTeacherStudentPage />,
+              },
+              {
+                path: "/teacher/students/edit/:id",
+                element: <EditTeacherStudentPage />,
+              },
+              {
+                path: "/teacher/students/:id/id-card",
+                element: <TeacherStudentIdCardPage />,
+              },
             ],
           },
 

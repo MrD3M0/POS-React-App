@@ -7,10 +7,27 @@ import Badge from "@/components/ui/badge";
 import GenericTable, { type T_TableHead } from "@/components/generic-table";
 import ConfirmDeleteDialog from "@/components/dialog/confirm-delete";
 import { QUERY_KEYS } from "@/lib/query-keys";
-import type { T_NOTICE } from "./service/service";
-import { listNotices, deleteNotice } from "./service/service";
+import {
+  listNotices,
+  deleteNotice,
+  type T_NOTICE,
+} from "@/pages/notices/service/service";
+import { NOTICE_ROLE_OPTIONS } from "@/pages/notices/service/service";
 
 const LIMIT = 10;
+
+function audienceLabel(notice: T_NOTICE): string {
+  const targets = notice.targets ?? [];
+  if (targets.length === 0) return "Everyone";
+  const roles = targets
+    .map((t) => t.role)
+    .filter(Boolean)
+    .map((role) => NOTICE_ROLE_OPTIONS.find((r) => r.value === role)?.label ?? role);
+  const classes = targets.filter((t) => t.batchId).length;
+  const parts = [...roles];
+  if (classes > 0) parts.push(`${classes} class${classes === 1 ? "" : "es"}`);
+  return parts.join(", ");
+}
 
 export default function AdminNoticesPage() {
   const [page, setPage] = useState(1);
@@ -54,6 +71,11 @@ export default function AdminNoticesPage() {
       key: "isPinned",
       headName: "Pinned",
       render: (n) => (n.isPinned ? <Badge variant="secondary">Pinned</Badge> : null),
+    },
+    {
+      key: "audience",
+      headName: "Audience",
+      render: (n) => <span className="text-sm">{audienceLabel(n)}</span>,
     },
     {
       key: "createdAt",

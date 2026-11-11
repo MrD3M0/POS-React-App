@@ -38,6 +38,8 @@ export const QUERY_KEYS = {
   ADMIN_SETTING_GET: "admin-setting",
   ADMIN_NOTICE_LIST: "admin-notices",
   ADMIN_NOTICE_GET: "admin-notice-get",
+  // Header notification bell (notices + dashboard alerts)
+  NOTIFICATION: "notification-feed",
   ADMIN_AUDIT_LOG: "admin-audit-log",
   // Principal
   PRINCIPAL_ATTENDANCE: "principal-attendance",
@@ -46,6 +48,10 @@ export const QUERY_KEYS = {
   PRINCIPAL_REPORTS: "principal-reports",
   // Accountant
   ACCOUNTANT_FEES_STRUCTURE: "accountant-fee-structures",
+  ACCOUNTANT_FEE_STRUCTURE_COURSES: "accountant-fee-structure-courses",
+  ACCOUNTANT_FEE_STRUCTURE_BATCHES: "accountant-fee-structure-batches",
+  ACCOUNTANT_FEE_STRUCTURE_HEADS: "accountant-fee-structure-heads",
+  ACCOUNTANT_FEE_STRUCTURE_STUDENTS: "accountant-fee-structure-students",
   ACCOUNTANT_PAYMENTS: "accountant-payments",
   ACCOUNTANT_RECEIPTS: "accountant-receipts",
   ACCOUNTANT_ATTENDANCE: "accountant-attendance",
@@ -53,6 +59,11 @@ export const QUERY_KEYS = {
   ACCOUNTANT_LEDGERS: "accountant-ledgers",
   ACCOUNTANT_PAYROLL: "accountant-payroll",
   ACCOUNTANT_PAYSLIPS: "accountant-payslips",
+  ACCOUNTANT_NOTICES: "accountant-notices",
+  ACCOUNTANT_DASHBOARD: "accountant-dashboard",
+  ACCOUNTANT_SCHOLARSHIPS: "accountant-scholarships",
+  ACCOUNTANT_SCHOLARSHIP_GRANTS: "accountant-scholarship-grants",
+  ACCOUNTANT_STUDENT_OPTIONS: "accountant-student-options",
   // Teacher (legacy/current routes)
   TEACHER_MY_CLASSES: "teacher-my-classes",
   TEACHER_ATTENDANCE: "teacher-attendance",

@@ -124,10 +124,20 @@ export default function EditStudentPage() {
 
   const approveMut = useMutation({
     mutationFn: () => approveStudent(id!),
-    onSuccess: () => {
-      toast.success("Student approved.");
+    onSuccess: (result) => {
+      const fee = result?.data?.feeAssignment;
+      if (fee?.assigned) {
+        toast.success(
+          `Student approved. Fee assigned: ${fee.feeStructureName ?? "fee structure"} (NPR ${fee.total ?? "0"}).`,
+        );
+      } else if (fee?.message) {
+        toast.warning(`Student approved. ${fee.message}`);
+      } else {
+        toast.success("Student approved.");
+      }
       qc.invalidateQueries({ queryKey: [QUERY_KEYS.ADMIN_STUDENT_LIST] });
       qc.invalidateQueries({ queryKey: [QUERY_KEYS.ADMIN_STUDENT_GET, id] });
+      qc.invalidateQueries({ queryKey: [QUERY_KEYS.ACCOUNTANT_BILLING] });
     },
     onError: (error: AxiosError<T_UseQueryError>) => {
       toast.error(error.response?.data?.message ?? "Failed to approve student.");

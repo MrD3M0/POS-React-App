@@ -17,8 +17,14 @@ export const PERMISSION_MAP = {
   "admin:employees:update": ["ADMIN"],
   "admin:employees:delete": ["ADMIN"],
 
-  "admin:students:read": ["ADMIN", "PRINCIPAL", "ACCOUNTANT", "TEACHER", "STAFF"],
-  "admin:students:create": ["TEACHER"], // teacher adds, admin approves
+  "admin:students:read": [
+    "ADMIN",
+    "PRINCIPAL",
+    "ACCOUNTANT",
+    "TEACHER",
+    "STAFF",
+  ],
+  "admin:students:create": ["ADMIN", "TEACHER"], // teacher adds, admin can create approved
   "admin:students:approve": ["ADMIN"],
   "admin:students:reject": ["ADMIN"],
   "admin:students:status": ["ADMIN"], // change status Active/Graduated/Dropped/Suspended
@@ -42,8 +48,15 @@ export const PERMISSION_MAP = {
   "admin:subjects:update": ["ADMIN"],
   "admin:subjects:delete": ["ADMIN"],
 
-  "admin:teachingAssignments:read": ["ADMIN", "PRINCIPAL", "ACCOUNTANT", "TEACHER"],
+  "admin:teachingAssignments:read": [
+    "ADMIN",
+    "PRINCIPAL",
+    "ACCOUNTANT",
+    "TEACHER",
+  ],
   "admin:teachingAssignments:assign": ["ADMIN"],
+  // A teacher only sees their own classes/assignments (nav: "My Classes").
+  "teacher:classes:read": ["TEACHER"],
 
   // === PRINCIPAL: approves academic and payroll work ===
   "principal:attendance:mark": ["PRINCIPAL"],
@@ -52,16 +65,16 @@ export const PERMISSION_MAP = {
   "principal:results:approve": ["PRINCIPAL"],
   "principal:results:reject": ["PRINCIPAL"],
   "principal:results:publish": ["PRINCIPAL"],
-  "principal:payroll:read": ["PRINCIPAL", "ACCOUNTANT"],
+  "principal:payroll:read": ["ADMIN", "PRINCIPAL", "ACCOUNTANT"],
   "principal:payroll:approve": ["PRINCIPAL"],
   "principal:payroll:reject": ["PRINCIPAL"],
   "principal:oversight": ["PRINCIPAL", "ADMIN"],
   "principal:notices:publish": ["PRINCIPAL", "ADMIN"],
 
   // === ACCOUNTANT: handles everything money-related ===
-  "accountant:fees:read": ["ADMIN", "ACCOUNTANT"],
-  "accountant:fees:structure:create": ["ADMIN"],
-  "accountant:fees:structure:assign": ["ADMIN", "ACCOUNTANT"],
+  "accountant:fees:read": ["ADMIN", "PRINCIPAL", "ACCOUNTANT"],
+  "accountant:fees:structure:create": ["ACCOUNTANT"],
+  "accountant:fees:structure:assign": ["ACCOUNTANT"],
   "accountant:fees:custom:add": ["ACCOUNTANT"],
   "accountant:fees:discount:give": ["ACCOUNTANT"],
   "accountant:fees:skip:add": ["ACCOUNTANT"],
@@ -69,16 +82,23 @@ export const PERMISSION_MAP = {
   "accountant:payments:record": ["ACCOUNTANT"],
   "accountant:payments:split": ["ACCOUNTANT"],
   "accountant:receipt:print": ["ACCOUNTANT"],
-  "accountant:receipt:cancel": ["ACCOUNTANT"],
-  "accountant:journal:read": ["ADMIN", "ACCOUNTANT"],
-  "accountant:journal:post": ["ADMIN", "ACCOUNTANT"],
-  "accountant:journal:reverse": ["ADMIN", "ACCOUNTANT"],
+  "accountant:receipt:cancel": ["ADMIN", "ACCOUNTANT"],
+  "accountant:journal:read": ["ADMIN", "PRINCIPAL", "ACCOUNTANT"],
+  "accountant:journal:post": ["ACCOUNTANT"],
+  "accountant:journal:reverse": ["ACCOUNTANT"],
   "accountant:salary:maintain": ["ACCOUNTANT"],
   "accountant:payroll:generate": ["ACCOUNTANT"],
   "accountant:payroll:submit": ["ACCOUNTANT"],
   "accountant:payroll:markPaid": ["ACCOUNTANT"],
+  // An accountant may create notices and address everybody or selected groups.
+  "accountant:notices:manage": ["ACCOUNTANT"],
+  // Scholarships: the accountant defines and grants them, the principal may
+  // only look at what was given.
+  "scholarship:read": ["ADMIN", "PRINCIPAL", "ACCOUNTANT"],
+  "scholarship:manage": ["ADMIN", "ACCOUNTANT"],
 
   // === TEACHER: works with own assigned batch, term and subject ===
+  "teacher:dashboard:read": ["TEACHER"],
   "teacher:attendance:take": ["TEACHER"],
   "teacher:attendance:own": ["TEACHER"],
   "teacher:attendance:percentage": ["TEACHER"],
@@ -91,6 +111,12 @@ export const PERMISSION_MAP = {
   "teacher:results:submit": ["TEACHER"],
   "teacher:results:own": ["TEACHER"],
   "teacher:notices:read": ["TEACHER"],
+  // A teacher may create a notice for the classes they teach.
+  "teacher:notices:create": ["TEACHER"],
+  // A teacher may READ their own batch pay only — creating/changing a batch
+  // pay is an accountant/admin task because it feeds straight into payroll.
+  "teacher:batchPay:read": ["TEACHER"],
+  "teacher:batchPay:manage": ["ADMIN", "ACCOUNTANT"],
 
   // === STAFF: views own profile, payslips and attendance, reads notices ===
   "staff:profile:own": ["STAFF"],
@@ -99,18 +125,56 @@ export const PERMISSION_MAP = {
   "staff:notices:read": ["STAFF"],
 
   // === Cross-role / system ===
-  "system:dashboard:read": ["ADMIN", "PRINCIPAL", "ACCOUNTANT", "TEACHER", "STAFF"],
-  "admin:lookups:read": ["ADMIN"],
-  "admin:settings:read": ["ADMIN"],
-  "admin:notices:read": ["ADMIN", "PRINCIPAL"],
-  "system:notices:read": ["ADMIN", "PRINCIPAL", "ACCOUNTANT", "TEACHER", "STAFF"],
-  "system:notices:create": ["ADMIN"],
-  "system:fiscalYear:read": ["ADMIN"],
+  "system:dashboard:read": [
+    "ADMIN",
+    "PRINCIPAL",
+    "ACCOUNTANT",
+    "TEACHER",
+    "STAFF",
+  ],
+  "admin:lookups:read": ["ADMIN", "PRINCIPAL", "ACCOUNTANT", "TEACHER"],
+  "admin:settings:read": ["ADMIN", "PRINCIPAL"],
+  "admin:notices:read": [
+    "ADMIN",
+    "PRINCIPAL",
+    "ACCOUNTANT",
+    "TEACHER",
+    "STAFF",
+  ],
+  "system:notices:read": [
+    "ADMIN",
+    "PRINCIPAL",
+    "ACCOUNTANT",
+    "TEACHER",
+    "STAFF",
+  ],
+  "system:notices:create": ["ADMIN", "PRINCIPAL"],
+  "system:fiscalYear:read": [
+    "ADMIN",
+    "PRINCIPAL",
+    "ACCOUNTANT",
+    "TEACHER",
+    "STAFF",
+  ],
+  "admin:audit:read": ["ADMIN", "PRINCIPAL"],
+  "admin:holidays:read": [
+    "ADMIN",
+    "PRINCIPAL",
+    "ACCOUNTANT",
+    "TEACHER",
+    "STAFF",
+  ],
+  // The help page (role guide, shortcuts, modules, setup) is open to everyone.
+  "system:help:read": ["ADMIN", "PRINCIPAL", "ACCOUNTANT", "TEACHER", "STAFF"],
+  "admin:dashboard:read": ["ADMIN"],
 } as const;
 
 export type PermissionKey = keyof typeof PERMISSION_MAP;
 
-function hasPermission(role: T_Role | undefined, permission: PermissionKey): boolean {
+function hasPermission(
+  role: T_Role | undefined,
+  permission: PermissionKey,
+): boolean {
   if (!role) return false;
   const allowed: readonly string[] = PERMISSION_MAP[permission];
   return allowed.includes(role);
@@ -163,7 +227,10 @@ export function NavItem({
           {label}
         </button>
       ) : href ? (
-        <a className="block rounded px-3 py-1.5 text-sm font-medium hover:bg-muted" href={href}>
+        <a
+          className="block rounded px-3 py-1.5 text-sm font-medium hover:bg-muted"
+          href={href}
+        >
           {label}
         </a>
       ) : null}

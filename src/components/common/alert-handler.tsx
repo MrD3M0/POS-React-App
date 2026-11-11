@@ -24,19 +24,23 @@ const config: Record<AlertVariant, { icon: React.ReactNode; styles: string }> =
   {
     success: {
       icon: <CheckCircle2 className="h-4 w-4" />,
-      styles: "bg-green-50 text-green-800 border-green-200",
+      styles:
+        "bg-emerald-500/10 text-emerald-700 border-emerald-500/30 dark:text-emerald-300 dark:border-emerald-500/40",
     },
     error: {
       icon: <AlertCircle className="h-4 w-4" />,
-      styles: "bg-red-50 text-red-800 border-red-200",
+      styles:
+        "bg-red-500/10 text-red-700 border-red-500/30 dark:text-red-300 dark:border-red-500/40",
     },
     warning: {
       icon: <TriangleAlert className="h-4 w-4" />,
-      styles: "bg-yellow-50 text-yellow-800 border-yellow-200",
+      styles:
+        "bg-amber-500/10 text-amber-700 border-amber-500/30 dark:text-amber-300 dark:border-amber-500/40",
     },
     info: {
       icon: <Info className="h-4 w-4" />,
-      styles: "bg-blue-50 text-blue-800 border-blue-200",
+      styles:
+        "bg-sky-500/10 text-sky-700 border-sky-500/30 dark:text-sky-300 dark:border-sky-500/40",
     },
   };
 

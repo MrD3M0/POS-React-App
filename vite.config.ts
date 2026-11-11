@@ -6,7 +6,19 @@ import { createRequire } from "module";
 import tailwindcss from "@tailwindcss/vite";
 
 const require = createRequire(import.meta.url);
-const esToolkitRoot = path.dirname(require.resolve("es-toolkit/package.json"));
+// es-toolkit is a transitive dependency (of recharts). With pnpm's strict
+// layout it is not resolvable from the project root, so look it up next to
+// recharts first and fall back to a plain resolution (npm / hoisted layouts).
+const resolveEsToolkit = () => {
+  try {
+    return require.resolve("es-toolkit/package.json");
+  } catch {
+    return require.resolve("es-toolkit/package.json", {
+      paths: [path.dirname(require.resolve("recharts/package.json"))],
+    });
+  }
+};
+const esToolkitRoot = path.dirname(resolveEsToolkit());
 
 // recharts imports these `es-toolkit/compat/*` subpaths, which es-toolkit only
 // ships as CJS. Its CJS sources use variable names that collide with the dev

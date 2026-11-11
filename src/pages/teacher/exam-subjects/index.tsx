@@ -20,6 +20,11 @@ import {
 } from "./service/service";
 import CreateExamSubjectForm from "./components/create-exam-subject-form";
 import EditExamSubjectForm from "./components/edit-exam-subject-form";
+import {
+  classNameLabel,
+  examSubjectLabel,
+  subjectLabel,
+} from "@/lib/teaching-assignment-label";
 
 const LIMIT = 20;
 
@@ -27,22 +32,44 @@ function examName(r: T_EXAM_SUBJECT): string {
   return r.exam?.name ?? (r.examName as string | undefined) ?? "—";
 }
 function subjectCode(r: T_EXAM_SUBJECT): string {
-  const s = r.batchTermSubject?.subject;
-  return s?.code ?? s?.name ?? "—";
+  const label = examSubjectLabel(r);
+  if (label) return label;
+  const fallback = subjectLabel(r.batchTermSubject?.subject);
+  return fallback || "—";
 }
 function toRows(raw: unknown): { rows: T_EXAM_SUBJECT[]; total: number } {
-  const r = raw as { data?: T_EXAM_SUBJECT[] | { data?: T_EXAM_SUBJECT[]; pagination?: { total?: number } } };
-  const rows: T_EXAM_SUBJECT[] = Array.isArray(r?.data) ? r.data : Array.isArray(r?.data?.data) ? r.data.data : [];
-  const total: number = Number(!Array.isArray(r?.data) ? r?.data?.pagination?.total : undefined) || rows.length;
+  const r = raw as {
+    data?:
+      | T_EXAM_SUBJECT[]
+      | { data?: T_EXAM_SUBJECT[]; pagination?: { total?: number } };
+  };
+  const rows: T_EXAM_SUBJECT[] = Array.isArray(r?.data)
+    ? r.data
+    : Array.isArray(r?.data?.data)
+      ? r.data.data
+      : [];
+  const total: number =
+    Number(!Array.isArray(r?.data) ? r?.data?.pagination?.total : undefined) ||
+    rows.length;
   return { rows, total };
 }
 function toBtsRows(raw: unknown): T_BATCH_TERM_SUBJECT[] {
-  const r = raw as { data?: T_BATCH_TERM_SUBJECT[] | { data?: T_BATCH_TERM_SUBJECT[] } };
-  return Array.isArray(r?.data) ? r.data : Array.isArray(r?.data?.data) ? r.data.data : [];
+  const r = raw as {
+    data?: T_BATCH_TERM_SUBJECT[] | { data?: T_BATCH_TERM_SUBJECT[] };
+  };
+  return Array.isArray(r?.data)
+    ? r.data
+    : Array.isArray(r?.data?.data)
+      ? r.data.data
+      : [];
 }
 function toExamRows(raw: unknown): T_EXAM[] {
   const r = raw as { data?: T_EXAM[] | { data?: T_EXAM[] } };
-  return Array.isArray(r?.data) ? r.data : Array.isArray(r?.data?.data) ? r.data.data : [];
+  return Array.isArray(r?.data)
+    ? r.data
+    : Array.isArray(r?.data?.data)
+      ? r.data.data
+      : [];
 }
 
 export default function TeacherExamSubjectsPage() {
@@ -68,12 +95,22 @@ export default function TeacherExamSubjectsPage() {
 
   const createMut = useMutation({
     mutationFn: (data: Record<string, unknown>) => createExamSubject(data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: [QUERY_KEYS.TEACHER_EXAM_SUBJECTS] }); toast.success("Exam subject created"); setMode("list"); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [QUERY_KEYS.TEACHER_EXAM_SUBJECTS] });
+      toast.success("Exam subject created");
+      setMode("list");
+    },
     onError: () => toast.error("Failed to create exam subject"),
   });
   const updateMut = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) => updateExamSubject(id, data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: [QUERY_KEYS.TEACHER_EXAM_SUBJECTS] }); toast.success("Exam subject updated"); setMode("list"); setEditRecord(null); },
+    mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
+      updateExamSubject(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [QUERY_KEYS.TEACHER_EXAM_SUBJECTS] });
+      toast.success("Exam subject updated");
+      setMode("list");
+      setEditRecord(null);
+    },
     onError: () => toast.error("Failed to update exam subject"),
   });
 
@@ -85,23 +122,73 @@ export default function TeacherExamSubjectsPage() {
   const btsList = toBtsRows(btsQuery.data);
 
   const head: T_TableHead<T_EXAM_SUBJECT>[] = [
-    { key: "exam", headName: "Exam", minWidth: 220, render: (r) => examName(r) },
-    { key: "subjectCode", headName: "Subject Code", minWidth: 160, render: (r) => subjectCode(r) },
-    { key: "fullMarks", headName: "Full Marks", minWidth: 120, render: (r) => String(r.fullMarks ?? "—") },
-    { key: "passMarks", headName: "Pass Marks", minWidth: 120, render: (r) => String(r.passMarks ?? "—") },
-    { key: "examDateBs", headName: "Exam Date (BS)", minWidth: 140, render: (r) => r.examDateBs ?? "—" },
+    {
+      key: "exam",
+      headName: "Exam",
+      minWidth: 220,
+      render: (r) => examName(r),
+    },
+    {
+      key: "subjectCode",
+      headName: "Subject / Teacher",
+      minWidth: 260,
+      render: (r) => subjectCode(r),
+    },
+    {
+      key: "class",
+      headName: "Class",
+      minWidth: 180,
+      render: (r) => classNameLabel(r.batchTermSubject?.batchTerm) || "—",
+    },
+    {
+      key: "fullMarks",
+      headName: "Full Marks",
+      minWidth: 120,
+      render: (r) => String(r.fullMarks ?? "—"),
+    },
+    {
+      key: "passMarks",
+      headName: "Pass Marks",
+      minWidth: 120,
+      render: (r) => String(r.passMarks ?? "—"),
+    },
+    {
+      key: "examDateBs",
+      headName: "Exam Date (BS)",
+      minWidth: 140,
+      render: (r) => r.examDateBs ?? "—",
+    },
   ];
 
   return (
     <div className="p-5">
       <PageHeader
         title="Exam Subjects"
-        breadCrumbItems={[{ title: "Teacher", link: "/teacher" }, { title: "Exam Subjects", link: "/teacher/exam-subjects" }]}
+        breadCrumbItems={[
+          { title: "Teacher", link: "/teacher" },
+          { title: "Exam Subjects", link: "/teacher/exam-subjects" },
+        ]}
       />
       <div className="flex justify-between mb-4">
         <div className="flex gap-2">
-          <button onClick={() => { setMode("list"); setEditRecord(null); }} className={`rounded px-3 py-1 text-sm font-medium ${mode === "list" ? "bg-primary text-primary-foreground" : "bg-secondary"}`}>List</button>
-          <button onClick={() => { setMode("create"); setEditRecord(null); }} className={`rounded px-3 py-1 text-sm font-medium ${mode === "create" ? "bg-primary text-primary-foreground" : "bg-secondary"}`}>Create Exam Subject</button>
+          <button
+            onClick={() => {
+              setMode("list");
+              setEditRecord(null);
+            }}
+            className={`rounded px-3 py-1 text-sm font-medium ${mode === "list" ? "bg-primary text-primary-foreground" : "bg-secondary"}`}
+          >
+            List
+          </button>
+          <button
+            onClick={() => {
+              setMode("create");
+              setEditRecord(null);
+            }}
+            className={`rounded px-3 py-1 text-sm font-medium ${mode === "create" ? "bg-primary text-primary-foreground" : "bg-secondary"}`}
+          >
+            Create Exam Subject
+          </button>
         </div>
       </div>
 
@@ -109,12 +196,24 @@ export default function TeacherExamSubjectsPage() {
         <GenericTable
           tableHeads={head}
           data={rows}
-          onSearch={(v) => { setSearch(v); setPage(1); }}
+          onSearch={(v) => {
+            setSearch(v);
+            setPage(1);
+          }}
           searchPlaceholder="Search exam subjects..."
           emptyTitle="No exam subjects yet."
           pagination={{ page, limit: LIMIT, total, onPageChange: setPage }}
           renderActions={(r) => (
-            <Button variant="outline" size="sm" onClick={() => { setEditRecord(r); setMode("edit"); }}>Edit</Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setEditRecord(r);
+                setMode("edit");
+              }}
+            >
+              Edit
+            </Button>
           )}
           onDelete={(r) => setDeleteId(r.id)}
         />
@@ -141,7 +240,10 @@ export default function TeacherExamSubjectsPage() {
           examsLoading={examsQuery.isLoading}
           btsLoading={btsQuery.isLoading}
           isPending={updateMut.isPending}
-          onCancel={() => { setMode("list"); setEditRecord(null); }}
+          onCancel={() => {
+            setMode("list");
+            setEditRecord(null);
+          }}
           onSubmit={(id, payload) => updateMut.mutate({ id, data: payload })}
         />
       )}
@@ -153,7 +255,11 @@ export default function TeacherExamSubjectsPage() {
           itemId={deleteId}
           itemName="Exam subject"
           onDelete={deleteExamSubject}
-          onSuccess={() => qc.invalidateQueries({ queryKey: [QUERY_KEYS.TEACHER_EXAM_SUBJECTS] })}
+          onSuccess={() =>
+            qc.invalidateQueries({
+              queryKey: [QUERY_KEYS.TEACHER_EXAM_SUBJECTS],
+            })
+          }
         />
       )}
     </div>

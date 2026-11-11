@@ -27,6 +27,7 @@ export const UrlConstants = {
   EXAM_SUBJECT_URL: "/exam-subject",
   EXAM_TYPE_URL: "/exam-type",
   FEE_HEAD_URL: "/fee-head",
+  HOLIDAY_URL: "/holiday",
   FEE_INSTALLMENT_URL: "/fee-installment",
   FEE_PAYMENT_URL: "/fee-payment",
   FEE_PAYMENT_ALLOCATION_URL: "/fee-payment-allocation",
@@ -41,6 +42,8 @@ export const UrlConstants = {
   LEAVE_TYPE_URL: "/leave-type",
   NOTICE_URL: "/notice",
   NOTICE_TARGET_URL: "/notice-target",
+  NOTIFICATION_URL: "/notification",
+  SCHOLARSHIP_URL: "/scholarship",
   OTP_URL: "/otp",
   PAYMENT_METHOD_URL: "/payment-method",
   PAYROLL_URL: "/payroll",
@@ -105,8 +108,10 @@ export const UrlConstants = {
   ACCOUNTANT_PAYROLL_WIZARD_URL: "/payroll",
   ACCOUNTANT_PAYSLIPS_URL: "/payslip",
   ACCOUNTANT_ATTENDANCE_URL: "/employee-attendance",
+  ACCOUNTANT_DASHBOARD_URL: "/accountant/dashboard",
 
   // ── Teacher page-area aliases ────────────────────────────────────────────
+  TEACHER_DASHBOARD_URL: "/teacher/dashboard",
   TEACHER_MY_CLASSES_URL: "/teaching-assignment",
   TEACHER_ATTENDANCE_URL: "/student-attendance",
   TEACHER_EXAMS_URL: "/exam",
