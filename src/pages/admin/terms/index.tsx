@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import PageHeader from "@/components/common/page-header";
 import ScreenLoader from "@/components/ui/screen-loader";
@@ -29,7 +30,14 @@ export default function AdminTermsPage() {
 
   const head: T_TableHead<T_TERM>[] = [
     { key: "termNumber", headName: "#", render: (t) => `#${t.termNumber}` },
-    { key: "name", headName: "Name" },
+    { key: "name", headName: "Name", render: (t) => (
+      <Link
+        to={`/admin/terms/${t.id}/subjects`}
+        className="font-medium text-primary hover:underline"
+      >
+        {t.name}
+      </Link>
+    ) },
     { key: "batchId", headName: "Batch ID" },
     { key: "startDateBs", headName: "Start Date (BS)", render: (t) => t.startDateBs || "—" },
     { key: "endDateBs", headName: "End Date (BS)", render: (t) => t.endDateBs || "—" },

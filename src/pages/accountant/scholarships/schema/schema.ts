@@ -4,8 +4,8 @@ export const scholarshipSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(150),
   code: z.string().trim().max(50).optional().or(z.literal("")),
   type: z.enum(["PERCENT", "FIXED"]),
-  value: z.coerce
-    .number({ invalid_type_error: "Enter a number" })
+  value: z
+    .number("Enter a number")
     .positive("Must be greater than 0")
     .max(100000000, "Too large"),
   description: z.string().trim().max(500).optional().or(z.literal("")),

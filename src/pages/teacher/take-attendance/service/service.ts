@@ -116,7 +116,7 @@ export async function listTeachingAssignments(): Promise<
   const res = await axiosInstance.get(
     `${UrlConstants.TEACHER_MY_CLASSES_URL}`,
     {
-      params: { page: 1, limit: 999 },
+      params: { page: 1, limit: -1 },
     },
   );
   return toRows<T_TEACHER_ASSIGNMENT>(res.data);
@@ -124,7 +124,7 @@ export async function listTeachingAssignments(): Promise<
 
 export async function listActivePeriods(): Promise<T_PERIOD[]> {
   const res = await axiosInstance.get(`${UrlConstants.PERIOD_URL}`, {
-    params: { page: 1, limit: 999, isActive: true },
+    params: { page: 1, limit: -1, isActive: true },
   });
   return toRows<T_PERIOD>(res.data);
 }
@@ -142,7 +142,7 @@ export async function findAttendanceSession(input: {
   const res = await axiosInstance.get(
     `${UrlConstants.TEACHER_ATTENDANCE_SESSIONS_URL}`,
     {
-      params: { page: 1, limit: 999, search: input.dateBs },
+      params: { page: 1, limit: -1, search: input.dateBs },
     },
   );
   const sessions = toRows<T_ATTENDANCE_SESSION>(res.data);
@@ -206,7 +206,7 @@ export async function listApprovedBatchStudents(
   const res = await axiosInstance.get(`${UrlConstants.TEACHER_STUDENTS_URL}`, {
     params: {
       page: 1,
-      limit: 999,
+      limit: -1,
       status: "ACTIVE",
       approvalStatus: "APPROVED",
     },

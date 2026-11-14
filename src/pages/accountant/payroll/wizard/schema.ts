@@ -2,8 +2,9 @@ import { z } from "zod";
 
 export const generatePayrollSchema = z.object({
   fiscalYearId: z.string().uuid("Fiscal year is required"),
-  yearBs: z.coerce.number().int().min(2000).max(2099),
-  monthBs: z.coerce.number().int().min(1, "Month is required").max(12),
+  // The form converts the input to a number before it reaches the schema.
+  yearBs: z.number().int().min(2000).max(2099),
+  monthBs: z.number().int().min(1, "Month is required").max(12),
   remarks: z.string().max(1000).optional().nullable(),
 });
 

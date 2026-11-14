@@ -28,11 +28,11 @@ export default function TeacherResultsPage() {
   });
   const examsQuery = useQuery({
     queryKey: [QUERY_KEYS.TEACHER_EXAMS, "results-picker", "unlimited"],
-    queryFn: () => listExams({ page: 1, limit: 999 }),
+    queryFn: () => listExams({ page: 1, limit: -1 }),
   });
   const studentsQuery = useQuery({
     queryKey: [QUERY_KEYS.TEACHER_STUDENTS, "results-picker", "unlimited"],
-    queryFn: () => listStudentsForTeacher({ page: 1, limit: 999 }),
+    queryFn: () => listStudentsForTeacher({ page: 1, limit: -1 }),
   });
 
   const genMut = useMutation({

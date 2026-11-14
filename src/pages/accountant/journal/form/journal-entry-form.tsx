@@ -36,11 +36,11 @@ export default function JournalEntryForm({ onClose }: JournalEntryFormProps) {
 
   const fiscalYearsQuery = useQuery({
     queryKey: ["accountant-fiscal-years", "unlimited"],
-    queryFn: () => listFiscalYears({ page: 1, limit: 999 }),
+    queryFn: () => listFiscalYears({ page: 1, limit: -1 }),
   });
   const accountsQuery = useQuery({
     queryKey: ["accountant-accounts", "unlimited"],
-    queryFn: () => listAccounts({ page: 1, limit: 999 }),
+    queryFn: () => listAccounts({ page: 1, limit: -1 }),
   });
 
   const fiscalYearOptions = (fiscalYearsQuery.data?.data?.data ?? []).map((fy) => ({

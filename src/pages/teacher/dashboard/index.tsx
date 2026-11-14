@@ -1,15 +1,22 @@
 import { useEffect } from "react";
+import { Link } from "react-router-dom";
 import {
   BookText,
   CalendarClock,
+  ClipboardCheck,
   ClipboardList,
   GraduationCap,
   ListChecks,
   RefreshCw,
+  Send,
+  Wallet,
 } from "lucide-react";
 import PageHeader from "@/components/common/page-header";
 import AlertHandler from "@/components/common/alert-handler";
 import Button from "@/components/ui/button";
+import { useRoleDashboard } from "@/pages/dashboard/hooks/use-role-dashboard";
+import { RoleKpi } from "@/pages/dashboard/components/dashboard-widgets";
+import { formatNpr } from "@/lib/money";
 import { useTeacherDashboard } from "./hooks/use-teacher-dashboard";
 import StatCard from "./components/stat-card";
 import AttendanceTrendChart from "./components/attendance-trend-chart";
@@ -21,6 +28,44 @@ import LowAttendanceTable from "./components/low-attendance-table";
 import UpcomingExamsTable from "./components/upcoming-exams-table";
 import RecentResultsTable from "./components/recent-results-table";
 import { formatTrend } from "./dashboard-utils";
+
+/**
+ * Aggregate payload from `GET /dashboard/teacher`: one call for the cards that
+ * are not part of the per-widget teacher dashboard endpoints.
+ */
+type T_TeacherPulse = {
+  checkIn?: {
+    available?: boolean;
+    status?: string;
+    checkInTime?: string | null;
+    note?: string;
+  };
+  todayClasses?: unknown[];
+  marksNeedingEntry?: unknown[];
+  rejectedSubjects?: Array<{
+    id: string;
+    subjectName: string;
+    batchName: string;
+    termName: string;
+    rejectionReason: string | null;
+  }>;
+  submissionStatus?: {
+    draft: number;
+    pending: number;
+    approved: number;
+    rejected: number;
+  };
+  addedStudentsPending?: Array<{ id: string; name: string }>;
+  batchPay?: { expectedMonthly: number; items: unknown[] };
+};
+
+function formatTime(value: string | null | undefined): string {
+  if (!value) return "—";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? "—"
+    : date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+}
 
 /**
  * Every card loads on its own (its own API call), so a card that fails shows
@@ -48,6 +93,8 @@ export default function TeacherDashboardPage() {
   } = useTeacherDashboard();
 
   const stats = statsQuery.data;
+  const pulseQuery = useRoleDashboard<T_TeacherPulse>("teacher");
+  const pulse = pulseQuery.data;
 
   // Keep the exam-batch selector in sync with the value the server applied.
   useEffect(() => {
@@ -67,7 +114,8 @@ export default function TeacherDashboardPage() {
     distributionQuery.isFetching ||
     passRateQuery.isFetching ||
     recentResultsQuery.isFetching ||
-    lowAttendanceQuery.isFetching;
+    lowAttendanceQuery.isFetching ||
+    pulseQuery.isFetching;
 
   const refreshAll = () => {
     void statsQuery.refetch();
@@ -79,6 +127,7 @@ export default function TeacherDashboardPage() {
     void passRateQuery.refetch();
     void recentResultsQuery.refetch();
     void lowAttendanceQuery.refetch();
+    void pulseQuery.refetch();
   };
 
   return (
@@ -109,6 +158,92 @@ export default function TeacherDashboardPage() {
           </div>
         }
       />
+
+      {/* Pulse — one aggregate request for the action cards */}
+      <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        <RoleKpi
+          title="Today's check-in"
+          value={
+            pulse?.checkIn?.status === "NOT_MARKED" || !pulse?.checkIn?.status
+              ? "Not marked"
+              : pulse.checkIn.status
+          }
+          helper={
+            pulse?.checkIn?.available === false
+              ? pulse.checkIn.note
+              : pulse?.checkIn?.checkInTime
+                ? `Recorded at ${formatTime(pulse.checkIn.checkInTime)}`
+                : "Attendance is recorded by the principal."
+          }
+          icon={ClipboardCheck}
+          isLoading={pulseQuery.isLoading}
+          isError={pulseQuery.isError}
+          onRetry={() => void pulseQuery.refetch()}
+        />
+        <RoleKpi
+          title="Marks to enter"
+          value={pulse?.marksNeedingEntry?.length ?? 0}
+          helper="Exams with incomplete marks"
+          icon={ListChecks}
+          isLoading={pulseQuery.isLoading}
+          isError={pulseQuery.isError}
+          onRetry={() => void pulseQuery.refetch()}
+        />
+        <RoleKpi
+          title="Rejected subjects"
+          value={pulse?.submissionStatus?.rejected ?? 0}
+          helper="Fix the reason and re-submit"
+          icon={Send}
+          isLoading={pulseQuery.isLoading}
+          isError={pulseQuery.isError}
+          onRetry={() => void pulseQuery.refetch()}
+        />
+        <RoleKpi
+          title="Students added"
+          value={pulse?.addedStudentsPending?.length ?? 0}
+          helper="Waiting for admin approval"
+          icon={GraduationCap}
+          isLoading={pulseQuery.isLoading}
+          isError={pulseQuery.isError}
+          onRetry={() => void pulseQuery.refetch()}
+        />
+        <RoleKpi
+          title="Expected batch pay"
+          value={
+            pulse?.batchPay ? formatNpr(pulse.batchPay.expectedMonthly) : "—"
+          }
+          helper="This BS month"
+          icon={Wallet}
+          isLoading={pulseQuery.isLoading}
+          isError={pulseQuery.isError}
+          onRetry={() => void pulseQuery.refetch()}
+        />
+      </div>
+
+      {pulse && (pulse.rejectedSubjects?.length ?? 0) > 0 ? (
+        <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/5 p-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm font-medium text-destructive">
+              {pulse.rejectedSubjects?.length} subject(s) were rejected by the
+              principal
+            </p>
+            <Button asChild variant="outline" size="sm">
+              <Link to="/teacher/marks/submit">Open Marks Submission</Link>
+            </Button>
+          </div>
+          <ul className="mt-2 space-y-1 text-xs text-destructive">
+            {pulse.rejectedSubjects?.slice(0, 3).map((subject) => (
+              <li key={subject.id}>
+                {subject.subjectName} · {subject.batchName} ·{" "}
+                {subject.termName}
+                {subject.rejectionReason
+                  ? ` — ${subject.rejectionReason}`
+                  : ""}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       {/* Row 1 — stat cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">

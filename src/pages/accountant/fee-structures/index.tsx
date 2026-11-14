@@ -148,10 +148,6 @@ export default function AccountantFeeStructuresPage() {
       <GenericTable
         tableHeads={head}
         data={rows}
-        onEdit={(structure) => {
-          setEditing(structure);
-          setFormOpen(true);
-        }}
         onDelete={(structure) => setDeleteId(structure.id)}
         onSearch={(value) => {
           setSearch(value);
@@ -162,6 +158,16 @@ export default function AccountantFeeStructuresPage() {
         pagination={{ page, limit: LIMIT, total, onPageChange: setPage }}
         renderActions={(structure) => (
           <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setEditing(structure);
+                setFormOpen(true);
+              }}
+            >
+              Edit
+            </Button>
             <Button
               variant="outline"
               size="sm"

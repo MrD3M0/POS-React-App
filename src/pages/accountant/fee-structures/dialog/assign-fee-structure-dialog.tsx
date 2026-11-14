@@ -15,7 +15,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Form } from "@/components/form";
 import {
   assignFeeStructureToStudent,
   assignFeeStructureToStudents,
@@ -146,7 +145,7 @@ export default function AssignFeeStructureDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <Form>
+        <div className="space-y-3">
           {mode === "student" ? (
             <div className="space-y-2">
               <Label htmlFor="assign-student">Student</Label>
@@ -200,7 +199,7 @@ export default function AssignFeeStructureDialog({
               {mode === "student" ? "Assign" : "Assign to Batch"}
             </Button>
           </DialogFooter>
-        </Form>
+        </div>
       </DialogContent>
     </Dialog>
   );

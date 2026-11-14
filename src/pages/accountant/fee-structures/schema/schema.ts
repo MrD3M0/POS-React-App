@@ -2,17 +2,10 @@ import { z } from "zod";
 
 export const feeStructureItemSchema = z.object({
   feeHeadId: z.string().min(1, "Select a fee head"),
-  /** null / empty = one-time fee (e.g. the admission fee). */
-  termNumber: z
-    .union([z.number().int().min(1), z.literal(""), z.null()])
-    .optional()
-    .transform((value) =>
-      value === "" || value === null || value === undefined
-        ? null
-        : Number(value),
-    ),
-  amount: z.coerce
-    .number({ invalid_type_error: "Enter an amount" })
+  /** null = one-time fee (e.g. the admission fee). */
+  termNumber: z.number().int().min(1).nullable(),
+  amount: z
+    .number("Enter an amount")
     .positive("Amount must be greater than 0"),
 });
 

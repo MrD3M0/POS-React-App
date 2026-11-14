@@ -23,7 +23,7 @@ export default function TeacherStudentsPage() {
 
   const batchesQuery = useQuery({
     queryKey: [QUERY_KEYS.ADMIN_BATCH_LIST, "teacher-student-filter", "unlimited"],
-    queryFn: () => listBatches({ page: 1, limit: 999 }),
+    queryFn: () => listBatches({ page: 1, limit: -1 }),
   });
 
   const query = useQuery({
@@ -54,7 +54,7 @@ export default function TeacherStudentsPage() {
   const batches = batchesQuery.data?.data?.data ?? [];
   const batchOptions = [
     { label: "All batches", value: "" },
-    ...batches.map((b) => ({ label: b.name || b.id, value: b.id, searchValues: `${b.name ?? ""} ${b.batchYear ?? ""}` })),
+    ...batches.map((b) => ({ label: b.name || b.id, value: b.id, searchValues: `${b.name ?? ""}` })),
   ];
   const approvalOptions = [
     { label: "All approvals", value: "" },
@@ -81,7 +81,7 @@ export default function TeacherStudentsPage() {
                 placeholder={batchesQuery.isLoading ? "Loading batches..." : "All batches"}
                 searchPlaceholder="Search batches..."
                 loading={batchesQuery.isLoading}
-                isClearable
+                withClear
               />
             </div>
             <div className="min-w-[160px]">

@@ -121,7 +121,7 @@ export default function TeacherAttendanceSessionsPage() {
   });
   const classQuery = useQuery({
     queryKey: [QUERY_KEYS.TEACHER_MY_CLASSES, "unlimited"],
-    queryFn: () => listMyClasses({ page: 1, limit: 999 }),
+    queryFn: () => listMyClasses({ page: 1, limit: -1 }),
   });
   const periodQuery = useQuery({
     queryKey: [
@@ -129,7 +129,7 @@ export default function TeacherAttendanceSessionsPage() {
       "period-picker",
       "unlimited",
     ],
-    queryFn: () => listPeriods({ page: 1, limit: 999 }),
+    queryFn: () => listPeriods({ page: 1, limit: -1 }),
   });
   const rosterQuery = useQuery({
     queryKey: [

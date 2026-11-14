@@ -7,7 +7,7 @@ import GenericTable from "@/components/generic-table";
 import Button from "@/components/ui/button";
 import Input from "@/components/ui/input";
 import { QUERY_KEYS } from "@/lib/query-keys";
-import { listPayments } from "./service/service";
+import { listPayments, type T_PAYMENT } from "./service/service";
 import SplitPaymentDialog from "./dialog/split-payment-dialog";
 import { useState } from "react";
 
@@ -61,14 +61,3 @@ export default function AccountantPaymentsPage() {
     </div>
   );
 }
-
-type T_PAYMENT = {
-  id: string;
-  studentName: string;
-  courseName: string;
-  amountDue: number;
-  status: "OUTSTANDING" | "PARTIAL" | "PAID" | "CANCELLED";
-  receiptNo?: string;
-  paidDate?: string;
-  methodLines?: { methodId: string; methodCode: string; amount: number; referenceNo?: string }[];
-};

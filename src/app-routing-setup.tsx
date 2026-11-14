@@ -12,6 +12,12 @@ import { LogIn } from "@/pages/auth/login";
 // Public registration removed: only ADMIN creates accounts.
 
 import DashboardPage from "@/pages/dashboard/dashboard-page";
+import RoleDashboardRedirect, {
+  RoleOnly,
+} from "@/pages/dashboard/role-dashboard-redirect";
+import AdminDashboardPage from "@/pages/admin/dashboard/index";
+import PrincipalDashboardPage from "@/pages/principal/dashboard/index";
+import StaffDashboardPage from "@/pages/staff/dashboard/index";
 import HelpPage from "@/pages/help/index";
 import ForbiddenPage from "@/pages/errors/403";
 
@@ -34,6 +40,7 @@ import AdminBatchEditPage from "@/pages/admin/batches/edit";
 import AdminTermsPage from "@/pages/admin/terms/index";
 import AdminTermCreatePage from "@/pages/admin/terms/create";
 import AdminTermEditPage from "@/pages/admin/terms/edit";
+import AdminTermSubjectsPage from "@/pages/admin/terms/subjects/index";
 import AdminSubjectsPage from "@/pages/admin/subjects/index";
 import AdminSubjectCreatePage from "@/pages/admin/subjects/create";
 import AdminSubjectEditPage from "@/pages/admin/subjects/edit";
@@ -74,7 +81,6 @@ import AccountantPayrollWizardPage from "@/pages/accountant/payroll/wizard/index
 import AccountantPayslipsPage from "@/pages/accountant/payslips/index";
 import AccountantListPage from "@/pages/accountant/accountants/index";
 import AccountantCreatePage from "@/pages/accountant/accountants/create";
-import AccountantEditPage from "@/pages/accountant/accountants/edit";
 import AccountantAttendancePage from "@/pages/accountant/attendance/index";
 import AccountantNoticesPage from "@/pages/accountant/notices/index";
 import CreateAccountantNoticePage from "@/pages/accountant/notices/create";
@@ -94,6 +100,7 @@ import TeacherExamsPage from "@/pages/teacher/exams/index";
 import TeacherExamCreatePage from "@/pages/teacher/exams/create/index";
 import TeacherExamEditPage from "@/pages/teacher/exams/edit/index";
 import TeacherMarksEntryPage from "@/pages/teacher/marks/index";
+import TeacherMarksSubmissionPage from "@/pages/teacher/marks-submission/index";
 import TeacherResultsPage from "@/pages/teacher/results/index";
 import TeacherStudentsPage from "@/pages/teacher/students/index";
 import TeacherStudentIdCardPage from "@/pages/teacher/students/id-card/index";
@@ -134,7 +141,8 @@ const router = createBrowserRouter([
       {
         element: <SidebarLayout />,
         children: [
-          { path: "/dashboard", element: <DashboardPage /> },
+          // `/dashboard` forwards every role to its own dashboard.
+          { path: "/dashboard", element: <RoleDashboardRedirect /> },
           { path: "/help", element: <HelpPage /> },
           {
             path: "/notices",
@@ -146,6 +154,11 @@ const router = createBrowserRouter([
           },
 
           // --- Admin modules ---
+          { path: "/admin", element: (
+            <RoleOnly roles={["ADMIN"]}>
+              <AdminDashboardPage />
+            </RoleOnly>
+          ) },
           { path: "/admin/users", element: <AdminUsersPage /> },
           { path: "/admin/users/create", element: <AdminUserCreatePage /> },
 
@@ -184,6 +197,10 @@ const router = createBrowserRouter([
           { path: "/admin/terms", element: <AdminTermsPage /> },
           { path: "/admin/terms/create", element: <AdminTermCreatePage /> },
           { path: "/admin/terms/edit/:id", element: <AdminTermEditPage /> },
+          {
+            path: "/admin/terms/:id/subjects",
+            element: <AdminTermSubjectsPage />,
+          },
 
           { path: "/admin/subjects", element: <AdminSubjectsPage /> },
           {
@@ -235,6 +252,11 @@ const router = createBrowserRouter([
           },
 
           // --- Principal modules ---
+          { path: "/principal", element: (
+            <RoleOnly roles={["PRINCIPAL", "ADMIN"]}>
+              <PrincipalDashboardPage />
+            </RoleOnly>
+          ) },
           {
             path: "/principal/attendance",
             element: <PrincipalAttendancePage />,
@@ -267,6 +289,11 @@ const router = createBrowserRouter([
           },
 
           // --- Accountant modules ---
+          { path: "/accountant", element: (
+            <RoleOnly roles={["ACCOUNTANT", "ADMIN", "PRINCIPAL"]}>
+              <AccountantDashboardPage />
+            </RoleOnly>
+          ) },
           {
             path: "/accountant/fee-structures",
             element: <AccountantFeeStructuresPage />,
@@ -299,7 +326,6 @@ const router = createBrowserRouter([
           { path: "/accountant/payslips", element: <AccountantPayslipsPage /> },
           { path: "/accountant/accountants", element: <AccountantListPage /> },
           { path: "/accountant/create", element: <AccountantCreatePage /> },
-          { path: "/accountant/edit/:id", element: <AccountantEditPage /> },
           {
             path: "/accountant/attendance",
             element: <AccountantAttendancePage />,
@@ -368,6 +394,10 @@ const router = createBrowserRouter([
               },
               { path: "/teacher/exams", element: <TeacherExamsPage /> },
               { path: "/teacher/marks", element: <TeacherMarksEntryPage /> },
+              {
+                path: "/teacher/marks/submit",
+                element: <TeacherMarksSubmissionPage />,
+              },
               { path: "/teacher/results", element: <TeacherResultsPage /> },
               {
                 path: "/teacher/results/:id",
@@ -404,6 +434,11 @@ const router = createBrowserRouter([
           },
 
           // --- Staff modules ---
+          { path: "/staff", element: (
+            <RoleOnly roles={["STAFF", "ADMIN"]}>
+              <StaffDashboardPage />
+            </RoleOnly>
+          ) },
           { path: "/staff/profile", element: <StaffProfilePage /> },
           { path: "/staff/profile/edit", element: <StaffProfileEditPage /> },
           { path: "/staff/payslips", element: <StaffPayslipsPage /> },

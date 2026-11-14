@@ -35,8 +35,8 @@ export default function StaffPayslipsPage() {
     queryKey: [QUERY_KEYS.STAFF_PROFILE],
     queryFn: getOwnStaff,
   });
-  const staff = staffQuery.data?.data as Record<string, any> | undefined;
-  const employeeId = (staff?.employeeId ?? staff?.employee?.id) as string | undefined;
+  const staff = staffQuery.data?.data;
+  const employeeId = staff?.employeeId ?? staff?.employee?.id;
 
   const query = useQuery({
     queryKey: [QUERY_KEYS.STAFF_PAYSLOPS, employeeId, page, search],

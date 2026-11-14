@@ -1,4 +1,4 @@
-import { type FC, type ReactNode, useEffect, useMemo, useState } from "react";
+import { type FC, type ReactNode, useMemo, useState } from "react";
 import { Check, Loader2, TriangleAlert, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Button  from "@/components/ui/button";
@@ -59,16 +59,16 @@ const SelectCommand: FC<SelectCommandProps> = ({
 }) => {
   const [open, setOpen] = useState(false);
   const [selectedValue, setSelectedValue] = useState(value || "");
-  const [mobile, setMobile] = useState(false);
+  const [prevValue, setPrevValue] = useState(value);
+  const [mobile] = useState(() => isMobile());
   const [search, setSearch] = useState("");
 
-  useEffect(() => {
+  // Keep internal selection in sync with the controlled `value` prop by
+  // adjusting state during render (no effect needed).
+  if (prevValue !== value) {
+    setPrevValue(value);
     setSelectedValue(value || "");
-  }, [value]);
-
-  useEffect(() => {
-    setMobile(isMobile());
-  }, []);
+  }
 
   const handleSelect = (val: string) => {
     if (disabled) return;
@@ -122,8 +122,8 @@ const SelectCommand: FC<SelectCommandProps> = ({
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                setSelectedValue(undefined as any);
-                onChange?.(undefined as any);
+                setSelectedValue("");
+                onChange?.("");
               }}
             />
           )}
@@ -226,8 +226,8 @@ const SelectCommand: FC<SelectCommandProps> = ({
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              setSelectedValue(undefined as any);
-              onChange?.(undefined as any);
+              setSelectedValue("");
+              onChange?.("");
             }}
           />
         )}

@@ -15,6 +15,7 @@ export const UrlConstants = {
   // ── Backend: flat REST routes mounted in CollegeMS-Backend-Node/src/router.ts ─
   ACCOUNT_URL: "/account",
   ACCOUNTANT_URL: "/accountant",
+  DASHBOARD_URL: "/dashboard",
   ATTENDANCE_SESSION_URL: "/attendance-session",
   BATCH_URL: "/batch",
   BATCH_TERM_URL: "/batch-term",

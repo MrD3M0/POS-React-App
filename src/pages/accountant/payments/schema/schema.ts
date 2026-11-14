@@ -8,7 +8,8 @@ export type CancelReceiptFormValues = z.infer<typeof cancelReceiptSchema>;
 
 const methodLineSchema = z.object({
   paymentMethodId: z.string().uuid("Select a payment method"),
-  amount: z.coerce.number().positive("Amount must be greater than 0"),
+  // The form keeps every amount as a number (valueAsNumber), so no coercion.
+  amount: z.number().positive("Amount must be greater than 0"),
   referenceNo: z.string().optional().or(z.literal("")),
   bankName: z.string().optional().or(z.literal("")),
 });
@@ -16,7 +17,7 @@ const methodLineSchema = z.object({
 const allocationSchema = z.object({
   studentFeeItemId: z.string().uuid("Select a fee item"),
   feeInstallmentId: z.string().uuid().optional().or(z.literal("")).nullable(),
-  amount: z.coerce.number().positive("Amount must be greater than 0"),
+  amount: z.number().positive("Amount must be greater than 0"),
 });
 
 export const createFeePaymentSchema = z

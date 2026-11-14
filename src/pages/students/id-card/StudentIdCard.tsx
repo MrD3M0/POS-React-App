@@ -18,7 +18,7 @@ function addYearsBs(dateBs: string | undefined, years: number): string {
   return `${y + years}-${parts[1]}-${parts[2]}`;
 }
 
-export function initialsOf(s: T_IdCardStudent) {
+function initialsOf(s: T_IdCardStudent) {
   return [s.firstName, s.middleName, s.lastName]
     .filter(Boolean)
     .map((n) => n!.charAt(0).toUpperCase())

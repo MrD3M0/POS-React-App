@@ -19,20 +19,25 @@ export default function StaffProfilePage() {
   if (query.isLoading) return <ScreenLoader />;
   if (query.isError) return <AlertHandler variant="error" />;
 
-  const staff = query.data?.data as Record<string, any> | undefined;
-  const employee = (staff?.employee ?? {}) as Record<string, any>;
+  const staff = query.data?.data;
+  const employee = staff?.employee ?? {};
 
   if (!staff?.id) return <AlertHandler variant="error" />;
 
-  const fullName = [employee.firstName, employee.lastName].filter(Boolean).join(" ") || "Staff";
-  const designation = employee.designation ?? staff.designation;
-  const department = staff.department ?? employee.department;
-  const phone = employee.phone ?? staff.phone;
-  const address = employee.permanentAddress ?? employee.temporaryAddress ?? staff.address;
-  const email = employee.email ?? staff.email;
-  const role = staff.role ?? employee.role;
+  const text = (v: unknown): string => (typeof v === "string" ? v : "");
+  const fullName = [text(employee.firstName), text(employee.lastName)].filter(Boolean).join(" ") || "Staff";
+  const designation = text(employee.designation) || text(staff.designation);
+  const department = text(staff.department) || text(employee.department);
+  const phone = text(employee.phone) || text(staff.phone);
+  const address = text(employee.permanentAddress) || text(employee.temporaryAddress) || text(staff.address);
+  const email = text(employee.email) || text(staff.email);
+  const role = text(staff.role) || text(employee.role);
   const isActive =
-    employee.isActive ?? staff.isActive ?? (staff.status ? staff.status !== "INACTIVE" : true);
+    typeof employee.isActive === "boolean"
+      ? employee.isActive
+      : typeof staff.isActive === "boolean"
+        ? staff.isActive
+        : staff.status !== "INACTIVE";
 
   return (
     <div className="p-5">
@@ -65,14 +70,14 @@ export default function StaffProfilePage() {
         </div>
       </div>
       <div className="grid grid-cols-3 gap-4">
-        <ProfileCard label="Employee ID" value={employee.employeeCode} />
+        <ProfileCard label="Employee ID" value={text(employee.employeeCode)} />
         <ProfileCard label="Designation" value={designation} />
         <ProfileCard label="Department" value={department} />
         <ProfileCard label="Phone" value={phone} />
         <ProfileCard label="Address" value={address} />
-        <ProfileCard label="SSF No." value={employee.ssfNo} showMasked={false} />
-        <ProfileCard label="Bank Account No." value={employee.bankAccountNo} showMasked={false} />
-        <ProfileCard label="PAN No." value={employee.panNo} showMasked={true} />
+        <ProfileCard label="SSF No." value={text(employee.ssfNo)} showMasked={false} />
+        <ProfileCard label="Bank Account No." value={text(employee.bankAccountNo)} showMasked={false} />
+        <ProfileCard label="PAN No." value={text(employee.panNo)} showMasked={true} />
         <ProfileCard label="Role" value={role} />
       </div>
     </div>

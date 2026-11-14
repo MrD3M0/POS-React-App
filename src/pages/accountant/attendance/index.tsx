@@ -67,7 +67,7 @@ export default function AccountantAttendancePage() {
 
   const employeesQuery = useQuery({
     queryKey: ["accountant-employees", "attendance-filter", "unlimited"],
-    queryFn: () => listEmployees({ page: 1, limit: 999 }),
+    queryFn: () => listEmployees({ page: 1, limit: -1 }),
   });
 
   const leaveTypesQuery = useQuery({

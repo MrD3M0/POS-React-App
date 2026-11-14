@@ -4,8 +4,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
+
 } from "@/components/ui/sidebar";
+import { useSidebar } from "@/components/ui/sidebar-context";
 import { type LucideIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 

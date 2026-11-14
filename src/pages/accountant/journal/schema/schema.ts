@@ -3,7 +3,7 @@ import { z } from "zod";
 export const journalLineSchema = z.object({
   accountId: z.string().uuid("Select an account"),
   direction: z.enum(["DEBIT", "CREDIT"]),
-  amount: z.coerce.number().positive("Amount must be greater than 0"),
+  amount: z.number().positive("Amount must be greater than 0"),
   description: z.string().optional().or(z.literal("")),
   studentId: z.string().uuid().optional().or(z.literal("")),
   employeeId: z.string().uuid().optional().or(z.literal("")),

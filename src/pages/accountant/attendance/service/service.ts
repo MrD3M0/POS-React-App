@@ -95,7 +95,7 @@ export async function markAttendance(input: {
 
 export async function listLeaveTypes(): Promise<T_LEAVE_TYPE[]> {
   const res = await axiosInstance.get(`${UrlConstants.LEAVE_TYPE_URL}`, {
-    params: { page: 1, limit: 999 },
+    params: { page: 1, limit: -1 },
   });
   const payload = res.data as {
     data?: T_LEAVE_TYPE[] | { data?: T_LEAVE_TYPE[] };

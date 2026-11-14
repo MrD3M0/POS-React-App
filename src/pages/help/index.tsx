@@ -83,7 +83,7 @@ export default function HelpPage() {
             <Button
               key={item.key}
               type="button"
-              variant={active ? "default" : "outline"}
+              variant={active ? "primary" : "outline"}
               size="sm"
               onClick={() => setTab(item.key)}
             >
@@ -104,7 +104,9 @@ export default function HelpPage() {
                 <Badge variant="secondary">{user.role}</Badge>
               ) : null}
             </div>
-            <p className="mt-2 text-sm text-muted-foreground">{guide.summary}</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {guide.summary}
+            </p>
 
             <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
               <div className="rounded-md border p-4">
@@ -282,7 +284,9 @@ export default function HelpPage() {
           <section className="rounded-lg border p-5">
             <div className="flex items-center gap-2">
               <Rocket className="size-5 text-primary" />
-              <h2 className="text-lg font-semibold">Run the application locally</h2>
+              <h2 className="text-lg font-semibold">
+                Run the application locally
+              </h2>
             </div>
             <p className="mt-1 text-sm text-muted-foreground">
               The repository holds the API (CollegeMS-Backend-Node) and the web
@@ -309,8 +313,8 @@ export default function HelpPage() {
           <section className="rounded-lg border p-5">
             <p className="text-sm">
               The seeded accounts and their passwords are listed in{" "}
-              <span className="font-mono">SEED_CREDENTIALS.md</span> at the
-              root of the repository.
+              <span className="font-mono">SEED_CREDENTIALS.md</span> at the root
+              of the repository.
             </p>
             <p className="mt-2 text-sm text-muted-foreground">
               New here? Start with{" "}

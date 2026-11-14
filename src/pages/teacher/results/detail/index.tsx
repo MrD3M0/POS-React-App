@@ -59,7 +59,7 @@ export default function TeacherResultDetailPage() {
   const subjectsQuery = useQuery({
     queryKey: [QUERY_KEYS.TEACHER_RESULT_DETAIL, id, "subjects"],
     queryFn: () =>
-      listResultSubjects({ page: 1, limit: 999, resultId: id as string }),
+      listResultSubjects({ page: 1, limit: -1, resultId: id as string }),
     enabled: !!id,
   });
 

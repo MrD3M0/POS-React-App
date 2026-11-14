@@ -1,36 +1,32 @@
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import PageHeader from "@/components/common/page-header";
 import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
 import Badge from "@/components/ui/badge";
 import { UserCheck, UserX, Users, Phone } from "lucide-react";
-import { getAllAccountants } from "@/pages/accountant/accountants/service/service";
-import type { T_ACCOUNTANT } from "@/pages/accountant/accountants/service/service";
+import { getAllAccountants, type T_ACCOUNTANT } from "@/pages/accountant/accountants/service/service";
+import { QUERY_KEYS } from "@/lib/query-keys";
 
 const LIMIT = 50;
 
 export default function PrincipalAccountantsPage() {
   const [search, setSearch] = useState("");
   const query = useQuery({
-    queryKey: ["principal-accountants", search],
+    queryKey: [QUERY_KEYS.ACCOUNTANT_LIST, "principal", search],
     queryFn: () => getAllAccountants({ page: 1, search, limit: LIMIT }),
+    placeholderData: keepPreviousData,
   });
 
-  const rows: T_ACCOUNTANT[] = useMemo(() => {
-    const d = query.data as unknown as { data?: T_ACCOUNTANT[] | { data?: T_ACCOUNTANT[] } };
-    const raw = d?.data as unknown;
-    if (Array.isArray(raw)) return raw;
-    if (raw && typeof raw === "object" && Array.isArray((raw as { data?: unknown }).data)) {
-      return (raw as { data: T_ACCOUNTANT[] }).data;
-    }
-    return [];
-  }, [query.data]);
+  const rows: T_ACCOUNTANT[] = useMemo(
+    () => query.data?.data?.data ?? [],
+    [query.data],
+  );
 
   if (query.isLoading) return <ScreenLoader />;
   if (query.isError) return <AlertHandler variant="error" />;
 
-  const active = rows.filter((r) => r.isActive).length;
+  const active = rows.filter((r) => r.employee?.isActive).length;
   const inactive = rows.length - active;
 
   return (
@@ -67,21 +63,26 @@ export default function PrincipalAccountantsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {rows.length === 0 && <p className="text-sm text-muted-foreground">No accountants found.</p>}
-        {rows.map((acc) => (
-          <div key={acc.id} className="rounded-xl border p-4 space-y-2 hover:shadow-sm transition">
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <p className="font-medium">{`${acc.firstName} ${acc.lastName ?? ""}`}</p>
-                <p className="text-xs text-muted-foreground">{acc.designation}</p>
+        {rows.map((acc) => {
+          const emp = acc.employee;
+          return (
+            <div key={acc.id} className="rounded-xl border p-4 space-y-2 hover:shadow-sm transition">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <p className="font-medium">{`${emp?.firstName ?? ""} ${emp?.lastName ?? ""}`.trim() || "—"}</p>
+                  <p className="text-xs text-muted-foreground">{emp?.designation ?? "—"}</p>
+                </div>
+                <Badge variant={emp?.isActive ? "default" : "destructive"}>
+                  {emp?.isActive ? "Active" : "Inactive"}
+                </Badge>
               </div>
-              <Badge variant={acc.isActive ? "default" : "destructive"}>{acc.isActive ? "Active" : "Inactive"}</Badge>
+              <p className="text-xs font-mono">{emp?.employeeCode ?? "—"}</p>
+              <p className="text-xs text-muted-foreground">{emp?.email ?? "—"}</p>
+              <p className="flex items-center gap-1 text-xs text-muted-foreground"><Phone className="h-3 w-3" />{emp?.phone ?? "—"}</p>
+              <p className="text-xs text-muted-foreground">Gender: {emp?.gender ?? "—"}</p>
             </div>
-            <p className="text-xs font-mono">{acc.employeeId}</p>
-            <p className="text-xs text-muted-foreground">{acc.email}</p>
-            <p className="flex items-center gap-1 text-xs text-muted-foreground"><Phone className="h-3 w-3" />{acc.phone ?? "—"}</p>
-            <p className="text-xs text-muted-foreground">Gender: {acc.gender}</p>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

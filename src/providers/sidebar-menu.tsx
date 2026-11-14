@@ -13,8 +13,9 @@ import {
   SidebarHeader,
   SidebarFooter,
   SidebarRail,
-  useSidebar,
+
 } from "@/components/ui/sidebar";
+import { useSidebar } from "@/components/ui/sidebar-context";
 import {
   Collapsible,
   CollapsibleContent,

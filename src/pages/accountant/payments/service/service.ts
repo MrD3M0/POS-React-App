@@ -45,7 +45,7 @@ export async function listPayments(params: { page: number; limit: number; search
 
 export async function listStudentFeesByStudent(studentId: string) {
   const res = await axiosInstance.get(UrlConstants.STUDENT_FEE_URL, {
-    params: { studentId, page: 1, limit: 999 },
+    params: { studentId, page: 1, limit: -1 },
   });
   return normalizeListBody(res.data as T_ListBody<T_STUDENT_FEE>);
 }

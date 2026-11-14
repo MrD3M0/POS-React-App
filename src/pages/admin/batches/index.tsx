@@ -116,11 +116,11 @@ function TermsView() {
   const [batchId, setBatchId] = useState("");
   const batchesQuery = useQuery({
     queryKey: [QUERY_KEYS.ADMIN_BATCH_LIST, "terms-filter", "unlimited"],
-    queryFn: () => listBatches({ page: 1, limit: 999 }),
+    queryFn: () => listBatches({ page: 1, limit: -1 }),
   });
   const query = useQuery({
     queryKey: [QUERY_KEYS.ADMIN_TERM_LIST, batchId],
-    queryFn: () => listTerms({ page: 1, limit: 999, ...(batchId ? { batchId } : {}) }),
+    queryFn: () => listTerms({ page: 1, limit: -1, ...(batchId ? { batchId } : {}) }),
   });
 
   if (query.isLoading) return <ScreenLoader />;
@@ -152,7 +152,7 @@ function TermsView() {
             placeholder={batchesQuery.isLoading ? "Loading batches..." : "Filter by batch (all)"}
             searchPlaceholder="Search batches..."
             loading={batchesQuery.isLoading}
-            isClearable
+            withClear
           />
         </div>
         <PageHeader
@@ -167,7 +167,7 @@ function TermsView() {
         data={termRows}
         onEdit={(t) => `/admin/terms/edit/${t.id}`}
         emptyTitle="No terms for this batch."
-        pagination={{ page: 1, limit: 999, total: termTotal, onPageChange: () => {} }}
+        pagination={{ page: 1, limit: -1, total: termTotal, onPageChange: () => {} }}
       />
     </div>
   );
@@ -176,7 +176,7 @@ function TermsView() {
 function SubjectsView() {
   const query = useQuery({
     queryKey: [QUERY_KEYS.ADMIN_SUBJECT_LIST, "batches-view", "unlimited"],
-    queryFn: () => listSubjects({ page: 1, limit: 999 }),
+    queryFn: () => listSubjects({ page: 1, limit: -1 }),
   });
 
   if (query.isLoading) return <ScreenLoader />;
@@ -207,7 +207,7 @@ function SubjectsView() {
         data={subjectRows}
         onEdit={(s) => `/admin/subjects/edit/${s.id}`}
         emptyTitle="No subjects."
-        pagination={{ page: 1, limit: 999, total: subjectTotal, onPageChange: () => {} }}
+        pagination={{ page: 1, limit: -1, total: subjectTotal, onPageChange: () => {} }}
       />
     </div>
   );

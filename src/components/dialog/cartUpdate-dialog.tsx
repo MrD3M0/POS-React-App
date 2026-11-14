@@ -1,4 +1,4 @@
-import { useEffect, useState, type Dispatch } from "react";
+import { useState, type Dispatch } from "react";
 import {
   Dialog,
   DialogContent,
@@ -37,13 +37,20 @@ export const UpdateCartDialog: React.FC<T_cartUpdateDialogProps> = ({
   setVisibleCart,
   setActualCart,
 }) => {
-  const [quantity, setQuantity] = useState<string>("");
+  const [quantity, setQuantity] = useState<string>(() => String(currentQuantity));
   const [error, setError] = useState<string>("");
 
-  useEffect(() => {
-    setQuantity(String(currentQuantity));
-    setError("");
-  }, [currentQuantity, open]);
+  // Reset the fields whenever the dialog opens (or the source quantity
+  // changes while open) by adjusting state during render — no effect needed.
+  const [prevResetKey, setPrevResetKey] = useState<string | null>(null);
+  const resetKey = open ? `open:${currentQuantity}` : null;
+  if (prevResetKey !== resetKey) {
+    setPrevResetKey(resetKey);
+    if (open) {
+      setQuantity(String(currentQuantity));
+      setError("");
+    }
+  }
 
   const handleSave = () => {
     const qty = Math.floor(Number(quantity));

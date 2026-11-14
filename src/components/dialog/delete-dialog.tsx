@@ -22,7 +22,7 @@ type GenericConfirmDeleteDialogProps = {
   /** The ID of the item to delete */
   itemId: string;
   /** The generic mutation function to execute */
-  onDelete: (id: string) => Promise<any>;
+  onDelete: (id: string) => Promise<unknown>;
   /** Array of TanStack Query keys to invalidate upon success */
   queryKeysToInvalidate?: QueryKey[];
   /** Optional custom title. Defaults to "Confirm Deletion" */
@@ -51,7 +51,14 @@ const ConfirmDeleteDialog: FC<GenericConfirmDeleteDialogProps> = ({
   const deleteMutation = useMutation({
     mutationFn: () => onDelete(itemId),
     onSuccess: (res) => {
-      toast.success(res?.message || `Successfully deleted ${itemName}`);
+      const message =
+        res != null &&
+        typeof res === "object" &&
+        "message" in res &&
+        typeof res.message === "string"
+          ? res.message
+          : null;
+      toast.success(message || `Successfully deleted ${itemName}`);
 
       // Dynamically invalidate any queries passed in by the parent
       if (queryKeysToInvalidate.length > 0) {

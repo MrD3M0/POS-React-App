@@ -257,7 +257,7 @@ export default function FeeStructureFormDialog({
                 </Button>
               </div>
 
-              {items.map((item, index) => (
+              {items.map((_item, index) => (
                 <div
                   key={index}
                   className="grid grid-cols-1 items-start gap-3 rounded-md border p-3 md:grid-cols-[1fr_120px_140px_auto]"

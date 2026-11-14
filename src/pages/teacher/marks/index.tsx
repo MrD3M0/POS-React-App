@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";import { useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import PageHeader from "@/components/common/page-header";
 import ScreenLoader from "@/components/ui/screen-loader";
@@ -35,31 +35,53 @@ function examSubjectLabel(r: T_EXAM_SUBJECT): string {
 }
 
 export default function TeacherMarksEntryPage() {
+  const [searchParams] = useSearchParams();
+  const paramExamSubjectId = searchParams.get("examSubjectId") ?? "";
   const [selectedExamId, setSelectedExamId] = useState("");
   const [selectedExamSubjectId, setSelectedExamSubjectId] = useState("");
   const [grid, setGrid] = useState<Map<string, MarkRow>>(() => new Map());
   const [savedOnce, setSavedOnce] = useState(false);
   const qc = useQueryClient();
 
+  // Deep link from Marks Submission: preselect the subject's exam first.
+  const paramSubjectQuery = useQuery({
+    queryKey: [QUERY_KEYS.TEACHER_EXAM_SUBJECTS, "deep-link", paramExamSubjectId],
+    queryFn: () => listExamSubjects({ page: 1, limit: -1 }),
+    enabled: Boolean(paramExamSubjectId),
+  });
+  const deepLinkMatch = paramSubjectQuery.data
+    ? toRows<T_EXAM_SUBJECT>(paramSubjectQuery.data).find(
+        (row) => row.id === paramExamSubjectId,
+      )
+    : undefined;
+  const deepLinkExamId = String(deepLinkMatch?.examId ?? deepLinkMatch?.exam?.id ?? "");
+  // Apply the deep link once by adjusting state during render (no effect).
+  const [appliedDeepLink, setAppliedDeepLink] = useState<string | null>(null);
+  if (paramExamSubjectId && deepLinkExamId && appliedDeepLink !== paramExamSubjectId) {
+    setAppliedDeepLink(paramExamSubjectId);
+    setSelectedExamId(deepLinkExamId);
+    setSelectedExamSubjectId(paramExamSubjectId);
+  }
+
   const examsQuery = useQuery({
     queryKey: [QUERY_KEYS.TEACHER_EXAMS, "marks-entry", "unlimited"],
-    queryFn: () => listExams({ page: 1, limit: 999 }),
+    queryFn: () => listExams({ page: 1, limit: -1 }),
   });
   const examSubjectsQuery = useQuery({
     queryKey: [QUERY_KEYS.TEACHER_EXAM_SUBJECTS, selectedExamId, "unlimited"],
-    queryFn: () => listExamSubjects({ page: 1, limit: 999, examId: selectedExamId || undefined }),
+    queryFn: () => listExamSubjects({ page: 1, limit: -1, examId: selectedExamId || undefined }),
     enabled: !!selectedExamId,
   });
   const studentsQuery = useQuery({
     queryKey: [QUERY_KEYS.TEACHER_STUDENTS, "marks-picker", "unlimited"],
-    queryFn: () => listStudentsForTeacher({ page: 1, limit: 999 }),
+    queryFn: () => listStudentsForTeacher({ page: 1, limit: -1 }),
   });
   const marksQuery = useQuery({
     queryKey: [QUERY_KEYS.TEACHER_MARKS, selectedExamSubjectId],
     queryFn: () =>
       listMarks({
         page: 1,
-        limit: 999,
+        limit: -1,
         examId: selectedExamId,
         examSubjectId: selectedExamSubjectId,
       }),
@@ -104,22 +126,29 @@ export default function TeacherMarksEntryPage() {
     return Number.isFinite(n) ? n : undefined;
   }, [selectedExamSubject]);
 
-  // Pre-fill local Map from existing marks when the subject selection loads.
-  useEffect(() => {
-    if (!selectedExamSubjectId) return;
-    const next = new Map<string, MarkRow>();
-    for (const m of existingMarks) {
-      const sid = String(m.studentId ?? m.student?.id ?? "");
-      if (!sid) continue;
-      const raw = m.marks ?? m.obtainedMarks ?? "";
-      next.set(sid, {
-        marks: raw === "" || raw == null ? "" : String(raw),
-        isAbsent: Boolean((m as Record<string, unknown>).isAbsent),
-      });
+  // Pre-fill local Map from existing marks when the subject selection loads,
+  // keyed on subject + fetch time, by adjusting state during render (no effect).
+  const gridKey = selectedExamSubjectId
+    ? `${selectedExamSubjectId}:${marksQuery.dataUpdatedAt}`
+    : "";
+  const [prevGridKey, setPrevGridKey] = useState(gridKey);
+  if (prevGridKey !== gridKey) {
+    setPrevGridKey(gridKey);
+    if (selectedExamSubjectId) {
+      const next = new Map<string, MarkRow>();
+      for (const m of existingMarks) {
+        const sid = String(m.studentId ?? m.student?.id ?? "");
+        if (!sid) continue;
+        const raw = m.marks ?? m.obtainedMarks ?? "";
+        next.set(sid, {
+          marks: raw === "" || raw == null ? "" : String(raw),
+          isAbsent: Boolean((m as Record<string, unknown>).isAbsent),
+        });
+      }
+      setGrid(next);
+      setSavedOnce(false);
     }
-    setGrid(next);
-    setSavedOnce(false);
-  }, [selectedExamSubjectId, existingMarks]);
+  }
 
   if (examsQuery.isLoading || examSubjectsQuery.isLoading || studentsQuery.isLoading) return <ScreenLoader />;
   if (examsQuery.isError) return <AlertHandler variant="error" />;

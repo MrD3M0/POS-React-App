@@ -8,7 +8,7 @@ import Button from "@/components/ui/button";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
 import { QUERY_KEYS } from "@/lib/query-keys";
-import { useCan } from "@/auth/permissions";
+import { useCan } from "@/auth/use-can";
 import { useAuth } from "@/auth/context/auth-context";
 import type { T_UseQueryError } from "@/types/common";
 import { listMyClasses, type T_MY_CLASS } from "../my-classes/service/service";
@@ -77,7 +77,7 @@ export default function TeacherBatchPayPage() {
   });
   const classQuery = useQuery({
     queryKey: [QUERY_KEYS.TEACHER_MY_CLASSES, "unlimited"],
-    queryFn: () => listMyClasses({ page: 1, limit: 999 }),
+    queryFn: () => listMyClasses({ page: 1, limit: -1 }),
     enabled: canManage,
   });
 

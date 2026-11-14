@@ -46,11 +46,11 @@ export default function EditExamForm({
 
   const termsQuery = useQuery({
     queryKey: [QUERY_KEYS.TEACHER_EXAMS, "term-options", "unlimited"],
-    queryFn: () => listTerms({ page: 1, limit: 999, isActive: true }),
+    queryFn: () => listTerms({ page: 1, limit: -1, isActive: true }),
   });
   const examTypesQuery = useQuery({
     queryKey: [QUERY_KEYS.TEACHER_EXAMS, "exam-type-options", "unlimited"],
-    queryFn: () => listExamTypes({ page: 1, limit: 999 }),
+    queryFn: () => listExamTypes({ page: 1, limit: -1 }),
   });
 
   const termOptions = useMemo(() => toRows<T_TERM>(termsQuery.data).map((t) => ({ label: termLabel(t), value: t.id, searchValues: termLabel(t) })), [termsQuery.data]);

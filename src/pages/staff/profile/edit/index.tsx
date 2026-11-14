@@ -31,18 +31,23 @@ export default function StaffProfileEditPage() {
     defaultValues: staffProfileEditDefaultValues,
   });
 
-  const staff = query.data?.data as Record<string, any> | undefined;
+  const staff = query.data?.data;
 
   useEffect(() => {
     if (query.data?.data) {
-      const s = query.data.data as Record<string, any>;
-      const e = (s.employee ?? {}) as Record<string, any>;
+      const s = query.data.data;
+      const e = s.employee ?? {};
       form.reset({
-        firstName: e.firstName ?? "",
-        lastName: e.lastName ?? "",
-        phone: e.phone ?? "",
-        address: e.permanentAddress ?? e.temporaryAddress ?? "",
-        department: s.department ?? "",
+        firstName: typeof e.firstName === "string" ? e.firstName : "",
+        lastName: typeof e.lastName === "string" ? e.lastName : "",
+        phone: typeof e.phone === "string" ? e.phone : "",
+        address:
+          typeof e.permanentAddress === "string"
+            ? e.permanentAddress
+            : typeof e.temporaryAddress === "string"
+              ? e.temporaryAddress
+              : "",
+        department: typeof s.department === "string" ? s.department : "",
       });
     }
   }, [query.data, form]);

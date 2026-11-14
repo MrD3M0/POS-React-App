@@ -2,14 +2,15 @@ import { z } from "zod";
 
 const methodLineSchema = z.object({
   paymentMethodId: z.string().min(1, "Select a payment method"),
-  amount: z.coerce.number().positive("Amount must be greater than 0"),
+  // The form keeps every amount as a number (valueAsNumber), so no coercion.
+  amount: z.number().positive("Amount must be greater than 0"),
   referenceNo: z.string().optional().or(z.literal("")),
   bankName: z.string().optional().or(z.literal("")),
 });
 
 const allocationSchema = z.object({
   studentFeeItemId: z.string().min(1, "Select a fee item"),
-  amount: z.coerce.number().positive("Amount must be greater than 0"),
+  amount: z.number().positive("Amount must be greater than 0"),
 });
 
 export const billingPaymentSchema = z
@@ -19,7 +20,7 @@ export const billingPaymentSchema = z
     studentFeeId: z.string().optional().or(z.literal("")),
     receiptNo: z.string().optional().or(z.literal("")),
     paymentDateBs: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Payment date (BS) is required (YYYY-MM-DD)"),
-    totalAmount: z.coerce.number().positive("Total amount must be greater than zero"),
+    totalAmount: z.number().positive("Total amount must be greater than zero"),
     remarks: z.string().optional().or(z.literal("")),
     methodLines: z.array(methodLineSchema).min(1, "At least one method line is required"),
     allocations: z.array(allocationSchema),

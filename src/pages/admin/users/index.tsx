@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import PageHeader from "@/components/common/page-header";
 import ScreenLoader from "@/components/ui/screen-loader";
@@ -17,8 +17,16 @@ import {
   type T_USER,
 } from "./service/service";
 import Button from "@/components/ui/button";
+import { isAxiosError } from "axios";
 
 const LIMIT = 15;
+
+const getErrorMessage = (e: unknown): string => {
+  if (isAxiosError(e)) {
+    return e.response?.data?.message ?? e.message;
+  }
+  return e instanceof Error ? e.message : "Action failed";
+};
 
 export default function AdminUsersPage() {
   const qc = useQueryClient();
@@ -28,7 +36,7 @@ export default function AdminUsersPage() {
   const [active, setActive] = useState("");
 
   const query = useQuery({
-    queryKey: [QUERY_KEYS.ADMIN_EMPLOYEE, "users", search, page, role, active],
+    queryKey: [QUERY_KEYS.ADMIN_USER_LIST, search, page, role, active],
     queryFn: () =>
       listUsers({
         page,
@@ -39,15 +47,15 @@ export default function AdminUsersPage() {
       }),
   });
 
-  const invalidate = () => qc.invalidateQueries({ queryKey: [QUERY_KEYS.ADMIN_EMPLOYEE, "users"] });
+  const invalidate = () => qc.invalidateQueries({ queryKey: [QUERY_KEYS.ADMIN_USER_LIST, "users"] });
 
   const run = async (label: string, fn: () => Promise<unknown>) => {
     try {
       await fn();
       toast.success(label);
       invalidate();
-    } catch (e: any) {
-      toast.error(e?.response?.data?.message || e?.message || "Action failed");
+    } catch (e: unknown) {
+      toast.error(getErrorMessage(e));
     }
   };
 

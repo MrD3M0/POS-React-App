@@ -36,7 +36,7 @@ export default function AddStudentPage() {
   });
   const guardianRelation = form.watch("guardianRelation");
 
-  const batchQuery = useQuery({ queryKey: [QUERY_KEYS.ADMIN_BATCH_LIST, "teacher-options", "unlimited"], queryFn: () => getAllBatches({ page: 1, limit: 999 }) });
+  const batchQuery = useQuery({ queryKey: [QUERY_KEYS.ADMIN_BATCH_LIST, "teacher-options", "unlimited"], queryFn: () => getAllBatches({ page: 1, limit: -1 }) });
   const batchOptions = useMemo(() => {
     const raw = batchQuery.data as unknown as { data?: T_Batch[] | { data?: T_Batch[] } };
     const rows: T_Batch[] = Array.isArray(raw?.data) ? raw.data : Array.isArray(raw?.data?.data) ? raw.data.data : [];

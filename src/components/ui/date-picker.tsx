@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Button  from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -28,9 +28,13 @@ export function DatePicker({ value, onChange, placeholder }: DatePickerProps) {
   const [date, setDate] = useState<DateRange | undefined>(value || defaultDate);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
-  useEffect(() => {
+  // Keep the internal range in sync with the controlled `value` prop by
+  // adjusting state during render (no effect needed).
+  const [prevValue, setPrevValue] = useState<DateRange | undefined>(value);
+  if (prevValue !== value) {
+    setPrevValue(value);
     if (value) setDate(value);
-  }, [value]);
+  }
 
   const handleSelect = (selected: DateRange | undefined) => {
     setDate(selected);

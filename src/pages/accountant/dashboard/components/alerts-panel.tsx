@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Bell, CircleAlert, Megaphone, TriangleAlert } from "lucide-react";
+import { Bell, Megaphone, TriangleAlert } from "lucide-react";
 import {
   Card,
   CardContent,

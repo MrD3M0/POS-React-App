@@ -23,7 +23,7 @@ import {
   FormMessage,
 } from "@/components/form";
 import { EMPLOYEE_CREATE_SCHEMA, EMPLOYEE_ROLES, type T_EMPLOYEE_CREATE } from "@/pages/admin/users/schema/schema";
-import { createEmployee } from "./service/service";
+import { createEmployee, type T_EMPLOYEE_ROLE } from "./service/service";
 
 function toOptional(value: string | undefined) {
   const trimmed = value?.trim();
@@ -66,7 +66,7 @@ export default function CreateEmployeePage() {
         middleName: toOptional(data.middleName),
         lastName: data.lastName.trim(),
         gender: data.gender,
-        role: data.role as any,
+        role: data.role as T_EMPLOYEE_ROLE,
         dobBs: toOptional(data.dobBs),
         phone: toOptional(data.phone),
         email: data.email.trim().toLowerCase(),

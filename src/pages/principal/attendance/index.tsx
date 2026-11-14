@@ -59,7 +59,7 @@ export default function PrincipalAttendancePage() {
       "principal-attendance-filter",
       "unlimited",
     ],
-    queryFn: () => listEmployees({ page: 1, limit: 999 }),
+    queryFn: () => listEmployees({ page: 1, limit: -1 }),
   });
 
   const attQuery = useQuery({

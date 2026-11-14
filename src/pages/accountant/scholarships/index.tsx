@@ -9,7 +9,7 @@ import Button from "@/components/ui/button";
 import GenericTable, { type T_TableHead } from "@/components/generic-table";
 import ConfirmDeleteDialog from "@/components/dialog/confirm-delete";
 import { QUERY_KEYS } from "@/lib/query-keys";
-import { useCan } from "@/auth/permissions";
+import { useCan } from "@/auth/use-can";
 import {
   deleteScholarship,
   listScholarshipGrants,
@@ -232,14 +232,6 @@ export default function AccountantScholarshipsPage() {
         <GenericTable
           tableHeads={schemeHead}
           data={schemeRows}
-          onEdit={
-            canManage
-              ? (scheme) => {
-                  setEditing(scheme);
-                  setFormOpen(true);
-                }
-              : undefined
-          }
           onDelete={canManage ? (scheme) => setDeleteId(scheme.id) : undefined}
           onSearch={(value) => {
             setSearch(value);
@@ -248,6 +240,22 @@ export default function AccountantScholarshipsPage() {
           searchPlaceholder="Search scholarships..."
           emptyTitle="No scholarships yet."
           pagination={{ page, limit: LIMIT, total, onPageChange: setPage }}
+          renderActions={
+            canManage
+              ? (scheme) => (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setEditing(scheme);
+                      setFormOpen(true);
+                    }}
+                  >
+                    Edit
+                  </Button>
+                )
+              : undefined
+          }
         />
       ) : (
         <GenericTable

@@ -73,17 +73,17 @@ export default function GrantScholarshipDialog({
 
   const scholarshipsQuery = useQuery({
     queryKey: [QUERY_KEYS.ACCOUNTANT_SCHOLARSHIPS, "options"],
-    queryFn: () => listScholarships({ page: 1, limit: 999 }),
+    queryFn: () => listScholarships({ page: 1, limit: -1 }),
     enabled: open,
   });
   const studentsQuery = useQuery({
     queryKey: [QUERY_KEYS.ACCOUNTANT_STUDENT_OPTIONS],
-    queryFn: () => listStudents({ page: 1, limit: 999 }),
+    queryFn: () => listStudents({ page: 1, limit: -1 }),
     enabled: open,
   });
   const feesQuery = useQuery({
     queryKey: [QUERY_KEYS.ACCOUNTANT_BILLING, "student-fees", studentId, "unlimited"],
-    queryFn: () => listStudentFees({ page: 1, limit: 999, studentId }),
+    queryFn: () => listStudentFees({ page: 1, limit: -1, studentId }),
     enabled: open && Boolean(studentId),
   });
   const itemsQuery = useQuery({
@@ -93,7 +93,7 @@ export default function GrantScholarshipDialog({
       studentFeeId,
       "unlimited",
     ],
-    queryFn: () => listStudentFeeItems({ page: 1, limit: 999, studentFeeId }),
+    queryFn: () => listStudentFeeItems({ page: 1, limit: -1, studentFeeId }),
     enabled: open && Boolean(studentFeeId),
   });
 

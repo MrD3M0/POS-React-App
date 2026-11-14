@@ -22,16 +22,6 @@ export default function PrincipalPendingPayrollPage() {
     queryFn: () => listPendingPayrolls({ page, limit: LIMIT, search }),
   });
 
-  if (query.isLoading) return <ScreenLoader />;
-  if (query.isError) return <AlertHandler variant="error" />;
-
-  const rows: T_PENDING_PAYROLL[] = Array.isArray(query.data?.data?.data)
-    ? query.data.data.data
-    : Array.isArray(query.data?.data)
-      ? query.data.data
-      : [];
-  const total = query.data?.data?.pagination?.total ?? rows.length;
-
   const approveMut = useMutation({
     mutationFn: (payrollId: string) => approvePayroll(payrollId),
     onSuccess: () => { qc.invalidateQueries({ queryKey: [QUERY_KEYS.PRINCIPAL_PAYROLL_PENDING] }); toast.success("Payroll approved"); },
@@ -43,6 +33,16 @@ export default function PrincipalPendingPayrollPage() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: [QUERY_KEYS.PRINCIPAL_PAYROLL_PENDING] }); toast.success("Payroll rejected"); },
     onError: () => toast.error("Failed to reject payroll."),
   });
+
+  if (query.isLoading) return <ScreenLoader />;
+  if (query.isError) return <AlertHandler variant="error" />;
+
+  const rows: T_PENDING_PAYROLL[] = Array.isArray(query.data?.data?.data)
+    ? query.data.data.data
+    : Array.isArray(query.data?.data)
+      ? query.data.data
+      : [];
+  const total = query.data?.data?.pagination?.total ?? rows.length;
 
   const head: T_TableHead<T_PENDING_PAYROLL>[] = [
     { key: "employeeName", headName: "Employee", minWidth: 200 },

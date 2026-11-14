@@ -1,8 +1,8 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/auth/context/auth-context";
 import ScreenLoader from "@/components/ui/screen-loader";
-import type { PermissionKey } from "@/auth/permissions";
-import { useCan } from "@/auth/permissions";
+import type { PermissionKey } from "@/auth/permission-map";
+import { useCan } from "@/auth/use-can";
 
 /**
  * `<ProtectedRoute permission="module:action" />`

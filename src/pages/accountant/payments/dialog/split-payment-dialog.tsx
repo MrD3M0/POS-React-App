@@ -67,17 +67,17 @@ export default function SplitPaymentDialog({ onClose, paymentId, receiptId }: Sp
 
   const studentsQuery = useQuery({
     queryKey: ["accountant-students", "unlimited"],
-    queryFn: () => listStudents({ page: 1, limit: 999 }),
+    queryFn: () => listStudents({ page: 1, limit: -1 }),
     enabled: !isCancel,
   });
   const fiscalYearsQuery = useQuery({
     queryKey: ["accountant-fiscal-years", "unlimited"],
-    queryFn: () => listFiscalYears({ page: 1, limit: 999 }),
+    queryFn: () => listFiscalYears({ page: 1, limit: -1 }),
     enabled: !isCancel,
   });
   const paymentMethodsQuery = useQuery({
     queryKey: ["accountant-payment-methods", "unlimited"],
-    queryFn: () => listPaymentMethods({ page: 1, limit: 999 }),
+    queryFn: () => listPaymentMethods({ page: 1, limit: -1 }),
     enabled: !isCancel,
   });
   const studentFeesQuery = useQuery({
@@ -198,7 +198,7 @@ export default function SplitPaymentDialog({ onClose, paymentId, receiptId }: Sp
                   <FormItem>
                     <FormLabel isOptional>Fiscal Year</FormLabel>
                     <FormControl>
-                      <SelectCommand value={field.value ?? ""} onChange={field.onChange} options={fiscalYearOptions} placeholder={fiscalYearsQuery.isLoading ? "Loading fiscal years..." : "Current / default (server)"} searchPlaceholder="Search fiscal years..." loading={fiscalYearsQuery.isLoading} isClearable />
+                      <SelectCommand value={field.value ?? ""} onChange={field.onChange} options={fiscalYearOptions} placeholder={fiscalYearsQuery.isLoading ? "Loading fiscal years..." : "Current / default (server)"} searchPlaceholder="Search fiscal years..." loading={fiscalYearsQuery.isLoading} withClear />
                     </FormControl>
                     <FormDescription>Optional fiscal year ID; backend can resolve current fiscal year.</FormDescription>
                     <FormMessage />

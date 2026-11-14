@@ -86,11 +86,11 @@ export default function TeacherExamSubjectsPage() {
   });
   const examsQuery = useQuery({
     queryKey: [QUERY_KEYS.TEACHER_EXAMS, "picker", "unlimited"],
-    queryFn: () => listExams({ page: 1, limit: 999 }),
+    queryFn: () => listExams({ page: 1, limit: -1 }),
   });
   const btsQuery = useQuery({
     queryKey: [QUERY_KEYS.TEACHER_EXAM_SUBJECTS, "bts-picker", "unlimited"],
-    queryFn: () => listBatchTermSubjects({ page: 1, limit: 999 }),
+    queryFn: () => listBatchTermSubjects({ page: 1, limit: -1 }),
   });
 
   const createMut = useMutation({

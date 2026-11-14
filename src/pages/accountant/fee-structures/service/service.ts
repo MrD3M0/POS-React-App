@@ -113,7 +113,7 @@ export async function assignFeeStructureToStudents(input: {
 
 export async function listFeeHeadOptions() {
   const res = await axiosInstance.get(UrlConstants.ADMIN_LOOKUP_FEEHEAD_URL, {
-    params: { page: 1, limit: 999 },
+    params: { page: 1, limit: -1 },
   });
   return res.data as {
     data?: { data?: T_FEE_HEAD[] };
@@ -122,7 +122,7 @@ export async function listFeeHeadOptions() {
 
 export async function listCourseOptions() {
   const res = await axiosInstance.get(UrlConstants.COURSE_URL, {
-    params: { page: 1, limit: 999 },
+    params: { page: 1, limit: -1 },
   });
   return res.data as {
     data?: { data?: { id: string; name: string; code?: string }[] };
@@ -131,7 +131,7 @@ export async function listCourseOptions() {
 
 export async function listBatchOptions() {
   const res = await axiosInstance.get(UrlConstants.BATCH_URL, {
-    params: { page: 1, limit: 999 },
+    params: { page: 1, limit: -1 },
   });
   return res.data as {
     data?: { data?: { id: string; name: string; courseId?: string }[] };
@@ -140,7 +140,7 @@ export async function listBatchOptions() {
 
 export async function listStudentOptions() {
   const res = await axiosInstance.get(UrlConstants.STUDENT_URL, {
-    params: { page: 1, limit: 999 },
+    params: { page: 1, limit: -1 },
   });
   return res.data as {
     data?: {

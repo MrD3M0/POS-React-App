@@ -3,24 +3,33 @@ import { UrlConstants } from "@/constants/endpoints";
 import type { T_AxiosResponseWithPagination, T_AxiosResponseWithoutPagination } from "@/types/common";
 import type { T_AccountantSchema } from "../schema/schema";
 
+/**
+ * The backend Accountant table only stores `id` + `employeeId` (+ timestamps).
+ * Every profile field comes from the linked Employee row, nested as `employee`
+ * (see backend `AccountantService` / `EMPLOYEE_SAFE_SELECT`). Reading flat
+ * `acc.firstName` etc. renders undefined — always go through `employee`.
+ */
+export type T_ACCOUNTANT_EMPLOYEE = {
+  id: string;
+  employeeCode?: string;
+  firstName?: string;
+  middleName?: string | null;
+  lastName?: string;
+  email?: string | null;
+  phone?: string | null;
+  gender?: "MALE" | "FEMALE" | "OTHERS";
+  designation?: string | null;
+  isActive?: boolean;
+  photoUrl?: string | null;
+};
+
 export type T_ACCOUNTANT = {
   id: string;
   employeeId: string;
-  firstName: string;
-  lastName?: string | null;
-  middleName?: string | null;
-  email: string;
-  passwordHash?: string | null;
-  designation: string;
-  phone?: string | null;
-  gender: "MALE" | "FEMALE" | "OTHERS";
-  ssfNo?: string | null;
-  bankAccountNo?: string | null;
-  panNo?: string | null;
-  isActive: boolean;
+  employee?: T_ACCOUNTANT_EMPLOYEE | null;
+  createdBy?: string | null;
   createdAt?: string;
   updatedAt?: string;
-  employee?: unknown;
 };
 
 export type T_EMPLOYEE_OPTION = {
@@ -30,11 +39,13 @@ export type T_EMPLOYEE_OPTION = {
   lastName?: string;
   email?: string | null;
   designation?: string;
+  phone?: string | null;
+  gender?: "MALE" | "FEMALE" | "OTHERS";
 };
 
 export async function listEmployeeOptions(params?: { page?: number; limit?: number; search?: string }) {
   const res = await axiosInstance.get(UrlConstants.ADMIN_EMPLOYEE_URL, {
-    params: { page: params?.page ?? 1, limit: params?.limit ?? 999, search: params?.search ?? "" },
+    params: { page: params?.page ?? 1, limit: params?.limit ?? -1, search: params?.search ?? "" },
   });
   return res.data as { data?: { data?: T_EMPLOYEE_OPTION[] } };
 }
@@ -58,14 +69,6 @@ export async function createAccountant(data: T_AccountantSchema) {
   const response: T_AxiosResponseWithoutPagination<T_ACCOUNTANT> = await axiosInstance.post(
     `${UrlConstants.ACCOUNTANT_URL}`,
     data,
-  );
-  return response.data;
-}
-
-export async function updateAccountant(args: { id: string; data: T_AccountantSchema }) {
-  const response: T_AxiosResponseWithoutPagination<T_ACCOUNTANT> = await axiosInstance.patch(
-    `${UrlConstants.ACCOUNTANT_URL}/${args.id}`,
-    args.data,
   );
   return response.data;
 }

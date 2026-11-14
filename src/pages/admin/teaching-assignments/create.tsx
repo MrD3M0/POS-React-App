@@ -49,11 +49,11 @@ export default function CreateTeachingAssignmentPage() {
 
   const teachersQuery = useQuery({
     queryKey: [QUERY_KEYS.ADMIN_TEACHER_LIST, "select", "unlimited"],
-    queryFn: () => listTeachers({ page: 1, limit: 999 }),
+    queryFn: () => listTeachers({ page: 1, limit: -1 }),
   });
   const btsQuery = useQuery({
     queryKey: ["admin-batch-term-subjects", "select", "unlimited"],
-    queryFn: () => listBatchTermSubjects({ page: 1, limit: 999 }),
+    queryFn: () => listBatchTermSubjects({ page: 1, limit: -1 }),
   });
 
   const teacherOptions = (teachersQuery.data?.data?.data ?? []).map((t) => ({

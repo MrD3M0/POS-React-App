@@ -61,11 +61,11 @@ export default function RecordPaymentForm() {
     form.setValue("allocations", [{ studentFeeItemId: "", amount: 0 }], { shouldValidate: false });
   }, [studentId, form]);
 
-  const studentQuery = useQuery({ queryKey: [QUERY_KEYS.ACCOUNTANT_BILLING, "students", "unlimited"], queryFn: () => listStudents({ page: 1, limit: 999 }) });
-  const fiscalQuery = useQuery({ queryKey: [QUERY_KEYS.ACCOUNTANT_BILLING, "fiscal-years", "unlimited"], queryFn: () => listFiscalYears({ page: 1, limit: 999 }) });
-  const methodQuery = useQuery({ queryKey: [QUERY_KEYS.ACCOUNTANT_BILLING, "methods", "unlimited"], queryFn: () => listPaymentMethods({ page: 1, limit: 999 }) });
-  const studentFeesQuery = useQuery({ queryKey: [QUERY_KEYS.ACCOUNTANT_BILLING, "student-fees", studentId, "unlimited"], queryFn: () => listStudentFees({ page: 1, limit: 999, studentId }), enabled: !!studentId });
-  const feeItemsQuery = useQuery({ queryKey: [QUERY_KEYS.ACCOUNTANT_BILLING, "fee-items", studentFeeId, "unlimited"], queryFn: () => listStudentFeeItems({ page: 1, limit: 999, studentFeeId }), enabled: !!studentFeeId });
+  const studentQuery = useQuery({ queryKey: [QUERY_KEYS.ACCOUNTANT_BILLING, "students", "unlimited"], queryFn: () => listStudents({ page: 1, limit: -1 }) });
+  const fiscalQuery = useQuery({ queryKey: [QUERY_KEYS.ACCOUNTANT_BILLING, "fiscal-years", "unlimited"], queryFn: () => listFiscalYears({ page: 1, limit: -1 }) });
+  const methodQuery = useQuery({ queryKey: [QUERY_KEYS.ACCOUNTANT_BILLING, "methods", "unlimited"], queryFn: () => listPaymentMethods({ page: 1, limit: -1 }) });
+  const studentFeesQuery = useQuery({ queryKey: [QUERY_KEYS.ACCOUNTANT_BILLING, "student-fees", studentId, "unlimited"], queryFn: () => listStudentFees({ page: 1, limit: -1, studentId }), enabled: !!studentId });
+  const feeItemsQuery = useQuery({ queryKey: [QUERY_KEYS.ACCOUNTANT_BILLING, "fee-items", studentFeeId, "unlimited"], queryFn: () => listStudentFeeItems({ page: 1, limit: -1, studentFeeId }), enabled: !!studentFeeId });
 
   const students = rowsFromList(studentQuery.data) as T_BillingStudent[];
   const fiscalYears = rowsFromList(fiscalQuery.data) as T_FiscalYear[];
@@ -139,7 +139,7 @@ export default function RecordPaymentForm() {
           <FormField control={form.control} name="studentFeeId" render={({ field }) => (
             <FormItem>
               <FormLabel isOptional>Student Fee (for items)</FormLabel>
-              <FormControl><SelectCommand value={field.value ?? ""} onChange={field.onChange} options={studentFeeOptions} placeholder={!studentId ? "Select student first" : studentFeesQuery.isLoading ? "Loading fees..." : "Select student fee"} searchPlaceholder="Search fees..." loading={studentFeesQuery.isLoading} disabled={!studentId} isClearable /></FormControl>
+              <FormControl><SelectCommand value={field.value ?? ""} onChange={field.onChange} options={studentFeeOptions} placeholder={!studentId ? "Select student first" : studentFeesQuery.isLoading ? "Loading fees..." : "Select student fee"} searchPlaceholder="Search fees..." loading={studentFeesQuery.isLoading} disabled={!studentId} withClear /></FormControl>
               <FormDescription>Optional: choose assigned fee to load allocatable items.</FormDescription>
               <FormMessage />
             </FormItem>

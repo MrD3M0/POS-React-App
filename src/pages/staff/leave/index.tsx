@@ -43,7 +43,7 @@ export default function StaffLeavePage() {
 
   const typesQuery = useQuery({
     queryKey: [QUERY_KEYS.ADMIN_LOOKUP_LEAVE, "staff-select", "unlimited"],
-    queryFn: () => listLeaveTypes({ page: 1, limit: 999 }),
+    queryFn: () => listLeaveTypes({ page: 1, limit: -1 }),
   });
 
   const form = useForm<StaffLeaveFormValues>({
@@ -149,7 +149,7 @@ export default function StaffLeavePage() {
                         placeholder={typesQuery.isLoading ? "Loading leave types..." : "Select leave type"}
                         searchPlaceholder="Search leave types..."
                         loading={typesQuery.isLoading}
-                        isClearable
+                        withClear
                       />
                     </FormControl>
                     <FormDescription>Select leave type (ID reference, unlimited options).</FormDescription>

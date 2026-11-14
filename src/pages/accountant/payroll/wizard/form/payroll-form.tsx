@@ -23,8 +23,8 @@ interface PayrollFormDialogProps {
 export default function PayrollFormDialog({ onClose }: PayrollFormDialogProps) {
   const qc = useQueryClient();
   const fiscalQuery = useQuery({
-    queryKey: [QUERY_KEYS.ADMIN_FISCAL_YEAR_LIST, "payroll-wizard", "unlimited"],
-    queryFn: () => listFiscalYears({ page: 1, limit: 999 }),
+    queryKey: [QUERY_KEYS.ADMIN_FISCALYEAR_LIST, "payroll-wizard", "unlimited"],
+    queryFn: () => listFiscalYears({ page: 1, limit: -1 }),
   });
   const fiscalYears: Array<{ id: string; name?: string; yearBs?: number; isCurrent?: boolean }> =
     (fiscalQuery.data?.data?.data ?? fiscalQuery.data?.data ?? []) as Array<{
@@ -53,7 +53,7 @@ export default function PayrollFormDialog({ onClose }: PayrollFormDialogProps) {
         remarks: values.remarks || undefined,
       }),
     onSuccess: (data) => {
-      qc.invalidateQueries({ queryKey: [QUERY_KEYS.ACCOUNTANT_PAYROLL_WIZARD] });
+      qc.invalidateQueries({ queryKey: [QUERY_KEYS.ACCOUNTANT_PAYROLL] });
       qc.invalidateQueries({ queryKey: [QUERY_KEYS.PRINCIPAL_PAYROLL_PENDING] });
       const count = (data as { payslipsGenerated?: number })?.payslipsGenerated;
       toast.success(

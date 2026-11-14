@@ -18,6 +18,7 @@ import {
   Receipt,
   ScrollText,
   ShieldCheck,
+  UploadCloud,
   UserCircle2,
   Users,
   Wallet,
@@ -42,13 +43,41 @@ export interface NavGroupType {
 }
 
 export const NAV_ITEMS: NavItemType[] = [
-  // Dashboard
+  // One dashboard entry per role, each pointed at that role's own route.
   {
-    key: "dashboard",
+    key: "admin-dashboard",
     label: "Dashboard",
     icon: LayoutDashboard,
-    href: "/dashboard",
-    permission: "system:dashboard:read",
+    href: "/admin",
+    permission: "admin:dashboard:read",
+  },
+  {
+    key: "principal-dashboard",
+    label: "Dashboard",
+    icon: LayoutDashboard,
+    href: "/principal",
+    permission: "principal:dashboard:read",
+  },
+  {
+    key: "accountant-dashboard",
+    label: "Dashboard",
+    icon: LayoutDashboard,
+    href: "/accountant",
+    permission: "accountant:dashboard:read",
+  },
+  {
+    key: "teacher-dashboard",
+    label: "Dashboard",
+    icon: LayoutDashboard,
+    href: "/teacher/dashboard",
+    permission: "teacher:dashboard:read",
+  },
+  {
+    key: "staff-dashboard",
+    label: "Dashboard",
+    icon: LayoutDashboard,
+    href: "/staff",
+    permission: "staff:dashboard:read",
   },
 
   // Admin Modules
@@ -283,13 +312,6 @@ export const NAV_ITEMS: NavItemType[] = [
 
   // Teacher Modules
   {
-    key: "teacher-dashboard",
-    label: "Dashboard",
-    icon: LayoutDashboard,
-    href: "/teacher/dashboard",
-    permission: "teacher:dashboard:read",
-  },
-  {
     key: "my-classes",
     label: "My Classes",
     icon: Users,
@@ -316,6 +338,13 @@ export const NAV_ITEMS: NavItemType[] = [
     icon: Calculator,
     href: "/teacher/marks",
     permission: "teacher:exams:mark",
+  },
+  {
+    key: "marks-submit",
+    label: "Marks Submission",
+    icon: UploadCloud,
+    href: "/teacher/marks/submit",
+    permission: "teacher:results:submit",
   },
   {
     key: "results",
@@ -479,7 +508,7 @@ export const NAV_GROUPS: NavGroupType[] = [
     key: "exams",
     label: "Exams",
     icon: CalendarDays,
-    itemKeys: ["exams", "exam-subjects", "marks-entry"],
+    itemKeys: ["exams", "exam-subjects", "marks-entry", "marks-submit"],
   },
   {
     key: "results",
@@ -548,7 +577,7 @@ for (const group of NAV_GROUPS) {
 // Role -> visible menu items
 const PERMISSION_BY_ROLE: Record<string, Set<string>> = {
   ADMIN: new Set([
-    "system:dashboard:read",
+    "admin:dashboard:read",
     "system:help:read",
     "admin:users:read",
     "admin:employees:read",
@@ -571,7 +600,7 @@ const PERMISSION_BY_ROLE: Record<string, Set<string>> = {
     "scholarship:manage",
   ]),
   PRINCIPAL: new Set([
-    "system:dashboard:read",
+    "principal:dashboard:read",
     "system:help:read",
     "admin:students:read",
     "admin:employees:read",
@@ -595,7 +624,7 @@ const PERMISSION_BY_ROLE: Record<string, Set<string>> = {
     "scholarship:read",
   ]),
   ACCOUNTANT: new Set([
-    "system:dashboard:read",
+    "accountant:dashboard:read",
     "system:help:read",
     "admin:students:read",
     "admin:batches:read",
@@ -648,7 +677,7 @@ const PERMISSION_BY_ROLE: Record<string, Set<string>> = {
     "teacher:notices:read",
   ]),
   STAFF: new Set([
-    "system:dashboard:read",
+    "staff:dashboard:read",
     "system:help:read",
     "staff:profile:own",
     "staff:payslips:own",
@@ -661,7 +690,13 @@ const PERMISSION_BY_ROLE: Record<string, Set<string>> = {
  * Nav keys that must always sit at the very top of the sidebar, whichever
  * role is signed in (every role has exactly one dashboard).
  */
-const DASHBOARD_KEYS = new Set(["dashboard", "teacher-dashboard"]);
+const DASHBOARD_KEYS = new Set([
+  "admin-dashboard",
+  "principal-dashboard",
+  "accountant-dashboard",
+  "teacher-dashboard",
+  "staff-dashboard",
+]);
 
 function withDashboardFirst(items: NavItemType[]): NavItemType[] {
   const dashboards = items.filter((item) => DASHBOARD_KEYS.has(item.key));

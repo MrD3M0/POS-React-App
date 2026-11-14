@@ -32,7 +32,7 @@ export default function CreateTermPage() {
 
   const batchesQuery = useQuery({
     queryKey: [QUERY_KEYS.ADMIN_BATCH_LIST, "select", "unlimited"],
-    queryFn: () => listBatches({ page: 1, limit: 999 }),
+    queryFn: () => listBatches({ page: 1, limit: -1 }),
   });
 
   const batches = batchesQuery.data?.data?.data ?? [];

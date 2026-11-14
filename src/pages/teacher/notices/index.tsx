@@ -6,7 +6,7 @@ import AlertHandler from "@/components/common/alert-handler";
 import Badge from "@/components/ui/badge";
 import GenericTable, { type T_TableHead } from "@/components/generic-table";
 import { QUERY_KEYS } from "@/lib/query-keys";
-import { useCan } from "@/auth/permissions";
+import { useCan } from "@/auth/use-can";
 import { listTeacherNotices, type T_NOTICE } from "./service/service";
 
 const LIMIT = 20;

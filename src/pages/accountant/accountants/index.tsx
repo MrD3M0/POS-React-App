@@ -76,7 +76,7 @@ export default function AccountantListPage() {
           <thead>
             <tr className="border-b border-border">
               <th className="px-3 py-2 text-left font-medium">#</th>
-              <th className="px-3 py-2 text-left font-medium">Employee ID</th>
+              <th className="px-3 py-2 text-left font-medium">Employee Code</th>
               <th className="px-3 py-2 text-left font-medium">Name</th>
               <th className="px-3 py-2 text-left font-medium">Designation</th>
               <th className="px-3 py-2 text-left font-medium">Gender</th>
@@ -92,37 +92,42 @@ export default function AccountantListPage() {
                 </td>
               </tr>
             ) : (
-              rows.map((acc, index) => (
-                <tr key={acc.id}>
-                  <td className="px-3 py-2 tabular-nums">{page * LIMIT - LIMIT + index + 1}</td>
-                  <td className="font-mono text-xs px-3 py-2">{acc.employeeId}</td>
-                  <td className="px-3 py-2 font-medium">{`${acc.firstName} ${acc.lastName ?? ""}`}</td>
-                  <td className="px-3 py-2">{acc.designation}</td>
-                  <td className="px-3 py-2">{acc.gender}</td>
-                  <td className="px-3 py-2 text-right">
-                    <Badge variant={acc.isActive ? "default" : "destructive"}>
-                      {acc.isActive ? "Active" : "Inactive"}
-                    </Badge>
-                  </td>
-                  <td className="px-3 py-2 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <Link to={`/accountant/edit/${acc.id}`}>
-                        <Button variant="outline" size="icon" className="h-8 w-8">
-                          <Edit className="h-4 w-4" />
+              rows.map((acc, index) => {
+                const emp = acc.employee;
+                return (
+                  <tr key={acc.id}>
+                    <td className="px-3 py-2 tabular-nums">{page * LIMIT - LIMIT + index + 1}</td>
+                    <td className="font-mono text-xs px-3 py-2">{emp?.employeeCode ?? "—"}</td>
+                    <td className="px-3 py-2 font-medium">{`${emp?.firstName ?? ""} ${emp?.lastName ?? ""}`.trim() || "—"}</td>
+                    <td className="px-3 py-2">{emp?.designation ?? "—"}</td>
+                    <td className="px-3 py-2">{emp?.gender ?? "—"}</td>
+                    <td className="px-3 py-2 text-right">
+                      <Badge variant={emp?.isActive ? "default" : "destructive"}>
+                        {emp?.isActive ? "Active" : "Inactive"}
+                      </Badge>
+                    </td>
+                    <td className="px-3 py-2 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        {/* Employee profile fields live on the employee record;
+                            the backend has no accountant-update endpoint. */}
+                        <Link to={`/admin/employees/edit/${acc.employeeId}`}>
+                          <Button variant="outline" size="icon" className="h-8 w-8">
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </Link>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          onClick={() => setDeleteId(acc.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
                         </Button>
-                      </Link>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-8 w-8 text-destructive hover:text-destructive"
-                        onClick={() => setDeleteId(acc.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>

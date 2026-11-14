@@ -1,25 +1,17 @@
 import { z } from "zod";
 
+/**
+ * Matches the backend contract exactly (`src/modules/accountant/validator.ts`):
+ * creating an Accountant only LINKS an existing employee record. All profile
+ * fields (name, email, designation, gender, phone) live on the Employee row
+ * and are edited via /admin/employees — they are NOT part of this payload.
+ */
 export const AccountantSchema = z.object({
-  employeeId: z.string().min(1, "Employee ID is required"),
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
-  email: z.string().email("Invalid email address"),
-  designation: z.string().min(1, "Designation is required"),
-  gender: z.enum(["MALE", "FEMALE", "OTHERS"]),
-  phone: z.string().optional(),
-  isActive: z.boolean(),
+  employeeId: z.string().uuid("Select an employee to link as accountant"),
 });
 
 export type T_AccountantSchema = z.infer<typeof AccountantSchema>;
 
 export const AccountantDefaultValues: T_AccountantSchema = {
   employeeId: "",
-  firstName: "",
-  lastName: "",
-  email: "",
-  designation: "",
-  gender: "MALE",
-  phone: "",
-  isActive: true,
 };

@@ -50,12 +50,12 @@ export async function getLookupById(type: string, id: string): Promise<{ data: T
   return res.data;
 }
 
-export async function createLookup(type: string, input: Record<string, any>): Promise<{ message: string }> {
+export async function createLookup(type: string, input: Record<string, unknown>): Promise<{ message: string }> {
   const res = await axiosInstance.post(`${urlFor(type)}`, input);
   return res.data;
 }
 
-export async function updateLookup(type: string, id: string, input: Record<string, any>): Promise<{ message: string }> {
+export async function updateLookup(type: string, id: string, input: Record<string, unknown>): Promise<{ message: string }> {
   const res = await axiosInstance.patch(`${urlFor(type)}/${id}`, input);
   return res.data;
 }

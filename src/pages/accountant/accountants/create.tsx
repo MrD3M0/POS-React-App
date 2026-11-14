@@ -1,18 +1,19 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
+import { Mail, Phone, User } from "lucide-react";
 import type { T_UseQueryError } from "@/types/common";
 import { QUERY_KEYS } from "@/lib/query-keys";
 import { mapFieldsOnError } from "@/lib/utils";
 import Button from "@/components/ui/button";
-import Input from "@/components/ui/input";
+import Badge from "@/components/ui/badge";
 import SelectCommand from "@/components/select-command";
-import { InputWithSwitch } from "@/components/input-with-switch";
 import PageHeader from "@/components/common/page-header";
+import ScreenLoader from "@/components/ui/screen-loader";
 import {
   Form,
   FormControl,
@@ -27,32 +28,19 @@ import {
   AccountantDefaultValues,
   type T_AccountantSchema,
 } from "./schema/schema";
-import { createAccountant, listEmployeeOptions } from "./service/service";
+import { createAccountant, listEmployeeOptions, type T_EMPLOYEE_OPTION } from "./service/service";
 
 const LIST_ROUTE = "/accountant/accountants";
-
-const GENDER_OPTIONS = [
-  { label: "Male", value: "MALE" },
-  { label: "Female", value: "FEMALE" },
-  { label: "Others", value: "OTHERS" },
-];
 
 const CreateAccountant = () => {
   const navigate = useNavigate();
   const qc = useQueryClient();
 
+  const [selectedEmployee, setSelectedEmployee] = useState<T_EMPLOYEE_OPTION | null>(null);
+
   const form = useForm<T_AccountantSchema>({
     resolver: zodResolver(AccountantSchema),
-    defaultValues: {
-      ...AccountantDefaultValues,
-      // Guard against undefined defaults (avoids uncontrolled -> controlled warnings)
-      employeeId: AccountantDefaultValues.employeeId ?? "",
-      firstName: AccountantDefaultValues.firstName ?? "",
-      lastName: AccountantDefaultValues.lastName ?? "",
-      email: AccountantDefaultValues.email ?? "",
-      designation: AccountantDefaultValues.designation ?? "",
-      phone: AccountantDefaultValues.phone ?? "",
-    },
+    defaultValues: { ...AccountantDefaultValues },
   });
 
   const employeesQuery = useQuery({
@@ -61,7 +49,7 @@ const CreateAccountant = () => {
       "accountant-select",
       "unlimited",
     ],
-    queryFn: () => listEmployeeOptions({ page: 1, limit: 999 }),
+    queryFn: () => listEmployeeOptions({ page: 1, limit: -1 }),
   });
 
   const employees = useMemo(
@@ -88,17 +76,6 @@ const CreateAccountant = () => {
     [employees],
   );
 
-  const handleEmployeeChange = (id: string, onChange: (v: string) => void) => {
-    onChange(id);
-    const emp = employees.find((e) => e.id === id);
-    if (!emp) return;
-    const opts = { shouldValidate: true, shouldDirty: true } as const;
-    form.setValue("firstName", emp.firstName ?? "", opts);
-    form.setValue("lastName", emp.lastName ?? "", opts);
-    form.setValue("email", emp.email ?? "", opts);
-    form.setValue("designation", emp.designation ?? "", opts);
-  };
-
   const mutation = useMutation({
     mutationFn: (data: T_AccountantSchema) => createAccountant(data),
     onSuccess: () => {
@@ -114,14 +91,16 @@ const CreateAccountant = () => {
     },
   });
 
+  if (employeesQuery.isLoading) return <ScreenLoader />;
+
   return (
     <div className="p-5">
       <PageHeader
         title="Add Accountant"
+        description="Link an existing employee record as the accountant."
         breadCrumbItems={[
           { title: "Accountant", link: "/accountant" },
           { title: "Accountants", link: LIST_ROUTE },
-          // Verify this route exists in your router; otherwise point it to LIST_ROUTE
           { title: "Create", link: "/accountant/create" },
         ]}
         backPage={LIST_ROUTE}
@@ -133,180 +112,73 @@ const CreateAccountant = () => {
             onSubmit={form.handleSubmit((data) => mutation.mutate(data))}
             className="space-y-4"
           >
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="employeeId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Employee</FormLabel>
-                    <FormControl>
-                      <SelectCommand
-                        value={field.value}
-                        onChange={(v: string) =>
-                          handleEmployeeChange(v, field.onChange)
-                        }
-                        options={employeeOptions}
-                        placeholder={
-                          employeesQuery.isLoading
-                            ? "Loading employees..."
-                            : "Select employee..."
-                        }
-                        searchPlaceholder="Search employees..."
-                        loading={employeesQuery.isLoading}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Select the employee record to link as accountant. Name,
-                      email, and designation are filled in automatically.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <FormField
+              control={form.control}
+              name="employeeId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Employee</FormLabel>
+                  <FormControl>
+                    <SelectCommand
+                      value={field.value}
+                      onChange={(v: string) => {
+                        field.onChange(v);
+                        setSelectedEmployee(employees.find((e) => e.id === v) ?? null);
+                      }}
+                      options={employeeOptions}
+                      placeholder={
+                        employeesQuery.isLoading
+                          ? "Loading employees..."
+                          : "Select employee..."
+                      }
+                      searchPlaceholder="Search employees..."
+                      loading={employeesQuery.isLoading}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Creating an accountant links an existing employee record.
+                    Their name, email, designation, and contact details come
+                    from the employee profile — edit those via Admin → Employees.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-              <FormField
-                control={form.control}
-                name="firstName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>First Name</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="e.g. John"
-                        {...field}
-                        value={field.value ?? ""}
-                      />
-                    </FormControl>
-                    <FormDescription>Accountant's given name.</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="lastName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Last Name</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="e.g. Doe"
-                        {...field}
-                        value={field.value ?? ""}
-                      />
-                    </FormControl>
-                    <FormDescription>Accountant's family name.</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="email"
-                        placeholder="e.g. john@university.edu"
-                        {...field}
-                        value={field.value ?? ""}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Primary contact/login email.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="designation"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Designation</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="e.g. Senior Accountant"
-                        {...field}
-                        value={field.value ?? ""}
-                      />
-                    </FormControl>
-                    <FormDescription>Job title or position.</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="gender"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Gender</FormLabel>
-                    <FormControl>
-                      <SelectCommand
-                        value={field.value}
-                        onChange={field.onChange}
-                        options={GENDER_OPTIONS}
-                        placeholder="Select gender"
-                        hideSearch
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Gender selection (fixed options).
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel isOptional>Phone</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="e.g. 98XXXXXXXX"
-                        {...field}
-                        value={field.value ?? ""}
-                      />
-                    </FormControl>
-                    <FormDescription>Optional contact number.</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="isActive"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Status</FormLabel>
-                    <FormControl>
-                      <InputWithSwitch
-                        value={field.value}
-                        onChange={field.onChange}
-                        labels={{ on: "Active", off: "Inactive" }}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Inactive accountants are excluded from active operations.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            {/* Read-only preview: everything else is derived from the employee record. */}
+            {selectedEmployee ? (
+              <div className="rounded-lg border bg-muted/30 p-4 space-y-2">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Employee details (managed in the employee profile)
+                </p>
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="flex items-center gap-2 text-sm font-medium">
+                    <User className="h-4 w-4 text-muted-foreground" />
+                    {[selectedEmployee.firstName, selectedEmployee.lastName]
+                      .filter(Boolean)
+                      .join(" ") || selectedEmployee.id}
+                  </span>
+                  {selectedEmployee.employeeCode && (
+                    <Badge variant="outline">{selectedEmployee.employeeCode}</Badge>
+                  )}
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {selectedEmployee.designation || "—"}
+                </p>
+                <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Mail className="h-3.5 w-3.5" />
+                  {selectedEmployee.email || "—"}
+                </p>
+                <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Phone className="h-3.5 w-3.5" />
+                  {selectedEmployee.phone || "—"}
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Select an employee above to preview the details that will be linked.
+              </p>
+            )}
 
             <div className="flex items-center justify-end gap-3 border-t pt-4">
               <Button

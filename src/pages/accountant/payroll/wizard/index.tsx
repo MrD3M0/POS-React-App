@@ -52,7 +52,7 @@ export default function AccountantPayrollWizardPage() {
   const qc = useQueryClient();
 
   const query = useQuery({
-    queryKey: [QUERY_KEYS.ACCOUNTANT_PAYROLL_WIZARD, "list", page, search],
+    queryKey: [QUERY_KEYS.ACCOUNTANT_PAYROLL, "list", page, search],
     queryFn: () => listPayrolls({ page, limit: LIMIT, search }),
   });
 
@@ -60,7 +60,7 @@ export default function AccountantPayrollWizardPage() {
     mutationFn: (id: string) => submitPayroll(id),
     onSuccess: () => {
       toast.success("Payroll submitted for approval.");
-      qc.invalidateQueries({ queryKey: [QUERY_KEYS.ACCOUNTANT_PAYROLL_WIZARD] });
+      qc.invalidateQueries({ queryKey: [QUERY_KEYS.ACCOUNTANT_PAYROLL] });
       qc.invalidateQueries({ queryKey: [QUERY_KEYS.PRINCIPAL_PAYROLL_PENDING] });
     },
     onError: (e: AxiosError<T_UseQueryError>) => toast.error(e.response?.data?.message ?? "Failed to submit payroll."),
@@ -146,7 +146,7 @@ function PayPayrollDialog({ payroll, onClose }: { payroll: PayrollRow; onClose: 
     mutationFn: (values: PayPayrollValues) => markPaid(payroll.id, { paidDateBs: values.paidDateBs }),
     onSuccess: () => {
       toast.success("Payroll marked as paid (journal posted, attendance locked).");
-      qc.invalidateQueries({ queryKey: [QUERY_KEYS.ACCOUNTANT_PAYROLL_WIZARD] });
+      qc.invalidateQueries({ queryKey: [QUERY_KEYS.ACCOUNTANT_PAYROLL] });
       qc.invalidateQueries({ queryKey: [QUERY_KEYS.PRINCIPAL_PAYROLL_PENDING] });
       onClose();
     },

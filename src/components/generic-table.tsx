@@ -16,7 +16,7 @@ import NoData from "./common/no-data";
 import StatusBadge from "./ui/status-badge";
 import PaginationControls from "./common/PaginationControls";
 
-export type T_TableHead<T = any> = {
+export type T_TableHead<T = unknown> = {
   /** Property to show. Supports dot paths for nested data, e.g. "category.name". */
   key: string;
   headName: string;
@@ -33,7 +33,7 @@ export type T_TablePagination = {
   onPageChange: (page: number) => void;
 };
 
-type Props<T extends Record<string, any>> = {
+type Props<T extends Record<string, unknown>> = {
   tableHeads: T_TableHead<T>[];
   data: T[];
   /**
@@ -69,14 +69,33 @@ const isDateValue = (value: unknown): value is string =>
   typeof value === "string" && ISO_DATE.test(value);
 
 /** Read `item[path]`, falling back to a dot-path walk ("category.name"). */
-const getValue = (item: Record<string, any>, path: string): unknown => {
-  const direct = path in item ? item[path] : path
-    .split(".")
-    .reduce<any>((acc, part) => (acc == null ? undefined : acc[part]), item);
+const getValue = (item: Record<string, unknown>, path: string): unknown => {
+  const direct =
+    path in item
+      ? item[path]
+      : path
+          .split(".")
+          .reduce<unknown>(
+            (acc, part) =>
+              acc != null && typeof acc === "object"
+                ? (acc as Record<string, unknown>)[part]
+                : undefined,
+            item,
+          );
 
   if (direct !== undefined && direct !== null && direct !== "") return direct;
-  if (path === "role") return item.user?.role ?? item.userRole ?? direct;
-  if (path === "email") return item.user?.email ?? item.userEmail ?? direct;
+  if (path === "role")
+    return (
+      (item.user as Record<string, unknown> | undefined)?.role ??
+      item.userRole ??
+      direct
+    );
+  if (path === "email")
+    return (
+      (item.user as Record<string, unknown> | undefined)?.email ??
+      item.userEmail ??
+      direct
+    );
   return direct;
 };
 
@@ -133,7 +152,7 @@ const renderValue = (raw: unknown): ReactNode => {
   return <span className="text-foreground/90">{String(value)}</span>;
 };
 
-const GenericTable = <T extends Record<string, any>>({
+const GenericTable = <T extends Record<string, unknown>>({
   tableHeads,
   data,
   renderRow,
@@ -259,7 +278,7 @@ const GenericTable = <T extends Record<string, any>>({
                     const cells = renderRow?.(item, startIndex + index);
                     return (
                       <TableRow
-                        key={item.id ?? index}
+                        key={item.id != null && typeof item.id !== "object" ? (item.id as string | number) : index}
                         className="group transition-colors"
                       >
                         <TableCell className="w-12 min-w-12 border-b border-r text-center text-sm tabular-nums text-muted-foreground">

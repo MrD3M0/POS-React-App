@@ -42,7 +42,7 @@ export default function EditBatchPage() {
 
   const coursesQuery = useQuery({
     queryKey: [QUERY_KEYS.ADMIN_COURSE_LIST, "select", "unlimited"],
-    queryFn: () => listCourses({ page: 1, limit: 999 }),
+    queryFn: () => listCourses({ page: 1, limit: -1 }),
   });
 
   const courses = coursesQuery.data?.data?.data ?? [];

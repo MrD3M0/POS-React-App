@@ -1,4 +1,4 @@
-import { type FC, type ReactNode, useEffect, useMemo, useState } from "react";
+import { type FC, type ReactNode, useMemo, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Check, Loader2, TriangleAlert, X } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -55,14 +55,18 @@ const SelectCommand: FC<SelectCommandProps> = ({
 }) => {
   const [open, setOpen] = useState(false);
   const [selectedValue, setSelectedValue] = useState(value || "");
+  const [prevValue, setPrevValue] = useState(value);
   // Reactive (matchMedia, < 768px) instead of a user-agent sniff, so it also
   // reacts to window resize, rotation, iPads and desktop dev-tools emulation.
   const mobile = useIsMobile();
   const [search, setSearch] = useState("");
 
-  useEffect(() => {
+  // Keep internal selection in sync with the controlled `value` prop by
+  // adjusting state during render (no effect needed).
+  if (prevValue !== value) {
+    setPrevValue(value);
     setSelectedValue(value || "");
-  }, [value]);
+  }
 
   const handleSelect = (val: string) => {
     if (disabled) return;
@@ -117,8 +121,8 @@ const SelectCommand: FC<SelectCommandProps> = ({
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                setSelectedValue(undefined as any);
-                onChange?.(undefined as any);
+                setSelectedValue("");
+                onChange?.("");
               }}
             />
           )}
@@ -223,8 +227,8 @@ const SelectCommand: FC<SelectCommandProps> = ({
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              setSelectedValue(undefined as any);
-              onChange?.(undefined as any);
+              setSelectedValue("");
+              onChange?.("");
             }}
           />
         )}

@@ -22,11 +22,14 @@ export const mapFieldsOnError = <T extends Record<string, unknown>>(
     // Check if deep errors exist
     if (key === "_deepErrors") {
       if (!handleDeepErrors) return;
-      const deepErrors = (value as any).issues as unknown as {
-        code: string;
-        message: string;
-        path: string[];
-      }[];
+      const deepErrors = (value as { issues?: unknown }).issues as
+        | {
+            code: string;
+            message: string;
+            path: string[];
+          }[]
+        | undefined;
+      if (!Array.isArray(deepErrors)) return;
 
       // For each deep error, set the error on the form
       deepErrors.forEach((deepError) => {

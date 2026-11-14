@@ -365,5 +365,5 @@ function formatAd(d: BsDate): string {
   return `${y}-${m}-${day}`;
 }
 
-// Re-exported for convenience in forms.
-export { adToBs, bsToAd, formatBs, parseBs };
+// (bs-date helpers live in "@/lib/bs-date" — import from there directly;
+// re-exporting them here would break react-refresh.)

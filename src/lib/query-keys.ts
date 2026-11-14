@@ -2,6 +2,8 @@ import { QueryClient } from "@tanstack/react-query";
 
 export const QUERY_KEYS = {
   CURRENT_USER: "current-user",
+  ADMIN_USER_LIST: "admin-users",
+  ROLE_DASHBOARD: "role-dashboard",
   CATEGORY_LIST: "categories",
   CATEGORY: "category",
   PRODUCT_LIST: "products",
@@ -22,6 +24,8 @@ export const QUERY_KEYS = {
   ADMIN_BATCH_LIST: "admin-batches",
   ADMIN_TERM_LIST: "admin-terms",
   ADMIN_TERM_GET: "admin-term",
+  ADMIN_TERM_SUBJECTS: "admin-term-subjects",
+  ADMIN_HOLIDAY_LIST: "admin-holidays",
   ADMIN_SUBJECT_LIST: "admin-subjects",
   ADMIN_SUBJECT_GET: "admin-subject",
   ADMIN_TEACHING_ASSIGNMENT_LIST: "admin-teaching-assignments",
@@ -44,6 +48,7 @@ export const QUERY_KEYS = {
   // Principal
   PRINCIPAL_ATTENDANCE: "principal-attendance",
   PRINCIPAL_RESULTS_PENDING: "principal-results-pending",
+  PRINCIPAL_RESULT_GROUPS: "principal-result-groups",
   PRINCIPAL_PAYROLL_PENDING: "principal-payroll-pending",
   PRINCIPAL_REPORTS: "principal-reports",
   // Accountant
@@ -72,6 +77,7 @@ export const QUERY_KEYS = {
   TEACHER_RESULTS: "teacher-results",
   TEACHER_STUDENTS: "teacher-students",
   TEACHER_EXAM_SUBJECTS: "teacher-exam-subjects",
+  TEACHER_RESULT_GROUPS: "teacher-result-groups",
   TEACHER_ATTENDANCE_SESSIONS: "teacher-attendance-sessions",
   TEACHER_BATCH_PAY: "teacher-batch-pay-page",
   TEACHER_RESULT_DETAIL: "teacher-result-detail",
@@ -123,6 +129,8 @@ export const QUERY_KEYS = {
   ACCOUNTANT_BILLING_INSTALLMENTS: "accountant-billing-installments",
   ACCOUNTANT_BILLING_PAYMENTS: "accountant-billing-payments",
   ACCOUNTANT_BILLING_RECEIPT: "accountant-billing-receipt",
+  // Shared BS event calendar (per-kind queries append the kind)
+  CALENDAR_EVENTS: "calendar-events",
 } as const;
 
 export default QUERY_KEYS;
