@@ -113,6 +113,7 @@ export const QUERY_KEYS = {
   ADMIN_TAX_SLAB_LIST: "admin-tax-slabs",
   ADMIN_TEACHER_LIST: "admin-teachers",
   ADMIN_TEACHER_GET: "admin-teacher",
+  ADMIN_STAFF_LIST: "admin-staffs",
   ADMIN_PAYROLL_LIST: "admin-payrolls",
   ADMIN_PAYSLIP_LIST: "admin-payslips",
   ADMIN_RESULT_LIST: "admin-results",

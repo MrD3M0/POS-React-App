@@ -1,152 +1,113 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { Link } from "react-router";
-import PageHeader from "@/components/common/page-header";
+import PageHeader, { type BreadcrumbEntry } from "@/components/common/page-header";
 import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
-import Button from "@/components/ui/button";
 import Badge from "@/components/ui/badge";
-import PaginationControls from "@/components/common/PaginationControls";
-import ConfirmDeleteDialog from "@/components/dialog/delete-dialog";
+import GenericTable, { type T_TableHead } from "@/components/generic-table";
 import { QUERY_KEYS } from "@/lib/query-keys";
-import { Search, Edit, Trash2 } from "lucide-react";
-import { useDebounce } from "use-debounce";
 
-import { getAllAccountants, removeAccountant, type T_ACCOUNTANT } from "./service/service";
+import { getAllAccountants, type T_ACCOUNTANT } from "./service/service";
 
-const LIMIT = 10; // per the user's spec
+const LIMIT = 10;
 
-export default function AccountantListPage() {
+type Props = {
+  /** First breadcrumb entry; defaults to the accountant-area root. */
+  root?: BreadcrumbEntry;
+};
+
+/** Read-only list of accountant profiles (list display only — no CRUD). */
+export default function AccountantListPage({
+  root = { title: "Accountant", link: "/accountant" },
+}: Props) {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  const [deleteId, setDeleteId] = useState<string | null>(null);
-
-  const [debouncedSearch] = useDebounce(search, 500);
 
   const query = useQuery({
-    queryKey: [QUERY_KEYS.ACCOUNTANT_LIST, page, debouncedSearch],
-    queryFn: () => getAllAccountants({ page, search: debouncedSearch, limit: LIMIT }),
+    queryKey: [QUERY_KEYS.ACCOUNTANT_LIST, page, search],
+    queryFn: () => getAllAccountants({ page, search, limit: LIMIT }),
     placeholderData: keepPreviousData,
   });
+
+  const onSearch = useCallback((value: string) => {
+    setSearch(value);
+    setPage(1);
+  }, []);
 
   if (query.isLoading) return <ScreenLoader />;
   if (query.isError) return <AlertHandler variant="error" />;
 
   const rows: T_ACCOUNTANT[] = query.data?.data?.data ?? [];
   const total = query.data?.data?.pagination?.total ?? 0;
-  const lastPage = Math.max(1, Math.ceil(total / LIMIT));
+
+  const tableHeads: T_TableHead<T_ACCOUNTANT>[] = [
+    {
+      key: "employee.employeeCode",
+      headName: "Employee Code",
+      render: (acc) => acc.employee?.employeeCode ?? "—",
+    },
+    {
+      key: "name",
+      headName: "Name",
+      render: (acc) =>
+        [acc.employee?.firstName, acc.employee?.lastName]
+          .filter(Boolean)
+          .join(" ") || "—",
+    },
+    {
+      key: "designation",
+      headName: "Designation",
+      render: (acc) => acc.employee?.designation ?? "—",
+    },
+    {
+      key: "email",
+      headName: "Email",
+      render: (acc) => acc.employee?.email ?? "—",
+    },
+    {
+      key: "phone",
+      headName: "Phone",
+      render: (acc) => acc.employee?.phone ?? "—",
+    },
+    {
+      key: "gender",
+      headName: "Gender",
+      render: (acc) =>
+        acc.employee?.gender ? (
+          <Badge variant="outline">{acc.employee.gender}</Badge>
+        ) : (
+          "—"
+        ),
+    },
+    {
+      key: "status",
+      headName: "Status",
+      render: (acc) => (
+        <Badge variant={acc.employee?.isActive ? "default" : "destructive"}>
+          {acc.employee?.isActive ? "Active" : "Inactive"}
+        </Badge>
+      ),
+    },
+  ];
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-5">
       <PageHeader
         title="Accountants"
-        description="Manage employee-assigned accountants and their assignments."
-        createPage="/accountant/create"
-        createPageTitle="Add Accountant"
+        description="Read-only list of employee-assigned accountant profiles."
         breadCrumbItems={[
-          { title: "Accountant", link: "/accountant" },
-          { title: "Accountants", link: "/accountant/accountants" },
+          root,
+          { title: "Accountants", link: `${root.link}/accountants` },
         ]}
-        actions={
-          <>
-            <div className="relative w-80">
-              <Search className="absolute left-2.5 top-3 h-4 w-4 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Search accountants..."
-                className="pl-9"
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setPage(1);
-                }}
-              />
-            </div>
-            <Link to="/accountant/create">
-              <Button variant="outline" size="sm">
-                New Accountant
-              </Button>
-            </Link>
-          </>
-        }
       />
-
-      <div className="rounded-lg border bg-card">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border">
-              <th className="px-3 py-2 text-left font-medium">#</th>
-              <th className="px-3 py-2 text-left font-medium">Employee Code</th>
-              <th className="px-3 py-2 text-left font-medium">Name</th>
-              <th className="px-3 py-2 text-left font-medium">Designation</th>
-              <th className="px-3 py-2 text-left font-medium">Gender</th>
-              <th className="px-3 py-2 text-right font-medium">Status</th>
-              <th className="px-3 py-2 text-right font-medium">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="px-3 py-10 text-center text-muted-foreground">
-                  No accountants found.
-                </td>
-              </tr>
-            ) : (
-              rows.map((acc, index) => {
-                const emp = acc.employee;
-                return (
-                  <tr key={acc.id}>
-                    <td className="px-3 py-2 tabular-nums">{page * LIMIT - LIMIT + index + 1}</td>
-                    <td className="font-mono text-xs px-3 py-2">{emp?.employeeCode ?? "—"}</td>
-                    <td className="px-3 py-2 font-medium">{`${emp?.firstName ?? ""} ${emp?.lastName ?? ""}`.trim() || "—"}</td>
-                    <td className="px-3 py-2">{emp?.designation ?? "—"}</td>
-                    <td className="px-3 py-2">{emp?.gender ?? "—"}</td>
-                    <td className="px-3 py-2 text-right">
-                      <Badge variant={emp?.isActive ? "default" : "destructive"}>
-                        {emp?.isActive ? "Active" : "Inactive"}
-                      </Badge>
-                    </td>
-                    <td className="px-3 py-2 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        {/* Employee profile fields live on the employee record;
-                            the backend has no accountant-update endpoint. */}
-                        <Link to={`/admin/employees/edit/${acc.employeeId}`}>
-                          <Button variant="outline" size="icon" className="h-8 w-8">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-8 w-8 text-destructive hover:text-destructive"
-                          onClick={() => setDeleteId(acc.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {lastPage > 1 && (
-        <PaginationControls currentPage={page} lastPage={lastPage} onPageChange={setPage} />
-      )}
-
-      {deleteId && (
-        <ConfirmDeleteDialog
-          open={!!deleteId}
-          onOpenChange={(open) => !open && setDeleteId(null)}
-          itemId={deleteId}
-          itemName="Accountant"
-          onDelete={removeAccountant}
-          queryKeysToInvalidate={[[QUERY_KEYS.ACCOUNTANT_LIST]]}
-        />
-      )}
+      <GenericTable
+        tableHeads={tableHeads}
+        data={rows}
+        onSearch={onSearch}
+        emptyTitle="No accountants found."
+        searchPlaceholder="Search by name or employee code..."
+        pagination={{ page, limit: LIMIT, total, onPageChange: setPage }}
+      />
     </div>
   );
 }

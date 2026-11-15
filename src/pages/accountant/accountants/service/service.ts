@@ -1,7 +1,6 @@
 import axiosInstance from "@/lib/axios-request";
 import { UrlConstants } from "@/constants/endpoints";
 import type { T_AxiosResponseWithPagination, T_AxiosResponseWithoutPagination } from "@/types/common";
-import type { T_AccountantSchema } from "../schema/schema";
 
 /**
  * The backend Accountant table only stores `id` + `employeeId` (+ timestamps).
@@ -32,24 +31,6 @@ export type T_ACCOUNTANT = {
   updatedAt?: string;
 };
 
-export type T_EMPLOYEE_OPTION = {
-  id: string;
-  employeeCode?: string;
-  firstName?: string;
-  lastName?: string;
-  email?: string | null;
-  designation?: string;
-  phone?: string | null;
-  gender?: "MALE" | "FEMALE" | "OTHERS";
-};
-
-export async function listEmployeeOptions(params?: { page?: number; limit?: number; search?: string }) {
-  const res = await axiosInstance.get(UrlConstants.ADMIN_EMPLOYEE_URL, {
-    params: { page: params?.page ?? 1, limit: params?.limit ?? -1, search: params?.search ?? "" },
-  });
-  return res.data as { data?: { data?: T_EMPLOYEE_OPTION[] } };
-}
-
 export async function getAllAccountants(params: { page: number; search: string; limit: number }) {
   const response: T_AxiosResponseWithPagination<T_ACCOUNTANT> = await axiosInstance.get(
     `${UrlConstants.ACCOUNTANT_URL}`,
@@ -60,21 +41,6 @@ export async function getAllAccountants(params: { page: number; search: string; 
 
 export async function getAccountantById(id: string) {
   const response: T_AxiosResponseWithoutPagination<T_ACCOUNTANT> = await axiosInstance.get(
-    `${UrlConstants.ACCOUNTANT_URL}/${id}`,
-  );
-  return response.data;
-}
-
-export async function createAccountant(data: T_AccountantSchema) {
-  const response: T_AxiosResponseWithoutPagination<T_ACCOUNTANT> = await axiosInstance.post(
-    `${UrlConstants.ACCOUNTANT_URL}`,
-    data,
-  );
-  return response.data;
-}
-
-export async function removeAccountant(id: string) {
-  const response: T_AxiosResponseWithoutPagination<unknown> = await axiosInstance.delete(
     `${UrlConstants.ACCOUNTANT_URL}/${id}`,
   );
   return response.data;

@@ -2,6 +2,7 @@ import {
   Banknote,
   BarChart3,
   BookMarked,
+  BookUser,
   BookOpen,
   BookText,
   Calculator,
@@ -20,6 +21,7 @@ import {
   ShieldCheck,
   UploadCloud,
   UserCircle2,
+  UserCog,
   Users,
   Wallet,
 } from "lucide-react";
@@ -93,6 +95,22 @@ export const NAV_ITEMS: NavItemType[] = [
     label: "Employees",
     icon: UserCircle2,
     href: "/admin/employees",
+    permission: "admin:employees:read",
+  },
+  {
+    // Read-only teachers directory (list display only).
+    key: "teachers",
+    label: "Teachers",
+    icon: BookUser,
+    href: "/admin/teachers",
+    permission: "admin:employees:read",
+  },
+  {
+    // Read-only staff directory (list display only).
+    key: "staff",
+    label: "Staff",
+    icon: UserCog,
+    href: "/admin/staff",
     permission: "admin:employees:read",
   },
   {
@@ -471,7 +489,7 @@ export const NAV_GROUPS: NavGroupType[] = [
     key: "people",
     label: "People",
     icon: Users,
-    itemKeys: ["users", "employees", "accountants"],
+    itemKeys: ["users", "employees", "teachers", "staff", "accountants"],
   },
   {
     key: "students",

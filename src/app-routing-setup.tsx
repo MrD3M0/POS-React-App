@@ -27,6 +27,8 @@ import AdminUserCreatePage from "@/pages/admin/users/create";
 import AdminEmployeesPage from "@/pages/admin/employees/index";
 import AdminEmployeeCreatePage from "@/pages/admin/employees/create";
 import AdminEmployeeEditPage from "@/pages/admin/employees/edit";
+import TeachersListPage from "@/pages/admin/teachers/index";
+import StaffListPage from "@/pages/admin/staff/index";
 import AdminStudentsPage from "@/pages/admin/students/index";
 import AdminStudentCreatePage from "@/pages/admin/students/create";
 import AdminStudentEditPage from "@/pages/admin/students/edit";
@@ -80,7 +82,6 @@ import AccountantLedgersPage from "@/pages/accountant/ledgers/index";
 import AccountantPayrollWizardPage from "@/pages/accountant/payroll/wizard/index";
 import AccountantPayslipsPage from "@/pages/accountant/payslips/index";
 import AccountantListPage from "@/pages/accountant/accountants/index";
-import AccountantCreatePage from "@/pages/accountant/accountants/create";
 import AccountantAttendancePage from "@/pages/accountant/attendance/index";
 import AccountantNoticesPage from "@/pages/accountant/notices/index";
 import CreateAccountantNoticePage from "@/pages/accountant/notices/create";
@@ -171,6 +172,10 @@ const router = createBrowserRouter([
             path: "/admin/employees/edit/:id",
             element: <AdminEmployeeEditPage />,
           },
+
+          // Read-only directories (list display only).
+          { path: "/admin/teachers", element: <TeachersListPage /> },
+          { path: "/admin/staff", element: <StaffListPage /> },
 
           { path: "/admin/students", element: <AdminStudentsPage /> },
           {
@@ -287,6 +292,18 @@ const router = createBrowserRouter([
             path: "/principal/accountants",
             element: <PrincipalAccountantsPage />,
           },
+          {
+            path: "/principal/teachers",
+            element: (
+              <TeachersListPage root={{ title: "Principal", link: "/principal" }} />
+            ),
+          },
+          {
+            path: "/principal/staff",
+            element: (
+              <StaffListPage root={{ title: "Principal", link: "/principal" }} />
+            ),
+          },
 
           // --- Accountant modules ---
           { path: "/accountant", element: (
@@ -325,7 +342,6 @@ const router = createBrowserRouter([
           },
           { path: "/accountant/payslips", element: <AccountantPayslipsPage /> },
           { path: "/accountant/accountants", element: <AccountantListPage /> },
-          { path: "/accountant/create", element: <AccountantCreatePage /> },
           {
             path: "/accountant/attendance",
             element: <AccountantAttendancePage />,

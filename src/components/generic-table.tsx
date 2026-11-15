@@ -1,5 +1,11 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { PenSquare, Search, Trash2, X } from "lucide-react";
+import {
+  EllipsisVerticalIcon,
+  PenSquare,
+  Search,
+  Trash2,
+  X,
+} from "lucide-react";
 import { Link } from "react-router";
 import { useDebounce } from "use-debounce";
 import { cn, formatDate } from "@/lib/utils";
@@ -11,18 +17,16 @@ import {
   TableHeader,
   TableRow,
 } from "./ui/table";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import Button from "@/components/ui/button";
 import NoData from "./common/no-data";
 import StatusBadge from "./ui/status-badge";
 import PaginationControls from "./common/PaginationControls";
 
 export type T_TableHead<T = unknown> = {
-  /** Property to show. Supports dot paths for nested data, e.g. "category.name". */
   key: string;
   headName: string;
-  /** Minimum width of the column in px. */
   minWidth?: number;
-  /** Custom cell renderer (callback). Overrides default rendering for this column. */
   render?: (item: T, index: number) => ReactNode;
 };
 
@@ -36,29 +40,14 @@ export type T_TablePagination = {
 type Props<T extends Record<string, unknown>> = {
   tableHeads: T_TableHead<T>[];
   data: T[];
-  /**
-   * Row callback: return an object keyed by each column's `key`, e.g.
-   * { name: user.data.data.name, status: <Badge>...</Badge> }.
-   * Each value can be a string, number, badge, or any React node.
-   * Columns missing from the object fall back to their `render` or default display.
-   */
   renderRow?: (item: T, index: number) => Record<string, ReactNode>;
-  /** Return the route to open when the edit icon is clicked. */
   onEdit?: (item: T) => string;
-  /** Called when the delete icon is clicked. */
   onDelete?: (item: T) => void;
-  /** Render extra action controls for a row (shown alongside edit/delete). */
+  /** Extra actions — these will NOT show directly, only inside EllipsisVertical Popover */
   renderActions?: (item: T, index: number) => ReactNode;
-  /** Pass `isLoading` from your useQuery to show skeleton rows. */
   isLoading?: boolean;
-  /**
-   * - omitted: rows are filtered in the browser across every column in `tableHeads`.
-   * - provided: called (debounced) with the search text; table shows exactly `data`.
-   *   Wrap it in useCallback so its identity stays stable.
-   */
   onSearch?: (value: string) => void;
   searchPlaceholder?: string;
-  /** Server-side pagination. Footer is shown only when total > 0. */
   pagination?: T_TablePagination;
   emptyTitle?: string;
   emptyDescription?: string;
@@ -68,7 +57,6 @@ const ISO_DATE = /^\d{4}-\d{2}-\d{2}(T[\d:.]+(Z|[+-]\d{2}:?\d{2})?)?$/;
 const isDateValue = (value: unknown): value is string =>
   typeof value === "string" && ISO_DATE.test(value);
 
-/** Read `item[path]`, falling back to a dot-path walk ("category.name"). */
 const getValue = (item: Record<string, unknown>, path: string): unknown => {
   const direct =
     path in item
@@ -82,7 +70,6 @@ const getValue = (item: Record<string, unknown>, path: string): unknown => {
                 : undefined,
             item,
           );
-
   if (direct !== undefined && direct !== null && direct !== "") return direct;
   if (path === "role")
     return (
@@ -101,17 +88,14 @@ const getValue = (item: Record<string, unknown>, path: string): unknown => {
 
 const LABEL_KEYS = ["name", "title", "label"];
 
-/** Collapse objects/arrays into something React can safely render. */
 const toDisplayValue = (value: unknown): unknown => {
   if (value instanceof Date) return value.toISOString();
-
   if (Array.isArray(value)) {
     return value
       .map(toDisplayValue)
       .filter((v) => v !== null && v !== undefined && v !== "")
       .join(", ");
   }
-
   if (value !== null && typeof value === "object") {
     const obj = value as Record<string, unknown>;
     for (const k of LABEL_KEYS) {
@@ -120,7 +104,6 @@ const toDisplayValue = (value: unknown): unknown => {
     }
     return "";
   }
-
   return value;
 };
 
@@ -133,7 +116,6 @@ const stringify = (value: unknown) => {
 
 const renderValue = (raw: unknown): ReactNode => {
   const value = toDisplayValue(raw);
-
   if (typeof value === "boolean")
     return (
       <StatusBadge variant={value ? "success" : "outline"}>
@@ -148,9 +130,56 @@ const renderValue = (raw: unknown): ReactNode => {
     );
   if (value === null || value === undefined || value === "")
     return <span className="text-muted-foreground">—</span>;
-
   return <span className="text-foreground/90">{String(value)}</span>;
 };
+
+/* -------------------------------------------------- */
+/*  EllipsisVertical + Popover for extra actions       */
+/*  Only this shows when renderActions exists          */
+/* -------------------------------------------------- */
+function RowActionsPopover({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label={label}
+          className="size-7 text-muted-foreground hover:bg-muted hover:text-foreground"
+        >
+          <EllipsisVerticalIcon className="size-4" />
+        </Button>
+      </PopoverTrigger>
+
+      <PopoverContent
+        align="end"
+        sideOffset={4}
+        className="w-52 p-1.5"
+        // Clicking any action inside closes the popover
+        onClickCapture={() => setOpen(false)}
+      >
+        {/* 
+          Whatever you return from renderActions() will be stacked vertically here.
+          Style your actions like this for best look:
+          <Button variant="ghost" className="w-full justify-start">View</Button>
+          <Link className="flex h-8 items-center rounded-md px-2 text-sm hover:bg-muted">Details</Link>
+        */}
+        <div className="flex flex-col gap-0.5 [&_a]:flex [&_a]:h-8 [&_a]:items-center [&_a]:rounded-md [&_a]:px-2 [&_a]:text-sm [&_a]:hover:bg-muted [&_button]:w-full [&_button]:justify-start [&_button]:font-normal">
+          {children}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 const GenericTable = <T extends Record<string, unknown>>({
   tableHeads,
@@ -169,7 +198,6 @@ const GenericTable = <T extends Record<string, unknown>>({
   const [search, setSearch] = useState("");
   const [debouncedSearch] = useDebounce(search, 400);
 
-  // Server-side mode: notify parent only when debounced text changes.
   const lastSent = useRef("");
   useEffect(() => {
     if (!onSearch || debouncedSearch === lastSent.current) return;
@@ -177,7 +205,6 @@ const GenericTable = <T extends Record<string, unknown>>({
     onSearch(debouncedSearch);
   }, [debouncedSearch, onSearch]);
 
-  // Client-side mode: filter locally against every column.
   const rows = useMemo(() => {
     if (onSearch) return data;
     const q = search.trim().toLowerCase();
@@ -199,7 +226,7 @@ const GenericTable = <T extends Record<string, unknown>>({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
-      {/* Search (native input) */}
+      {/* Search */}
       <div className="relative min-w-48 max-w-72">
         <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
         <input
@@ -228,7 +255,6 @@ const GenericTable = <T extends Record<string, unknown>>({
         )}
       </div>
 
-      {/* Table card: always full size, with or without rows */}
       <div className="flex !min-h-[25rem] flex-1 flex-col overflow-hidden rounded-lg border border-border">
         <div className="flex min-h-0 flex-1 flex-col overflow-auto">
           <div className="shrink-0 [&>div]:overflow-visible">
@@ -248,7 +274,7 @@ const GenericTable = <T extends Record<string, unknown>>({
                     </TableHead>
                   ))}
                   {hasActions && (
-                    <TableHead className="w-24 text-center text-xs font-semibold uppercase tracking-wide text-foreground/70">
+                    <TableHead className="w-32 text-center text-xs font-semibold uppercase tracking-wide text-foreground/70">
                       Actions
                     </TableHead>
                   )}
@@ -278,7 +304,11 @@ const GenericTable = <T extends Record<string, unknown>>({
                     const cells = renderRow?.(item, startIndex + index);
                     return (
                       <TableRow
-                        key={item.id != null && typeof item.id !== "object" ? (item.id as string | number) : index}
+                        key={
+                          item.id != null && typeof item.id !== "object"
+                            ? (item.id as string | number)
+                            : index
+                        }
                         className="group transition-colors"
                       >
                         <TableCell className="w-12 min-w-12 border-b border-r text-center text-sm tabular-nums text-muted-foreground">
@@ -303,9 +333,9 @@ const GenericTable = <T extends Record<string, unknown>>({
                         })}
 
                         {hasActions && (
-                          <TableCell className="w-auto min-w-24 border-b text-right">
-                            <div className="flex items-center justify-end gap-1">
-                              {renderActions?.(item, startIndex + index)}
+                          <TableCell className="w-32 min-w-32 border-b text-right">
+                            <div className="flex items-center justify-end gap-0.5">
+                              {/* 1. EDIT — always direct */}
                               {onEdit && (
                                 <Link
                                   to={onEdit(item)}
@@ -315,6 +345,8 @@ const GenericTable = <T extends Record<string, unknown>>({
                                   <PenSquare className="size-3.5" />
                                 </Link>
                               )}
+
+                              {/* 2. DELETE — always direct */}
                               {onDelete && (
                                 <Button
                                   type="button"
@@ -327,6 +359,15 @@ const GenericTable = <T extends Record<string, unknown>>({
                                   <Trash2 className="size-3.5" />
                                 </Button>
                               )}
+
+                              {/* 3. EVERYTHING ELSE — inside EllipsisVertical Popover */}
+                              {renderActions && (
+                                <RowActionsPopover
+                                  label={`More actions for row ${startIndex + index + 1}`}
+                                >
+                                  {renderActions(item, startIndex + index)}
+                                </RowActionsPopover>
+                              )}
                             </div>
                           </TableCell>
                         )}
@@ -337,7 +378,6 @@ const GenericTable = <T extends Record<string, unknown>>({
             </Table>
           </div>
 
-          {/* Empty state takes ALL remaining height under the header */}
           {!isLoading && rows.length === 0 && (
             <NoData title={emptyTitle} description={emptyDescription} />
           )}

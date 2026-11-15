@@ -23,28 +23,29 @@ export const PERMISSION_MAP = {
     "STAFF",
   ],
   "admin:students:create": ["ADMIN", "TEACHER"], // teacher adds, admin can create approved
-  "admin:students:approve": ["ADMIN"],
-  "admin:students:reject": ["ADMIN"],
-  "admin:students:status": ["ADMIN"], // change status Active/Graduated/Dropped/Suspended
+  "admin:students:approve": ["ADMIN", "PRINCIPAL"],
+  "admin:students:reject": ["ADMIN", "PRINCIPAL"],
+  "admin:students:status": ["ADMIN", "PRINCIPAL"], // change status Active/Graduated/Dropped/Suspended
 
   "admin:courses:read": ["ADMIN"],
-  "admin:courses:create": ["ADMIN"],
-  "admin:courses:update": ["ADMIN"],
-  "admin:courses:delete": ["ADMIN"],
+  "admin:courses:create": ["ADMIN", "PRINCIPAL"],
+  "admin:courses:update": ["ADMIN", "PRINCIPAL"],
+  "admin:courses:delete": ["ADMIN", "PRINCIPAL"],
 
   "admin:batches:read": ["ADMIN"],
-  "admin:batches:create": ["ADMIN"],
-  "admin:batches:update": ["ADMIN"],
-  "admin:batches:move": ["ADMIN"], // move batch to next semester/year
+  "admin:batches:create": ["ADMIN", "PRINCIPAL"],
+  "admin:batches:update": ["ADMIN", "PRINCIPAL"],
+  "admin:batches:move": ["ADMIN", "PRINCIPAL"], // move batch to next semester/year
 
   "admin:terms:read": ["ADMIN"],
-  "admin:terms:create": ["ADMIN"],
-  "admin:terms:update": ["ADMIN"],
+  "admin:terms:create": ["ADMIN", "PRINCIPAL"],
+  "admin:terms:update": ["ADMIN", "PRINCIPAL"],
+  "admin:terms:delete": ["ADMIN", "PRINCIPAL"],
 
   "admin:subjects:read": ["ADMIN"],
-  "admin:subjects:create": ["ADMIN"],
-  "admin:subjects:update": ["ADMIN"],
-  "admin:subjects:delete": ["ADMIN"],
+  "admin:subjects:create": ["ADMIN", "PRINCIPAL"],
+  "admin:subjects:update": ["ADMIN", "PRINCIPAL"],
+  "admin:subjects:delete": ["ADMIN", "PRINCIPAL"],
 
   "admin:teachingAssignments:read": [
     "ADMIN",
