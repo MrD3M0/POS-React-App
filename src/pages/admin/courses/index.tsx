@@ -4,6 +4,7 @@ import PageHeader from "@/components/common/page-header";
 import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
 import Badge from "@/components/ui/badge";
+import { ActiveStatusBadge } from "@/components/ui/status-badge";
 import GenericTable, { type T_TableHead } from "@/components/generic-table";
 import ConfirmDeleteDialog from "@/components/dialog/confirm-delete";
 import { QUERY_KEYS } from "@/lib/query-keys";
@@ -36,11 +37,7 @@ export default function AdminCoursesPage() {
     {
       key: "isActive",
       headName: "Status",
-      render: (c) => (
-        <Badge variant={c.isActive === false ? "destructive" : "default"}>
-          {c.isActive === false ? "Inactive" : "Active"}
-        </Badge>
-      ),
+      render: (c) => <ActiveStatusBadge active={c.isActive !== false} />,
     },
   ];
 

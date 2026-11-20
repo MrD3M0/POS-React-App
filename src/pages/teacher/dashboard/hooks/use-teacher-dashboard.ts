@@ -13,6 +13,7 @@ import {
   getDashboardResultDistribution,
   getDashboardStats,
   getDashboardTodaySchedule,
+  getDashboardWeekSchedule,
   type T_DashboardFilters,
 } from "../service/service";
 
@@ -63,6 +64,15 @@ export function useTeacherDashboard() {
   const scheduleQuery = useQuery({
     queryKey: [QUERY_KEYS.TEACHER_DASHBOARD, "today-schedule", ...filterKey],
     queryFn: () => getDashboardTodaySchedule(filters),
+    // COMPLETED / ONGOING / UPCOMING is computed in Kathmandu time, so the
+    // card refreshes itself once a minute to keep the status current.
+    staleTime: 60_000,
+    refetchInterval: 60_000,
+  });
+
+  const weekScheduleQuery = useQuery({
+    queryKey: [QUERY_KEYS.TEACHER_DASHBOARD, "week-schedule", ...filterKey],
+    queryFn: () => getDashboardWeekSchedule(filters),
     staleTime: 60_000,
   });
 
@@ -130,6 +140,7 @@ export function useTeacherDashboard() {
     attendanceTrend: trendQuery,
     classAttendance: classAttendanceQuery,
     todaySchedule: scheduleQuery,
+    weekSchedule: weekScheduleQuery,
     examBatches: examBatchesQuery,
     resultDistribution: resultDistributionQuery,
     passRate: passRateQuery,

@@ -58,9 +58,9 @@ export default function CreateExamSubjectForm({
             examDateBs: v.examDateBs || undefined,
           }),
         )}
-        className="space-y-4 max-w-xl"
+        className="space-y-4 w-full"
       >
-        <div className="flex flex-col gap-3">
+        <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-2">
           <FormField
             control={form.control}
             name="examId"
@@ -178,12 +178,12 @@ export default function CreateExamSubjectForm({
             )}
           />
         </div>
-        <div className="flex gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={onCancel}>
+        <div className="flex gap-2 pt-2 border-t">
+          <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>
             Cancel
           </Button>
-          <Button type="submit" variant="primary" size="sm" loading={isPending}>
-            Create
+          <Button type="submit" variant="primary" loading={isPending}>
+            Create Exam Subject
           </Button>
         </div>
       </form>

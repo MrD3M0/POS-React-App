@@ -1,10 +1,13 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { PenSquare, UserPlus, Users } from "lucide-react";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import PageHeader from "@/components/common/page-header";
 import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
 import Badge from "@/components/ui/badge";
-import Button from "@/components/ui/button";
+import { ActiveStatusBadge } from "@/components/ui/status-badge";
 import GenericTable, { type T_TableHead } from "@/components/generic-table";
 import ConfirmDeleteDialog from "@/components/dialog/confirm-delete";
 import { QUERY_KEYS } from "@/lib/query-keys";
@@ -13,7 +16,6 @@ import {
   listFeeStructures,
   type T_FEE_STRUCTURE,
 } from "./service/service";
-import FeeStructureFormDialog from "./dialog/fee-structure-form";
 import AssignFeeStructureDialog from "./dialog/assign-fee-structure-dialog";
 
 const LIMIT = 20;
@@ -35,6 +37,19 @@ function itemsLabel(structure: T_FEE_STRUCTURE): string {
     .join(", ");
 }
 
+/** Short label for the table cell: first two items, then "+N more". */
+function itemsLabelShort(structure: T_FEE_STRUCTURE): string {
+  const items = structure.items ?? [];
+  if (items.length === 0) return "No fee items";
+  const first = items.slice(0, 2).map((item) => {
+    const head = item.feeHead?.name ?? item.feeHeadId;
+    const term = item.termNumber ? ` (term ${item.termNumber})` : " (one time)";
+    return `${head} ${money(item.amount)}${term}`;
+  });
+  const rest = items.length - first.length;
+  return `${first.join(", ")}${rest > 0 ? ` +${rest} more` : ""}`;
+}
+
 function totalLabel(structure: T_FEE_STRUCTURE): string {
   const total = (structure.items ?? []).reduce(
     (sum, item) => sum + Number(item.amount ?? 0),
@@ -48,10 +63,9 @@ function totalLabel(structure: T_FEE_STRUCTURE): string {
  * students (one student or a whole batch).
  */
 export default function AccountantFeeStructuresPage() {
+  const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  const [formOpen, setFormOpen] = useState(false);
-  const [editing, setEditing] = useState<T_FEE_STRUCTURE | null>(null);
   const [assignTarget, setAssignTarget] = useState<T_FEE_STRUCTURE | null>(null);
   const [assignMode, setAssignMode] = useState<"student" | "batch">("student");
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -75,19 +89,19 @@ export default function AccountantFeeStructuresPage() {
     {
       key: "name",
       headName: "Structure",
-      minWidth: 240,
+      minWidth: 180,
       render: (structure) => structure.name ?? "—",
     },
     {
       key: "course",
       headName: "Course",
-      minWidth: 220,
+      minWidth: 170,
       render: (structure) => structure.course?.name ?? structure.courseId ?? "—",
     },
     {
       key: "batch",
       headName: "Applies to",
-      minWidth: 160,
+      minWidth: 130,
       render: (structure) =>
         structure.batch?.name ? (
           <Badge variant="secondary">Batch {structure.batch.name}</Badge>
@@ -98,26 +112,24 @@ export default function AccountantFeeStructuresPage() {
     {
       key: "items",
       headName: "Fee Items",
-      minWidth: 320,
+      minWidth: 260,
       render: (structure) => (
-        <span className="text-sm">{itemsLabel(structure)}</span>
+        <span className="block truncate text-sm" title={itemsLabel(structure)}>
+          {itemsLabelShort(structure)}
+        </span>
       ),
     },
     {
       key: "total",
       headName: "Total",
-      minWidth: 140,
+      minWidth: 120,
       render: (structure) => totalLabel(structure),
     },
     {
       key: "isActive",
       headName: "Status",
-      minWidth: 120,
-      render: (structure) => (
-        <Badge variant={structure.isActive ? "default" : "outline"}>
-          {structure.isActive ? "Active" : "Inactive"}
-        </Badge>
-      ),
+      minWidth: 100,
+      render: (structure) => <ActiveStatusBadge active={structure.isActive} />,
     },
   ];
 
@@ -130,20 +142,9 @@ export default function AccountantFeeStructuresPage() {
           { title: "Accountant", link: "/accountant/fee-structures" },
           { title: "Fee Structures", link: "/accountant/fee-structures" },
         ]}
+        createPage="/accountant/fee-structures/create"
+        createPageTitle="Create"
       />
-
-      <div className="mb-4 flex flex-wrap gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            setEditing(null);
-            setFormOpen(true);
-          }}
-        >
-          New Fee Structure
-        </Button>
-      </div>
 
       <GenericTable
         tableHeads={head}
@@ -157,51 +158,37 @@ export default function AccountantFeeStructuresPage() {
         emptyTitle="No fee structures yet."
         pagination={{ page, limit: LIMIT, total, onPageChange: setPage }}
         renderActions={(structure) => (
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setEditing(structure);
-                setFormOpen(true);
-              }}
+          <>
+            <DropdownMenuItem
+              onClick={() => navigate(`/accountant/fee-structures/${structure.id}/edit`)}
+              className="flex w-full items-center gap-2 px-3 py-2 text-sm cursor-pointer"
             >
-              Edit
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
+              <PenSquare className="h-4 w-4" />
+              <span>Edit</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
               onClick={() => {
                 setAssignTarget(structure);
                 setAssignMode("student");
               }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-sm cursor-pointer"
             >
-              Assign Student
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
+              <UserPlus className="h-4 w-4" />
+              <span>Assign Student</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
               onClick={() => {
                 setAssignTarget(structure);
                 setAssignMode("batch");
               }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-sm cursor-pointer"
             >
-              Assign Batch
-            </Button>
-          </div>
+              <Users className="h-4 w-4" />
+              <span>Assign Batch</span>
+            </DropdownMenuItem>
+          </>
         )}
       />
-
-      {formOpen ? (
-        <FeeStructureFormDialog
-          open={formOpen}
-          onOpenChange={(open) => {
-            setFormOpen(open);
-            if (!open) setEditing(null);
-          }}
-          structure={editing}
-        />
-      ) : null}
 
       {assignTarget ? (
         <AssignFeeStructureDialog

@@ -1,8 +1,5 @@
-import { useEffect, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import type { AxiosError } from "axios";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CalendarDays, Table2 } from "lucide-react";
 import PageHeader from "@/components/common/page-header";
@@ -11,8 +8,6 @@ import AlertHandler from "@/components/common/alert-handler";
 import GenericTable, { type T_TableHead } from "@/components/generic-table";
 import Button from "@/components/ui/button";
 import Badge from "@/components/ui/badge";
-import Input from "@/components/ui/input";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -21,31 +16,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/form";
-import { BsDatePicker } from "@/components/bs-datepicker";
 import BsEventCalendar from "@/components/calendar/bs-event-calendar";
 import { useCalendarEvents } from "@/components/calendar/use-calendar-events";
 import ConfirmDeleteDialog from "@/components/dialog/confirm-delete";
 import { QUERY_KEYS } from "@/lib/query-keys";
-import { mapFieldsOnError } from "@/lib/utils";
-import type { T_UseQueryError } from "@/types/common";
-import { formatBs, todayBs } from "@/lib/bs-date";
-import {
-  createHoliday,
-  deleteHoliday,
-  generateWeeklyOffs,
-  listHolidays,
-  type T_HOLIDAY,
-} from "./service/service";
-import { holidayFormSchema, type HolidayFormValues } from "./schema/schema";
+import { todayBs } from "@/lib/bs-date";
+import { deleteHoliday, listHolidays, type T_HOLIDAY } from "./service/service";
+import { HOLIDAY_TYPE_LABELS, type T_HOLIDAY_TYPE_VALUE } from "./schema/schema";
+import HolidayForm from "./components/holiday-form";
+import GenerateWeekdaysDialog from "./components/generate-weekdays-dialog";
 
 const LIMIT = 15;
 
@@ -59,8 +40,16 @@ export default function AdminHolidaysPage() {
   const today = todayBs();
   const [calYear, setCalYear] = useState(today.year);
   const [calMonth, setCalMonth] = useState(today.month);
-  const [createDateBs, setCreateDateBs] = useState<string | null>(null);
+
+  const [addOpen, setAddOpen] = useState(false);
+  const [addInitialDateBs, setAddInitialDateBs] = useState<string | null>(null);
+  const [generateOpen, setGenerateOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  // Bulk row selection ("Delete selected")
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [deleteSelectedOpen, setDeleteSelectedOpen] = useState(false);
+  const [deletingSelected, setDeletingSelected] = useState(false);
 
   const query = useQuery({
     queryKey: [QUERY_KEYS.ADMIN_HOLIDAY_LIST, search, page],
@@ -78,34 +67,93 @@ export default function AdminHolidaysPage() {
     qc.invalidateQueries({ queryKey: [QUERY_KEYS.CALENDAR_EVENTS] });
   };
 
-  const handleGenerateWeeklyOffs = async () => {
-    const year = window.prompt("BS year for Saturdays (e.g. 2082):");
-    if (!year) return;
-    try {
-      const res = await generateWeeklyOffs(Number(year));
-      toast.success(`Created ${res?.data?.created ?? 0} weekly off days`);
-      refresh();
-    } catch (error) {
-      const message =
-        (error as AxiosError<{ message?: string }>).response?.data?.message ||
-        "Failed";
-      toast.error(message);
-    }
+  const openAddDialog = (dateBs: string | null) => {
+    setAddInitialDateBs(dateBs);
+    setAddOpen(true);
+  };
+
+  const closeAddDialog = () => {
+    setAddOpen(false);
+    setAddInitialDateBs(null);
+  };
+
+  const toggleSelectRow = (id: string, checked: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  };
+
+  const rows: T_HOLIDAY[] = query.data?.data?.data ?? [];
+  const pageIds = rows.map((row) => row.id);
+  const allPageSelected = pageIds.length > 0 && pageIds.every((id) => selectedIds.has(id));
+
+  const toggleSelectPage = (checked: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      pageIds.forEach((id) => {
+        if (checked) next.add(id);
+        else next.delete(id);
+      });
+      return next;
+    });
+  };
+
+  const deleteSelected = async () => {
+    setDeletingSelected(true);
+    const ids = [...selectedIds];
+    const results = await Promise.allSettled(ids.map((id) => deleteHoliday(id)));
+    setDeletingSelected(false);
+    setDeleteSelectedOpen(false);
+    const failed = results.filter((r) => r.status === "rejected").length;
+    const deleted = results.length - failed;
+    if (deleted > 0) toast.success(`${deleted} holiday${deleted === 1 ? "" : "s"} deleted`);
+    if (failed > 0)
+      toast.error(`${failed} holiday${failed === 1 ? "" : "s"} could not be deleted`);
+    setSelectedIds(new Set());
+    refresh();
   };
 
   if (query.isLoading && view === "table") return <ScreenLoader />;
   if (query.isError && view === "table") return <AlertHandler variant="error" />;
 
-  const rows: T_HOLIDAY[] = query.data?.data?.data ?? [];
   const total = query.data?.data?.pagination?.total ?? 0;
 
   const head: T_TableHead<T_HOLIDAY>[] = [
+    {
+      key: "select",
+      headName: "",
+      minWidth: 48,
+      render: (r) => (
+        <Checkbox
+          aria-label={`Select holiday ${r.name} (${r.dateBs})`}
+          checked={selectedIds.has(r.id)}
+          onCheckedChange={(checked) => toggleSelectRow(r.id, checked === true)}
+          className="mx-auto"
+        />
+      ),
+    },
     { key: "dateBs", headName: "Date (BS)", minWidth: 140 },
-    { key: "name", headName: "Name", minWidth: 220 },
+    { key: "name", headName: "Name", minWidth: 200 },
+    {
+      key: "type",
+      headName: "Type",
+      minWidth: 110,
+      render: (r) =>
+        r.type ? (
+          <Badge variant="outline">
+            {HOLIDAY_TYPE_LABELS[r.type as T_HOLIDAY_TYPE_VALUE] ?? r.type}
+          </Badge>
+        ) : (
+          "—"
+        ),
+    },
     {
       key: "applies",
       headName: "Applies to",
-      minWidth: 220,
+      minWidth: 180,
       render: (r) => (
         <div className="flex gap-1">
           {r.appliesToStudents ? <Badge variant="outline">Students</Badge> : null}
@@ -116,25 +164,9 @@ export default function AdminHolidaysPage() {
     {
       key: "actions",
       headName: "Actions",
-      minWidth: 140,
+      minWidth: 110,
       render: (r) => (
-        <Button
-          size="sm"
-          variant="destructive"
-          onClick={async () => {
-            if (!window.confirm(`Delete holiday ${r.name} (${r.dateBs})?`)) return;
-            try {
-              await deleteHoliday(r.id);
-              toast.success("Holiday deleted");
-              refresh();
-            } catch (error) {
-              const message =
-                (error as AxiosError<{ message?: string }>).response?.data?.message ||
-                "Failed";
-              toast.error(message);
-            }
-          }}
-        >
+        <Button size="sm" variant="destructive" onClick={() => setDeleteId(r.id)}>
           Delete
         </Button>
       ),
@@ -145,7 +177,10 @@ export default function AdminHolidaysPage() {
     <div className="p-5">
       <PageHeader
         title="Holidays"
-        breadCrumbItems={[{ title: "Admin", link: "/admin" }, { title: "Holidays", link: "/admin/holidays" }]}
+        breadCrumbItems={[
+          { title: "Admin", link: "/admin" },
+          { title: "Holidays", link: "/admin/holidays" },
+        ]}
         actions={
           <Tabs value={view} onValueChange={(value) => setView(value as "table" | "calendar")}>
             <TabsList>
@@ -164,34 +199,33 @@ export default function AdminHolidaysPage() {
 
       {view === "table" ? (
         <>
-          <div className="flex gap-2 mb-4 flex-wrap">
-            <Button
-              onClick={async () => {
-                const dateBs = window.prompt("Holiday date (BS YYYY-MM-DD):");
-                const name = window.prompt("Holiday name:");
-                if (!dateBs || !name) return;
-                try {
-                  await createHoliday({ dateBs, name, appliesToEmployees: true, appliesToStudents: true });
-                  toast.success("Holiday created");
-                  refresh();
-                } catch (error) {
-                  const message =
-                    (error as AxiosError<{ message?: string }>).response?.data?.message ||
-                    "Failed";
-                  toast.error(message);
-                }
-              }}
-            >
-              Add holiday
-            </Button>
-            <Button variant="outline" onClick={handleGenerateWeeklyOffs}>
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <Button onClick={() => openAddDialog(null)}>Add holiday</Button>
+            <Button variant="outline" onClick={() => setGenerateOpen(true)}>
               Generate Saturdays
             </Button>
+            {rows.length > 0 ? (
+              <label className="ml-2 flex cursor-pointer items-center gap-2 text-sm">
+                <Checkbox
+                  checked={allPageSelected}
+                  onCheckedChange={(checked) => toggleSelectPage(checked === true)}
+                />
+                Select page
+              </label>
+            ) : null}
+            {selectedIds.size > 0 ? (
+              <Button variant="destructive" onClick={() => setDeleteSelectedOpen(true)}>
+                Delete selected ({selectedIds.size})
+              </Button>
+            ) : null}
           </div>
           <GenericTable
             tableHeads={head}
             data={rows}
-            onSearch={(value) => { setSearch(value); setPage(1); }}
+            onSearch={(value) => {
+              setSearch(value);
+              setPage(1);
+            }}
             emptyTitle="No holidays found."
             pagination={{ page, limit: LIMIT, total, onPageChange: setPage }}
             searchPlaceholder="Search holidays..."
@@ -199,8 +233,8 @@ export default function AdminHolidaysPage() {
         </>
       ) : (
         <>
-          <div className="flex gap-2 mb-4 flex-wrap">
-            <Button variant="outline" onClick={handleGenerateWeeklyOffs}>
+          <div className="mb-4 flex flex-wrap gap-2">
+            <Button variant="outline" onClick={() => setGenerateOpen(true)}>
               Generate Saturdays
             </Button>
             <span className="self-center text-xs text-muted-foreground">
@@ -218,7 +252,7 @@ export default function AdminHolidaysPage() {
                 setCalYear(year);
                 setCalMonth(month);
               }}
-              onDayClick={(dateBs) => setCreateDateBs(dateBs)}
+              onDayClick={(dateBs) => openAddDialog(dateBs)}
               isLoading={calendar.isLoading}
               renderEventActions={(event, closeDialog) => (
                 <Button
@@ -237,13 +271,34 @@ export default function AdminHolidaysPage() {
         </>
       )}
 
-      <CreateHolidayDialog
-        open={createDateBs !== null}
-        dateBs={createDateBs ?? formatBs(today)}
-        onOpenChange={(open) => !open && setCreateDateBs(null)}
-        onCreated={refresh}
-      />
+      {/* Add holiday — single day / date range / multiple dates, all via one bulk request */}
+      <Dialog open={addOpen} onOpenChange={(open) => (open ? setAddOpen(true) : closeAddDialog())}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Add holiday</DialogTitle>
+            <DialogDescription>
+              One shared name, type and description are applied to every selected date.
+              Dates that already have a holiday are skipped.
+            </DialogDescription>
+          </DialogHeader>
+          {/* Mounted fresh per open so the form state resets */}
+          {addOpen ? (
+            <HolidayForm
+              initialDateBs={addInitialDateBs ?? undefined}
+              onDone={() => {
+                refresh();
+                closeAddDialog();
+              }}
+              onCancel={closeAddDialog}
+            />
+          ) : null}
+        </DialogContent>
+      </Dialog>
 
+      {/* Generate weekly offs (default Saturdays) */}
+      <GenerateWeekdaysDialog open={generateOpen} onOpenChange={setGenerateOpen} onDone={refresh} />
+
+      {/* Single-row delete */}
       <ConfirmDeleteDialog
         open={deleteId !== null}
         onOpenChange={(open) => !open && setDeleteId(null)}
@@ -252,156 +307,43 @@ export default function AdminHolidaysPage() {
         onDelete={deleteHoliday}
         onSuccess={() => {
           toast.success("Holiday deleted");
+          setSelectedIds((prev) => {
+            const next = new Set(prev);
+            if (deleteId) next.delete(deleteId);
+            return next;
+          });
           refresh();
         }}
       />
+
+      {/* Bulk delete confirm */}
+      <Dialog open={deleteSelectedOpen} onOpenChange={setDeleteSelectedOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete selected holidays?</DialogTitle>
+            <DialogDescription>
+              {selectedIds.size} holiday{selectedIds.size === 1 ? "" : "s"} will be
+              deleted. This action is audited and cannot be undone from this page.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteSelectedOpen(false)}
+              disabled={deletingSelected}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              loading={deletingSelected}
+              onClick={() => void deleteSelected()}
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
-  );
-}
-
-// ─── Create holiday dialog (opened from the calendar) ────────────────────────
-
-function CreateHolidayDialog({
-  open,
-  dateBs,
-  onOpenChange,
-  onCreated,
-}: {
-  open: boolean;
-  dateBs: string;
-  onOpenChange: (open: boolean) => void;
-  onCreated: () => void;
-}) {
-  const form = useForm<HolidayFormValues>({
-    resolver: zodResolver(holidayFormSchema),
-    defaultValues: {
-      dateBs,
-      name: "",
-      appliesToEmployees: true,
-      appliesToStudents: true,
-    },
-  });
-
-  useEffect(() => {
-    if (open) {
-      form.reset({ dateBs, name: "", appliesToEmployees: true, appliesToStudents: true });
-    }
-  }, [open, dateBs, form]);
-
-  const createMutation = useMutation({
-    mutationFn: (values: HolidayFormValues) =>
-      createHoliday({
-        dateBs: values.dateBs,
-        name: values.name,
-        appliesToEmployees: values.appliesToEmployees,
-        appliesToStudents: values.appliesToStudents,
-      }),
-    onSuccess: () => {
-      toast.success("Holiday created");
-      onCreated();
-      onOpenChange(false);
-    },
-    onError: (error) => {
-      mapFieldsOnError(error as AxiosError<T_UseQueryError>, form.setError);
-      const message =
-        (error as AxiosError<{ message?: string }>).response?.data?.message ||
-        "Failed to create holiday.";
-      toast.error(message);
-    },
-  });
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Add holiday</DialogTitle>
-          <DialogDescription>
-            Create a holiday on the selected BS date.
-          </DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit((values) => createMutation.mutate(values))}
-            className="space-y-3"
-          >
-            <FormField
-              control={form.control}
-              name="dateBs"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Date (BS)</FormLabel>
-                  <FormControl>
-                    <BsDatePicker
-                      value={field.value}
-                      onChange={(value) => field.onChange(typeof value === "string" ? value : "")}
-                      onBlur={field.onBlur}
-                      valueFormat="bs"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g. Dashain" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="flex flex-wrap gap-3">
-              <FormField
-                control={form.control}
-                name="appliesToStudents"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center gap-2">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={(checked) => field.onChange(checked === true)}
-                      />
-                    </FormControl>
-                    <FormLabel className="!mt-0 font-normal">Students</FormLabel>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="appliesToEmployees"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center gap-2">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={(checked) => field.onChange(checked === true)}
-                      />
-                    </FormControl>
-                    <FormLabel className="!mt-0 font-normal">Employees</FormLabel>
-                  </FormItem>
-                )}
-              />
-            </div>
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" loading={createMutation.isPending}>
-                Create
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
   );
 }

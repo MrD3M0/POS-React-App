@@ -1,9 +1,10 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import PageHeader from "@/components/common/page-header";
 import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
-import Badge from "@/components/ui/badge";
+import { ActiveStatusBadge } from "@/components/ui/status-badge";
 import GenericTable, { type T_TableHead } from "@/components/generic-table";
 import ConfirmDeleteDialog from "@/components/dialog/confirm-delete";
 import { QUERY_KEYS } from "@/lib/query-keys";
@@ -58,11 +59,7 @@ export default function AdminTeachingAssignmentsPage() {
     {
       key: "isActive",
       headName: "Active",
-      render: (r) => (
-        <Badge variant={r.isActive === false ? "destructive" : "default"}>
-          {r.isActive === false ? "Inactive" : "Active"}
-        </Badge>
-      ),
+      render: (r) => <ActiveStatusBadge active={r.isActive !== false} />,
     },
   ];
 
@@ -78,7 +75,16 @@ export default function AdminTeachingAssignmentsPage() {
       <GenericTable
         tableHeads={head}
         data={rows}
+        onEdit={(r) => `/admin/teaching-assignments/edit/${r.id}`}
         onDelete={(r) => setDeleteId(r.id)}
+        renderActions={(r) => (
+          <Link
+            to={`/admin/class-schedules/create?assignmentId=${r.id}`}
+            className="text-xs font-medium text-primary hover:underline"
+          >
+            Schedule
+          </Link>
+        )}
         onSearch={(value) => { setSearch(value); setPage(1); }}
         emptyTitle="No teaching assignments found."
         pagination={{ page, limit: LIMIT, total, onPageChange: setPage }}

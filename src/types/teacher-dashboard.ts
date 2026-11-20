@@ -76,20 +76,50 @@ export interface T_DashboardPassRate {
   overallPassPercent: number;
 }
 
+export type T_DashboardScheduleStatus = "COMPLETED" | "ONGOING" | "UPCOMING";
+
 export interface T_DashboardScheduleItem {
+  /** Weekly ClassSchedule row this item came from. */
+  scheduleId: string | null;
   sessionId: string | null;
   assignmentId: string;
+  periodId: string | null;
   /** "Subject - Class/Section" */
   label: string;
   subjectName: string;
+  subjectCode: string | null;
   classLabel: string;
   periodName: string;
   startTime: string | null;
   endTime: string | null;
-  /** No room/classroom model exists yet, so this is always null for now. */
+  /** Room from the weekly routine, null when not set. */
   room: string | null;
   attendanceTaken: boolean;
+  status: T_DashboardScheduleStatus;
+  /** The first UPCOMING period of the day. */
   isNext: boolean;
+}
+
+/** Card payload of GET /dashboard/today-schedule. */
+export interface T_DashboardTodaySchedule {
+  todaySchedule: T_DashboardScheduleItem[];
+  pendingAttendance: number;
+  /** Employee-applicable holiday name, null on a working day. */
+  holiday: { name: string } | null;
+  dateBs: string | null;
+  dayOfWeek: string | null;
+}
+
+/** One day of GET /dashboard/week-schedule. */
+export interface T_DashboardWeekDay {
+  date: string;
+  dayOfWeek: string;
+  holidayName: string | null;
+  items: T_DashboardScheduleItem[];
+}
+
+export interface T_DashboardWeekSchedule {
+  days: T_DashboardWeekDay[];
 }
 
 export interface T_DashboardLowAttendanceStudent {

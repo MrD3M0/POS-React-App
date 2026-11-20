@@ -9,7 +9,7 @@ import type { T_UseQueryError } from "@/types/common";
 import PageHeader from "@/components/common/page-header";
 import Button from "@/components/ui/button";
 import Input from "@/components/ui/input";
-import Badge from "@/components/ui/badge";
+import StatusBadge from "@/components/ui/status-badge";
 import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
 import { BsDatePicker } from "@/components/bs-datepicker";
@@ -120,9 +120,7 @@ export default function EditStudentPage() {
         ]}
       />
       <div className="flex items-center gap-2">
-        <Badge variant={student.approvalStatus === "APPROVED" ? "default" : student.approvalStatus === "REJECTED" ? "destructive" : "secondary"}>
-          {student.approvalStatus}
-        </Badge>
+        <StatusBadge status={student.approvalStatus} />
         {student.rejectionReason ? <span className="text-xs text-destructive">Reason: {student.rejectionReason}</span> : null}
       </div>
       <Form {...form}>

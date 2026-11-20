@@ -8,7 +8,7 @@ import PageHeader from "@/components/common/page-header";
 import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
 import GenericTable, { type T_TableHead } from "@/components/generic-table";
-import Badge from "@/components/ui/badge";
+import { StatusPill } from "@/components/ui/status-badge";
 import Button from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { BsDatePicker } from "@/components/bs-datepicker";
@@ -27,21 +27,6 @@ type PayrollRow = T_PAYROLL & { payslipCount?: number };
 function monthLabel(m?: number) {
   const found = BS_MONTH_OPTIONS.find((o) => Number(o.value) === m);
   return found ? found.label : m != null ? String(m) : "—";
-}
-
-function statusVariant(status?: string): "default" | "secondary" | "destructive" | "outline" | "success" | "warning" {
-  switch (status) {
-    case "PAID":
-      return "success";
-    case "APPROVED":
-      return "default";
-    case "PENDING":
-      return "warning";
-    case "REJECTED":
-      return "destructive";
-    default:
-      return "outline";
-  }
 }
 
 export default function AccountantPayrollWizardPage() {
@@ -76,7 +61,7 @@ export default function AccountantPayrollWizardPage() {
     { key: "period", headName: "Period (BS)", minWidth: 180, render: (r) => `${r.yearBs ?? "—"} / ${monthLabel(r.monthBs)}` },
     { key: "totalDays", headName: "Days", minWidth: 90, render: (r) => String(r.totalDays ?? "—") },
     { key: "payslips", headName: "Payslips", minWidth: 100, render: (r) => String(r.payslipCount ?? (Array.isArray(r.payslips) ? r.payslips.length : "—")) },
-    { key: "status", headName: "Status", minWidth: 120, render: (r) => <Badge variant={statusVariant(r.status)}>{r.status ?? "—"}</Badge> },
+    { key: "status", headName: "Status", minWidth: 120, render: (r) => <StatusPill status={r.status}>{r.status ?? "—"}</StatusPill> },
     { key: "paidDateBs", headName: "Paid Date (BS)", minWidth: 140, render: (r) => String(r.paidDateBs ?? "—") },
     {
       key: "action",

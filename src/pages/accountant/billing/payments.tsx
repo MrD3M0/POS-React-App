@@ -3,10 +3,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
+import { Ban, Receipt } from "lucide-react";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import PageHeader from "@/components/common/page-header";
 import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
-import Badge from "@/components/ui/badge";
+import { StatusPill } from "@/components/ui/status-badge";
 import Button from "@/components/ui/button";
 import Input from "@/components/ui/input";
 import GenericTable from "@/components/generic-table";
@@ -105,9 +107,9 @@ export default function AccountantFeePaymentsPage() {
             headName: "Status",
             minWidth: 110,
             render: (p: T_FeePayment) => (
-              <Badge variant={p.isCancelled ? "destructive" : "default"}>
+              <StatusPill status={p.isCancelled ? "CANCELLED" : "VALID"}>
                 {p.isCancelled ? "CANCELLED" : "VALID"}
-              </Badge>
+              </StatusPill>
             ),
           },
         ]}
@@ -125,23 +127,27 @@ export default function AccountantFeePaymentsPage() {
           onPageChange: setPage,
         }}
         renderActions={(p: T_FeePayment) => (
-          <span className="flex items-center justify-end gap-2">
-            <Link
-              to={`/accountant/billing/receipt/${p.id}`}
-              className="text-xs font-medium text-primary underline"
-            >
-              Receipt
-            </Link>
-            {!p.isCancelled ? (
-              <button
-                type="button"
-                className="text-xs font-medium text-destructive underline"
-                onClick={() => setCancelId(p.id)}
+          <>
+            <DropdownMenuItem asChild>
+              <Link
+                to={`/accountant/billing/receipt/${p.id}`}
+                className="flex w-full items-center gap-2 px-3 py-2 text-sm no-underline hover:no-underline cursor-pointer"
               >
-                Cancel
-              </button>
+                <Receipt className="h-4 w-4" />
+                <span>Receipt</span>
+              </Link>
+            </DropdownMenuItem>
+            {!p.isCancelled ? (
+              <DropdownMenuItem
+                variant="destructive"
+                onClick={() => setCancelId(p.id)}
+                className="flex w-full items-center gap-2 px-3 py-2 text-sm cursor-pointer"
+              >
+                <Ban className="h-4 w-4" />
+                <span>Cancel</span>
+              </DropdownMenuItem>
             ) : null}
-          </span>
+          </>
         )}
       />
 

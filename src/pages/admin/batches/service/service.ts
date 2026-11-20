@@ -37,18 +37,6 @@ export type T_BATCH_CREATE_INPUT = {
 
 export type T_BATCH_UPDATE_INPUT = Partial<T_BATCH_CREATE_INPUT>;
 
-export type T_TERM = {
-  id: string;
-  batchId: string;
-  termNumber: number;
-  name: string;
-  startDateBs?: string | null;
-  endDateBs?: string | null;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-};
-
 export async function listBatches(params: {
   page: number;
   limit: number;
@@ -94,16 +82,5 @@ export async function moveBatchToNextTerm(
     await axiosInstance.patch(`${UrlConstants.BATCH_URL}/${batchId}`, {
       currentTermNumber: nextTermNumber,
     });
-  return response.data;
-}
-
-export async function listTerms(params: {
-  page?: number;
-  limit?: number;
-  search?: string;
-  batchId?: string;
-}) {
-  const response: T_AxiosResponseWithPagination<T_TERM> =
-    await axiosInstance.get(`${UrlConstants.BATCH_TERM_URL}`, { params });
   return response.data;
 }

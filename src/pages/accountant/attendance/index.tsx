@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import PageHeader from "@/components/common/page-header";
 import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
-import Badge from "@/components/ui/badge";
+import StatusBadge from "@/components/ui/status-badge";
 import GenericTable from "@/components/generic-table";
 import Button from "@/components/ui/button";
 import SelectCommand from "@/components/select-command";
@@ -30,16 +30,6 @@ const statusOptions = [
   { label: "Late", value: "LATE" },
   { label: "Leave", value: "LEAVE" },
 ];
-
-function mapStatus(
-  m: string,
-): "default" | "destructive" | "warning" | "secondary" | "outline" {
-  if (m === "PRESENT") return "default";
-  if (m === "ABSENT") return "destructive";
-  if (m === "LATE" || m === "LATE DAY") return "warning";
-  if (m === "LEAVE") return "secondary";
-  return "outline";
-}
 
 function employeeName(row: T_ATT): string {
   const e = row.employee;
@@ -273,9 +263,9 @@ export default function AccountantAttendancePage() {
               headName: "Status",
               minWidth: 160,
               render: (a: T_ATT) => (
-                <Badge variant={mapStatus(a.status)}>
+                <StatusBadge status={a.status}>
                   {statusLabel(a.status)}
-                </Badge>
+                </StatusBadge>
               ),
             },
           ]}

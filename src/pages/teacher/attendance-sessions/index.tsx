@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { PenSquare } from "lucide-react";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import PageHeader from "@/components/common/page-header";
 import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
-import Badge from "@/components/ui/badge";
+import StatusBadge from "@/components/ui/status-badge";
 import GenericTable, { type T_TableHead } from "@/components/generic-table";
 import ConfirmDeleteDialog from "@/components/dialog/confirm-delete";
-import Button from "@/components/ui/button";
 import { toast } from "sonner";
 import { QUERY_KEYS } from "@/lib/query-keys";
 import { listMyClasses, type T_MY_CLASS } from "../my-classes/service/service";
@@ -228,11 +229,7 @@ export default function TeacherAttendanceSessionsPage() {
       key: "locked",
       headName: "Locked",
       minWidth: 100,
-      render: (r) => (
-        <Badge variant={isLocked(r) ? "warning" : "outline"}>
-          {isLocked(r) ? "Locked" : "Open"}
-        </Badge>
-      ),
+      render: (r) => <StatusBadge status={isLocked(r) ? "LOCKED" : "OPEN"} />,
     },
   ];
 
@@ -330,16 +327,16 @@ export default function TeacherAttendanceSessionsPage() {
           }) as Record<string, React.ReactNode>
         }
         renderActions={(r) => (
-          <Button
-            variant="outline"
-            size="sm"
+          <DropdownMenuItem
             onClick={() => {
               setEditRecord(r);
               setMode("edit");
             }}
+            className="flex w-full items-center gap-2 px-3 py-2 text-sm cursor-pointer"
           >
-            Edit
-          </Button>
+            <PenSquare className="h-4 w-4" />
+            <span>Edit</span>
+          </DropdownMenuItem>
         )}
         onDelete={(r) => setDeleteId(r.id)}
       />

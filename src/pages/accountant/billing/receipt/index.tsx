@@ -4,7 +4,7 @@ import PageHeader from "@/components/common/page-header";
 import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
 import Button from "@/components/ui/button";
-import Badge from "@/components/ui/badge";
+import { StatusPill } from "@/components/ui/status-badge";
 import { QUERY_KEYS } from "@/lib/query-keys";
 import { getFeePaymentById, studentFullName } from "../service/service";
 
@@ -52,7 +52,9 @@ export default function AccountantBillingReceiptPage() {
             <div className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Payment Receipt</div>
             <div className="mt-1 text-lg font-bold">{payment.receiptNo}</div>
           </div>
-          <Badge variant={payment.isCancelled ? "destructive" : "default"}>{payment.isCancelled ? "CANCELLED" : "VALID"}</Badge>
+          <StatusPill status={payment.isCancelled ? "CANCELLED" : "VALID"}>
+            {payment.isCancelled ? "CANCELLED" : "VALID"}
+          </StatusPill>
         </div>
 
         <div className="mt-4 grid grid-cols-1 gap-3 text-sm md:grid-cols-2">

@@ -19,9 +19,9 @@ export const termSchema = z.object({
 
 export type TermFormValues = z.infer<typeof termSchema>;
 
-export const termDefaultValues: TermFormValues = {
+// `termNumber` is intentionally absent — the field starts empty (never 0).
+export const termDefaultValues = {
   batchId: "",
-  termNumber: 1,
   name: "",
   startDateBs: "",
   endDateBs: "",

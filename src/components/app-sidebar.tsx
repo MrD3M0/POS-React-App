@@ -60,7 +60,11 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             {open && (
               <SidebarMenuButton className="w-full flex justify-between">
-                <span>Zap Point Of Sale</span>
+                <img
+                  src="/ZippyCmsSidebarHeader.png"
+                  alt="Zippy CMS"
+                  className="h-10 w-auto min-w-0 shrink object-contain"
+                />
                 <SidebarTrigger />
               </SidebarMenuButton>
             )}

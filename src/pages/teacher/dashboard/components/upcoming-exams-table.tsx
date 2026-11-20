@@ -15,19 +15,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import Badge from "@/components/ui/badge";
-import type {
-  T_DashboardExamBatch,
-  T_DashboardMarksStatus,
-} from "@/types/teacher-dashboard";
+import StatusBadge from "@/components/ui/status-badge";
+import type { T_DashboardExamBatch } from "@/types/teacher-dashboard";
 import { formatMarks, shortBsDate } from "../dashboard-utils";
 import { WidgetEmpty, WidgetError, WidgetSkeleton } from "@/components/common/widget-state";
-
-function marksVariant(status: T_DashboardMarksStatus) {
-  if (status === "COMPLETE") return "success" as const;
-  if (status === "PARTIAL") return "warning" as const;
-  return "outline" as const;
-}
 
 export default function UpcomingExamsTable({
   data,
@@ -96,9 +87,7 @@ export default function UpcomingExamsTable({
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <Badge variant={marksVariant(row.marksStatus)}>
-                        {row.marksStatus}
-                      </Badge>
+                      <StatusBadge status={row.marksStatus} />
                       {row.marksStatus !== "COMPLETE" ? (
                         <Link
                           to="/teacher/marks"

@@ -14,6 +14,7 @@ import {
 import PageHeader from "@/components/common/page-header";
 import Button from "@/components/ui/button";
 import Badge from "@/components/ui/badge";
+import { ActiveStatusBadge } from "@/components/ui/status-badge";
 import { useRoleDashboard } from "@/pages/dashboard/hooks/use-role-dashboard";
 import {
   ActionList,
@@ -289,9 +290,7 @@ export default function AdminDashboardPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge variant="outline">{user.role}</Badge>
-                  <Badge variant={user.isActive ? "success" : "destructive"}>
-                    {user.isActive ? "Active" : "Inactive"}
-                  </Badge>
+                  <ActiveStatusBadge active={user.isActive} />
                 </div>
               </li>
             ))}

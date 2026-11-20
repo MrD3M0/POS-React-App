@@ -14,7 +14,7 @@ import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
 import NoData from "@/components/common/no-data";
 import SelectCommand from "@/components/common/select-command";
-import Badge from "@/components/ui/badge";
+import { StatusPill } from "@/components/ui/status-badge";
 import Button from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
@@ -33,12 +33,6 @@ const STATUS_LABEL: Record<TResultGroupStatus, string> = {
   REJECTED: "Rejected — fix and re-submit",
 };
 
-function statusVariant(status: TResultGroupStatus) {
-  if (status === "APPROVED") return "success" as const;
-  if (status === "PENDING") return "warning" as const;
-  if (status === "REJECTED") return "destructive" as const;
-  return "outline" as const;
-}
 
 function toErrorMessage(error: unknown): string {
   const response = (
@@ -230,9 +224,9 @@ export default function TeacherMarksSubmissionPage() {
                   <div className="min-w-0 space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="font-semibold">{row.subjectName}</p>
-                      <Badge variant={statusVariant(row.status)}>
+                      <StatusPill status={row.status}>
                         {STATUS_LABEL[row.status]}
-                      </Badge>
+                      </StatusPill>
                     </div>
                     <p className="text-xs text-muted-foreground">
                       {row.batchName} · {row.termName} · {row.examName}

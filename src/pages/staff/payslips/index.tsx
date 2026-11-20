@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { Eye } from "lucide-react";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import PageHeader from "@/components/common/page-header";
 import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
@@ -90,13 +91,16 @@ export default function StaffPayslipsPage() {
           paidDateBs: ((r as Record<string, unknown>).paidDateBs as string) ?? ((r as Record<string, unknown>).paidDate as string) ?? "—",
         } as Record<string, React.ReactNode>)}
         renderActions={(r) => (
-          <Link
-            to={`/staff/payslips/${r.id}`}
-            aria-label={`View payslip ${r.payslipNo ?? r.id}`}
-            className="inline-flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-          >
-            <Eye className="size-3.5" />
-          </Link>
+          <DropdownMenuItem asChild>
+            <Link
+              to={`/staff/payslips/${r.id}`}
+              aria-label={`View payslip ${r.payslipNo ?? r.id}`}
+              className="flex w-full items-center gap-2 px-3 py-2 text-sm no-underline hover:no-underline cursor-pointer"
+            >
+              <Eye className="h-4 w-4" />
+              <span>View Payslip</span>
+            </Link>
+          </DropdownMenuItem>
         )}
       />
     </div>

@@ -5,7 +5,7 @@ import PageHeader from "@/components/common/page-header";
 import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
 import Button from "@/components/ui/button";
-import Badge from "@/components/ui/badge";
+import { ActiveStatusBadge } from "@/components/ui/status-badge";
 import GenericTable, { type T_TableHead } from "@/components/generic-table";
 import ConfirmDeleteDialog from "@/components/dialog/confirm-delete";
 import { QUERY_KEYS } from "@/lib/query-keys";
@@ -48,16 +48,22 @@ export default function AdminLookupsPage() {
       render: (l) => l.code ?? (l.periodNumber ? `#${l.periodNumber}` : l.grade ?? "—"),
     },
     { key: "name", headName: "Name", render: (l) => l.name ?? (l.grade ? `Grade ${l.grade}` : "—") },
+    ...(active.type === "period"
+      ? [
+          {
+            key: "time",
+            headName: "Time",
+            render: (l: T_LOOKUP) =>
+              l.startTime && l.endTime ? `${l.startTime} – ${l.endTime}` : "—",
+          },
+        ]
+      : []),
     {
       key: "isActive",
       headName: "Status",
       render: (l) => {
         const activeVal = l.isActive ?? l.active ?? true;
-        return (
-          <Badge variant={activeVal ? "default" : "destructive"}>
-            {activeVal ? "Active" : "Inactive"}
-          </Badge>
-        );
+        return <ActiveStatusBadge active={activeVal} />;
       },
     },
   ];

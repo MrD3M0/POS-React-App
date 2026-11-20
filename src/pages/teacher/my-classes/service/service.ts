@@ -15,6 +15,13 @@ export type T_MY_CLASS = {
     batchTerm?: { termNumber?: number; name?: string; batch?: { name?: string } } | null;
   } | null;
   subject?: { code?: string; name?: string } | null;
+  teachingAssignment?: {
+    teacher?: { employee?: { firstName?: string | null; middleName?: string | null; lastName?: string | null; employeeCode?: string | null } | null } | null;
+    batchTermSubject?: {
+      subject?: { code?: string; name?: string } | null;
+      batchTerm?: { name?: string | null; termNumber?: number | null; batch?: { name?: string | null } | null } | null;
+    } | null;
+  } | null;
   [key: string]: unknown;
 };
 

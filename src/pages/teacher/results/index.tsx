@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Eye } from "lucide-react";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import PageHeader from "@/components/common/page-header";
 import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
-import Badge from "@/components/ui/badge";
+import StatusBadge from "@/components/ui/status-badge";
 import Button from "@/components/ui/button";
 import { toast } from "sonner";
 import { QUERY_KEYS } from "@/lib/query-keys";
@@ -62,7 +64,7 @@ export default function TeacherResultsPage() {
   const head: T_TableHead<T_RESULT>[] = [
     { key: "examName", headName: "Exam", minWidth: 240, render: (r) => r.examName ?? r.exam?.name ?? "—" },
     { key: "batchName", headName: "Batch", minWidth: 200, render: (r) => r.batchName ?? r.batch?.name ?? "—" },
-    { key: "status", headName: "Status", minWidth: 180, render: (r) => { const s = r.status ?? "—"; return <Badge variant={s === "APPROVED" ? "success" : s === "PUBLISHED" ? "default" : s === "REJECTED" ? "destructive" : "warning"}>{s}</Badge>; } },
+    { key: "status", headName: "Status", minWidth: 180, render: (r) => <StatusBadge status={r.status} />, },
     { key: "gpa", headName: "GPA", minWidth: 100, render: (r) => r.gpa ?? "—" },
   ];
 
@@ -94,12 +96,15 @@ export default function TeacherResultsPage() {
         pagination={{ page, limit: LIMIT, total, onPageChange: setPage }}
         emptyTitle="No results yet."
         renderActions={(r) => (
-          <Link
-            to={`/teacher/results/${r.id}`}
-            className="inline-flex items-center rounded border border-border px-2 py-1 text-xs font-medium hover:bg-muted"
-          >
-            View
-          </Link>
+          <DropdownMenuItem asChild>
+            <Link
+              to={`/teacher/results/${r.id}`}
+              className="flex w-full items-center gap-2 px-3 py-2 text-sm no-underline hover:no-underline cursor-pointer"
+            >
+              <Eye className="h-4 w-4" />
+              <span>View</span>
+            </Link>
+          </DropdownMenuItem>
         )}
       />
     </div>

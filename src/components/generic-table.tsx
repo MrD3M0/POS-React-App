@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
+  ArrowLeft,
+  ArrowRight,
   EllipsisVerticalIcon,
   PenSquare,
   Search,
@@ -17,8 +19,17 @@ import {
   TableHeader,
   TableRow,
 } from "./ui/table";
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
 import Button from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "./ui/card";
+import { Badge } from "./ui/badge";
+import { ScrollArea } from "./ui/scroll-area";
+import { Skeleton } from "./ui/skeleton";
+import { Separator } from "./ui/separator";
 import NoData from "./common/no-data";
 import StatusBadge from "./ui/status-badge";
 import PaginationControls from "./common/PaginationControls";
@@ -117,11 +128,7 @@ const stringify = (value: unknown) => {
 const renderValue = (raw: unknown): ReactNode => {
   const value = toDisplayValue(raw);
   if (typeof value === "boolean")
-    return (
-      <StatusBadge variant={value ? "success" : "outline"}>
-        {value ? "active" : "inactive"}
-      </StatusBadge>
-    );
+    return <StatusBadge status={value ? "ACTIVE" : "INACTIVE"} />;
   if (isDateValue(value))
     return (
       <span className="tabular-nums text-muted-foreground">
@@ -133,10 +140,11 @@ const renderValue = (raw: unknown): ReactNode => {
   return <span className="text-foreground/90">{String(value)}</span>;
 };
 
-/* -------------------------------------------------- */
-/*  EllipsisVertical + Popover for extra actions       */
-/*  Only this shows when renderActions exists          */
-/* -------------------------------------------------- */
+/* ---------------------------------------------------------------- */
+/*  EllipsisVertical dropdown for extra row actions                  */
+/*  Pages render <DropdownMenuItem> (icon + label) children —        */
+/*  stacked vertically, one action per row.                          */
+/* ---------------------------------------------------------------- */
 function RowActionsPopover({
   label,
   children,
@@ -147,8 +155,8 @@ function RowActionsPopover({
   const [open, setOpen] = useState(false);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
+      <DropdownMenuTrigger asChild>
         <Button
           type="button"
           variant="ghost"
@@ -158,26 +166,46 @@ function RowActionsPopover({
         >
           <EllipsisVerticalIcon className="size-4" />
         </Button>
-      </PopoverTrigger>
+      </DropdownMenuTrigger>
 
-      <PopoverContent
+      {/* Vertical column: one item per row */}
+      <DropdownMenuContent
         align="end"
-        sideOffset={4}
-        className="w-52 p-1.5"
-        // Clicking any action inside closes the popover
+        className="flex flex-col min-w-[180px] p-1"
+        // Clicking any action inside closes the menu
         onClickCapture={() => setOpen(false)}
       >
-        {/* 
-          Whatever you return from renderActions() will be stacked vertically here.
-          Style your actions like this for best look:
-          <Button variant="ghost" className="w-full justify-start">View</Button>
-          <Link className="flex h-8 items-center rounded-md px-2 text-sm hover:bg-muted">Details</Link>
-        */}
-        <div className="flex flex-col gap-0.5 [&_a]:flex [&_a]:h-8 [&_a]:items-center [&_a]:rounded-md [&_a]:px-2 [&_a]:text-sm [&_a]:hover:bg-muted [&_button]:w-full [&_button]:justify-start [&_button]:font-normal">
-          {children}
-        </div>
-      </PopoverContent>
-    </Popover>
+        {children}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+/* ---------------------------------------------------------------- */
+/*  Round arrow button used for mobile prev / next page              */
+/* ---------------------------------------------------------------- */
+function ArrowButton({
+  direction,
+  disabled,
+  onClick,
+}: {
+  direction: "prev" | "next";
+  disabled: boolean;
+  onClick: () => void;
+}) {
+  const Icon = direction === "prev" ? ArrowLeft : ArrowRight;
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      size="icon"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={direction === "prev" ? "Previous page" : "Next page"}
+      className="size-8 shrink-0 self-center rounded-full shadow-sm active:scale-95 disabled:opacity-30"
+    >
+      <Icon className="size-4" />
+    </Button>
   );
 }
 
@@ -224,38 +252,224 @@ const GenericTable = <T extends Record<string, unknown>>({
     ? Math.max(1, Math.ceil(pagination.total / pagination.limit))
     : 1;
 
+  const canPrev = !!pagination && pagination.page > 1;
+  const canNext = !!pagination && pagination.page < totalPages;
+
+  const goToPage = (page: number) => {
+    if (!pagination) return;
+    const next = Math.min(Math.max(1, page), totalPages);
+    if (next !== pagination.page) pagination.onPageChange(next);
+  };
+
+  // Mobile card list: jump back to the top whenever the page changes
+  const cardScrollRef = useRef<HTMLDivElement>(null);
+  const currentPage = pagination?.page;
+  useEffect(() => {
+    cardScrollRef.current
+      ?.querySelector<HTMLElement>("[data-radix-scroll-area-viewport]")
+      ?.scrollTo({ top: 0, behavior: "smooth" });
+  }, [currentPage]);
+
+  const renderCell = (
+    item: T,
+    index: number,
+    head: T_TableHead<T>,
+    cells?: Record<string, ReactNode>,
+  ): ReactNode => {
+    const custom = cells?.[head.key];
+    if (custom !== undefined) return custom;
+    if (head.render) return head.render(item, index);
+    return renderValue(getValue(item, head.key));
+  };
+
+  const getRowKey = (item: T, index: number) =>
+    item.id != null && typeof item.id !== "object"
+      ? (item.id as string | number)
+      : index;
+
+  /** Edit / Delete / ⋮ — shared by the table row and the mobile card */
+  const renderRowActions = (item: T, index: number) => (
+    <div className="flex items-center justify-end gap-0.5">
+      {/* 1. EDIT — always direct */}
+      {onEdit && (
+        <Link
+          to={onEdit(item)}
+          aria-label={`Edit row ${index + 1}`}
+          className="inline-flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+        >
+          <PenSquare className="size-3.5" />
+        </Link>
+      )}
+
+      {/* 2. DELETE — always direct */}
+      {onDelete && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label={`Delete row ${index + 1}`}
+          className="size-7 text-destructive hover:text-destructive"
+          onClick={() => onDelete(item)}
+        >
+          <Trash2 className="size-3.5" />
+        </Button>
+      )}
+
+      {/* 3. EVERYTHING ELSE — inside EllipsisVertical Popover */}
+      {renderActions && (
+        <RowActionsPopover label={`More actions for row ${index + 1}`}>
+          {renderActions(item, index)}
+        </RowActionsPopover>
+      )}
+    </div>
+  );
+
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
-      {/* Search */}
-      <div className="relative min-w-48 max-w-72">
-        <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder={searchPlaceholder}
-          aria-label="Search table"
-          className={cn(
-            "h-8 w-full rounded-md pl-8 pr-8 text-sm",
-            "border border-border bg-background",
-            "text-foreground placeholder:text-muted-foreground",
-            "focus:border-ring/60 focus:outline-none focus:ring-2 focus:ring-ring/40",
-            "transition-colors",
+      {/* Top bar: Search (left) + Pagination control (right) */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="relative w-full min-w-48 sm:w-72">
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={searchPlaceholder}
+            aria-label="Search table"
+            className={cn(
+              "h-8 w-full rounded-md pl-8 pr-8 text-sm",
+              "border border-border bg-background",
+              "text-foreground placeholder:text-muted-foreground",
+              "focus:border-ring/60 focus:outline-none focus:ring-2 focus:ring-ring/40",
+              "transition-colors",
+            )}
+          />
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch("")}
+              aria-label="Clear search"
+              className="absolute right-1.5 top-1/2 flex size-5 -translate-y-1/2 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <X className="size-3" />
+            </button>
           )}
-        />
-        {search && (
-          <button
-            type="button"
-            onClick={() => setSearch("")}
-            aria-label="Clear search"
-            className="absolute right-1.5 top-1/2 flex size-5 -translate-y-1/2 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          >
-            <X className="size-3" />
-          </button>
+        </div>
+
+        {/* Mobile only — desktop already has the pagination footer */}
+        {pagination && pagination.total > 0 && (
+          <div className="ml-auto flex items-center md:hidden">
+            <PaginationControls
+              currentPage={pagination.page}
+              lastPage={totalPages}
+              onPageChange={pagination.onPageChange}
+            />
+          </div>
         )}
       </div>
 
-      <div className="flex !min-h-[25rem] flex-1 flex-col overflow-hidden rounded-lg border border-border">
+      {/* ============================================================ */}
+      {/*  MOBILE — scrollable cards + left/right arrows (< md)        */}
+      {/* ============================================================ */}
+      <div className="flex min-h-0 flex-1 flex-col gap-2 md:hidden">
+        <div className="flex min-h-0 flex-1 items-stretch gap-2">
+          {pagination && (
+            <ArrowButton
+              direction="prev"
+              disabled={!canPrev || isLoading}
+              onClick={() => goToPage(pagination.page - 1)}
+            />
+          )}
+
+          <ScrollArea
+            ref={cardScrollRef}
+            className="h-[65vh] min-h-[20rem] min-w-0 flex-1 [&_[data-radix-scroll-area-viewport]>div]:!block"
+          >
+            <div className="space-y-3 pb-1 pr-3">
+              {isLoading &&
+                Array.from({ length: 4 }).map((_, i) => (
+                  <Card key={i} className="gap-0 py-0 shadow-sm">
+                    <CardContent className="grid grid-cols-2 gap-x-4 gap-y-4 p-3">
+                      {Array.from({
+                        length: Math.min(tableHeads.length, 4),
+                      }).map((_, j) => (
+                        <div key={j} className="space-y-1.5">
+                          <Skeleton className="h-3 w-1/2" />
+                          <Skeleton
+                            className="h-4"
+                            style={{ width: `${55 + ((j * 23) % 40)}%` }}
+                          />
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                ))}
+
+              {!isLoading &&
+                rows.map((item, index) => {
+                  const globalIndex = startIndex + index;
+                  const cells = renderRow?.(item, globalIndex);
+                  return (
+                    <Card
+                      key={getRowKey(item, index)}
+                      className="gap-0 py-0 shadow-sm"
+                    >
+                      {/* Card header: SN + actions */}
+                      <CardHeader className="flex flex-row items-center justify-between space-y-0 px-3 py-2">
+                        <Badge
+                          variant="secondary"
+                          className="tabular-nums text-muted-foreground"
+                        >
+                          #{globalIndex + 1}
+                        </Badge>
+                        {hasActions && renderRowActions(item, globalIndex)}
+                      </CardHeader>
+                      <Separator />
+
+                      {/* Card body: 2-column grid, label on top, value below */}
+                      <CardContent className="grid grid-cols-2 gap-x-4 gap-y-4 p-3">
+                        {tableHeads.map((head) => (
+                          <div key={head.key} className="min-w-0 space-y-1">
+                            <p className="text-xs font-medium text-muted-foreground">
+                              {head.headName}
+                            </p>
+                            <div className="break-words text-sm">
+                              {renderCell(item, globalIndex, head, cells)}
+                            </div>
+                          </div>
+                        ))}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+
+              {!isLoading && rows.length === 0 && (
+                <NoData title={emptyTitle} description={emptyDescription} />
+              )}
+            </div>
+          </ScrollArea>
+
+          {pagination && (
+            <ArrowButton
+              direction="next"
+              disabled={!canNext || isLoading}
+              onClick={() => goToPage(pagination.page + 1)}
+            />
+          )}
+        </div>
+
+        {pagination && pagination.total > 0 && (
+          <p className="text-center text-xs text-muted-foreground">
+            Page {pagination.page} of {totalPages} &nbsp;·&nbsp;{" "}
+            {pagination.total} total
+          </p>
+        )}
+      </div>
+
+      {/* ============================================================ */}
+      {/*  DESKTOP — original table (>= md)                            */}
+      {/* ============================================================ */}
+      <div className="hidden !min-h-[25rem] flex-1 flex-col overflow-hidden rounded-lg border border-border md:flex">
         <div className="flex min-h-0 flex-1 flex-col overflow-auto">
           <div className="shrink-0 [&>div]:overflow-visible">
             <Table>
@@ -301,74 +515,30 @@ const GenericTable = <T extends Record<string, unknown>>({
 
                 {!isLoading &&
                   rows.map((item, index) => {
-                    const cells = renderRow?.(item, startIndex + index);
+                    const globalIndex = startIndex + index;
+                    const cells = renderRow?.(item, globalIndex);
                     return (
                       <TableRow
-                        key={
-                          item.id != null && typeof item.id !== "object"
-                            ? (item.id as string | number)
-                            : index
-                        }
+                        key={getRowKey(item, index)}
                         className="group transition-colors"
                       >
                         <TableCell className="w-12 min-w-12 border-b border-r text-center text-sm tabular-nums text-muted-foreground">
-                          {startIndex + index + 1}
+                          {globalIndex + 1}
                         </TableCell>
 
-                        {tableHeads.map((head) => {
-                          const custom = cells?.[head.key];
-                          return (
-                            <TableCell
-                              key={head.key}
-                              style={{ minWidth: head.minWidth }}
-                              className="max-w-[20rem] truncate border-b border-r text-sm"
-                            >
-                              {custom !== undefined
-                                ? custom
-                                : head.render
-                                  ? head.render(item, startIndex + index)
-                                  : renderValue(getValue(item, head.key))}
-                            </TableCell>
-                          );
-                        })}
+                        {tableHeads.map((head) => (
+                          <TableCell
+                            key={head.key}
+                            style={{ minWidth: head.minWidth }}
+                            className="max-w-[20rem] truncate border-b border-r text-sm"
+                          >
+                            {renderCell(item, globalIndex, head, cells)}
+                          </TableCell>
+                        ))}
 
                         {hasActions && (
                           <TableCell className="w-32 min-w-32 border-b text-right">
-                            <div className="flex items-center justify-end gap-0.5">
-                              {/* 1. EDIT — always direct */}
-                              {onEdit && (
-                                <Link
-                                  to={onEdit(item)}
-                                  aria-label={`Edit row ${startIndex + index + 1}`}
-                                  className="inline-flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-                                >
-                                  <PenSquare className="size-3.5" />
-                                </Link>
-                              )}
-
-                              {/* 2. DELETE — always direct */}
-                              {onDelete && (
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon"
-                                  aria-label={`Delete row ${startIndex + index + 1}`}
-                                  className="size-7 text-destructive hover:text-destructive"
-                                  onClick={() => onDelete(item)}
-                                >
-                                  <Trash2 className="size-3.5" />
-                                </Button>
-                              )}
-
-                              {/* 3. EVERYTHING ELSE — inside EllipsisVertical Popover */}
-                              {renderActions && (
-                                <RowActionsPopover
-                                  label={`More actions for row ${startIndex + index + 1}`}
-                                >
-                                  {renderActions(item, startIndex + index)}
-                                </RowActionsPopover>
-                              )}
-                            </div>
+                            {renderRowActions(item, globalIndex)}
                           </TableCell>
                         )}
                       </TableRow>

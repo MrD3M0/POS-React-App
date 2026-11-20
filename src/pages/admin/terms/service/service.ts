@@ -15,6 +15,19 @@ export type T_TERM = {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  batch?: {
+    id: string;
+    name: string;
+    courseId: string;
+    currentTermNumber: number;
+    course?: {
+      id: string;
+      code: string;
+      name: string;
+      totalTerms: number;
+      system: "SEMESTER" | "YEARLY";
+    };
+  };
 };
 
 export type T_TERM_CREATE_INPUT = {

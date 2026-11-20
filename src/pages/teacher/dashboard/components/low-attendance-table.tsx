@@ -14,21 +14,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import Badge from "@/components/ui/badge";
+import StatusBadge from "@/components/ui/status-badge";
 import type { T_DashboardLowAttendanceStudent } from "@/types/teacher-dashboard";
 import { formatPercent } from "../dashboard-utils";
 import { WidgetEmpty, WidgetError, WidgetSkeleton } from "@/components/common/widget-state";
 
-function statusVariant(percent: number) {
-  if (percent < 50) return "destructive" as const;
-  if (percent < 65) return "warning" as const;
-  return "outline" as const;
-}
-
-function statusLabel(percent: number) {
-  if (percent < 50) return "Critical";
-  if (percent < 65) return "Low";
-  return "Warning";
+/** Attendance severity (case-insensitive keys in the shared status system). */
+function attendanceStatus(percent: number) {
+  if (percent < 50) return "CRITICAL";
+  if (percent < 65) return "LOW";
+  return "WARNING";
 }
 
 export default function LowAttendanceTable({
@@ -90,9 +85,7 @@ export default function LowAttendanceTable({
                     {formatPercent(row.attendancePercent)}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Badge variant={statusVariant(row.attendancePercent)}>
-                      {statusLabel(row.attendancePercent)}
-                    </Badge>
+                    <StatusBadge status={attendanceStatus(row.attendancePercent)} />
                   </TableCell>
                 </TableRow>
               ))}

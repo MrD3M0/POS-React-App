@@ -4,12 +4,14 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { KeyRound } from "lucide-react";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import PageHeader from "@/components/common/page-header";
 import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
 import PasswordInput from "@/components/ui/password-input";
 import Button from "@/components/ui/button";
 import Badge from "@/components/ui/badge";
+import { ActiveStatusBadge } from "@/components/ui/status-badge";
 import GenericTable, { type T_TableHead } from "@/components/generic-table";
 import ConfirmDeleteDialog from "@/components/dialog/delete-dialog";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/form";
@@ -57,11 +59,7 @@ export default function AdminEmployeesPage() {
     {
       key: "isActive",
       headName: "Status",
-      render: (e) => (
-        <Badge variant={e.isActive ? "default" : "destructive"}>
-          {e.isActive ? "Active" : "Inactive"}
-        </Badge>
-      ),
+      render: (e) => <ActiveStatusBadge active={e.isActive} />,
     },
   ];
 
@@ -83,17 +81,14 @@ export default function AdminEmployeesPage() {
           const userId = emp.user?.id;
           const name = [emp.firstName, emp.lastName].filter(Boolean).join(" ") || emp.employeeCode;
           return (
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="size-7"
-              title={userId ? "Change password" : "No linked user account"}
+            <DropdownMenuItem
               disabled={!userId}
               onClick={() => userId && setPasswordTarget({ userId, name })}
+              className="flex w-full items-center gap-2 px-3 py-2 text-sm cursor-pointer"
             >
-              <KeyRound className="size-3.5" />
-            </Button>
+              <KeyRound className="h-4 w-4" />
+              <span>Reset Password</span>
+            </DropdownMenuItem>
           );
         }}
         onSearch={(value) => { setSearch(value); setPage(1); }}

@@ -6,7 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import StatusBadge from "@/components/ui/status-badge";
 import { formatNpr } from "@/lib/money";
 import {
   WidgetError,
@@ -56,9 +56,7 @@ export default function TrialBalanceCard({
               <span className="font-medium">{formatNpr(credit)}</span>
             </div>
             <div className="flex items-center justify-between border-t pt-3">
-              <Badge variant={balanced ? "default" : "destructive"}>
-                {balanced ? "Balanced" : "Not balanced"}
-              </Badge>
+              <StatusBadge status={balanced ? "BALANCED" : "NOT BALANCED"} />
               <span className="text-xs text-muted-foreground">
                 Difference {formatNpr(Math.abs(debit - credit))}
               </span>

@@ -24,6 +24,8 @@ import ClassAttendanceChart from "./components/class-attendance-chart";
 import ResultDistributionChart from "./components/result-distribution-chart";
 import PassRateChart from "./components/pass-rate-chart";
 import TodaySchedule from "./components/today-schedule";
+import WeekSchedule from "./components/week-schedule";
+import MiniCalendar from "./components/mini-calendar";
 import LowAttendanceTable from "./components/low-attendance-table";
 import UpcomingExamsTable from "./components/upcoming-exams-table";
 import RecentResultsTable from "./components/recent-results-table";
@@ -85,6 +87,7 @@ export default function TeacherDashboardPage() {
     attendanceTrend: trendQuery,
     classAttendance: classAttendanceQuery,
     todaySchedule: scheduleQuery,
+    weekSchedule: weekScheduleQuery,
     examBatches: examBatchesQuery,
     resultDistribution: distributionQuery,
     passRate: passRateQuery,
@@ -110,6 +113,7 @@ export default function TeacherDashboardPage() {
     trendQuery.isFetching ||
     classAttendanceQuery.isFetching ||
     scheduleQuery.isFetching ||
+    weekScheduleQuery.isFetching ||
     examBatchesQuery.isFetching ||
     distributionQuery.isFetching ||
     passRateQuery.isFetching ||
@@ -122,6 +126,7 @@ export default function TeacherDashboardPage() {
     void trendQuery.refetch();
     void classAttendanceQuery.refetch();
     void scheduleQuery.refetch();
+    void weekScheduleQuery.refetch();
     void examBatchesQuery.refetch();
     void distributionQuery.refetch();
     void passRateQuery.refetch();
@@ -340,11 +345,18 @@ export default function TeacherDashboardPage() {
       {/* Row 3 — schedule + tables */}
       <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
         <TodaySchedule
-          data={scheduleQuery.data ?? []}
+          data={scheduleQuery.data}
           isLoading={scheduleQuery.isLoading}
           isError={scheduleQuery.isError}
           onRetry={() => void scheduleQuery.refetch()}
         />
+        <WeekSchedule
+          data={weekScheduleQuery.data}
+          isLoading={weekScheduleQuery.isLoading}
+          isError={weekScheduleQuery.isError}
+          onRetry={() => void weekScheduleQuery.refetch()}
+        />
+        <MiniCalendar />
         <LowAttendanceTable
           data={lowAttendanceQuery.data ?? []}
           isLoading={lowAttendanceQuery.isLoading}

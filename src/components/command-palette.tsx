@@ -77,7 +77,7 @@ export default function CommandPalette() {
       case "ACCOUNTANT":
         actions.push(
           { label: "Fee Structures", href: "/accountant/fee-structures", icon: <Search className="size-4" /> },
-          { label: "Grant Scholarship", href: "/accountant/scholarships", icon: <Search className="size-4" /> },
+          { label: "Grant Scholarship", href: "/accountant/scholarships/grants", icon: <Search className="size-4" /> },
           { label: "Record Payment", href: "/accountant/billing", icon: <Search className="size-4" /> },
         );
         break;

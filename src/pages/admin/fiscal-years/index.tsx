@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import PageHeader from "@/components/common/page-header";
 import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
-import Badge from "@/components/ui/badge";
+import StatusBadge from "@/components/ui/status-badge";
 import GenericTable, { type T_TableHead } from "@/components/generic-table";
 import ConfirmDeleteDialog from "@/components/dialog/confirm-delete";
 import { QUERY_KEYS } from "@/lib/query-keys";
@@ -34,16 +34,12 @@ export default function AdminFiscalYearsPage() {
     {
       key: "isCurrent",
       headName: "Current",
-      render: (f) => (f.isCurrent ? <Badge variant="default">Current</Badge> : <span className="text-muted-foreground">—</span>),
+      render: (f) => <StatusBadge status={f.isCurrent ? "CURRENT" : null} />, // shows "—" in neutral gray when not current
     },
     {
       key: "isClosed",
       headName: "Status",
-      render: (f) => (
-        <Badge variant={f.isClosed ? "destructive" : "outline"}>
-          {f.isClosed ? "Closed" : "Open"}
-        </Badge>
-      ),
+      render: (f) => <StatusBadge status={f.isClosed ? "CLOSED" : "OPEN"} />,
     },
   ];
 

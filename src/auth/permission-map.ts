@@ -57,6 +57,12 @@ export const PERMISSION_MAP = {
   // A teacher only sees their own classes/assignments (nav: "My Classes").
   "teacher:classes:read": ["TEACHER"],
 
+  // === Class schedules: admin owns setup, principal/teacher read-only ===
+  "admin:classSchedules:read": ["ADMIN", "PRINCIPAL", "TEACHER"],
+  "admin:classSchedules:create": ["ADMIN"],
+  "admin:classSchedules:update": ["ADMIN"],
+  "admin:classSchedules:delete": ["ADMIN"],
+
   // === PRINCIPAL: approves academic and payroll work ===
   "principal:attendance:mark": ["PRINCIPAL"],
   "principal:attendance:correct": ["PRINCIPAL"],
@@ -133,6 +139,8 @@ export const PERMISSION_MAP = {
   ],
   "admin:lookups:read": ["ADMIN", "PRINCIPAL", "ACCOUNTANT", "TEACHER"],
   "admin:settings:read": ["ADMIN", "PRINCIPAL"],
+  // Principal-owned college identity shown on student ID cards.
+  "principal:settings:read": ["PRINCIPAL"],
   "admin:notices:read": [
     "ADMIN",
     "PRINCIPAL",

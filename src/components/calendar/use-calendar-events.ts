@@ -31,7 +31,7 @@ import { listTerms } from "@/pages/admin/terms/service/service";
 import { listInstallments } from "@/pages/accountant/billing/service/service";
 import { listExams } from "@/pages/teacher/exams/service/service";
 import { listExamSubjects } from "@/pages/teacher/exam-subjects/service/service";
-import { listAttendanceSessions } from "@/pages/teacher/attendance-sessions/service/service";
+import { getClassScheduleCalendar } from "@/pages/teacher/calendar/service/service";
 import { listNotices as listSharedNotices } from "@/pages/notices/service/service";
 import { listNotices as listStaffNotices } from "@/pages/staff/notices/service/service";
 import { listTeacherNotices } from "@/pages/teacher/notices/service/service";
@@ -147,10 +147,12 @@ export function useCalendarEvents({
     enabled: wants("EXAM"),
   });
 
-  // ── CLASS — TEACHER, own sessions; client-side month filter ────────────────
-  const sessionQuery = useQuery({
+  // ── CLASS — TEACHER; weekly routine from /class-schedule/calendar ──────────
+  // The endpoint expands the weekly routine into dated occurrences for the
+  // visible month and skips employee holidays, so no client-side filtering.
+  const classCalendarQuery = useQuery({
     queryKey: [QUERY_KEYS.CALENDAR_EVENTS, role, year, month, kinds, "CLASS"],
-    queryFn: () => listAttendanceSessions({ page: 1, limit: -1 }),
+    queryFn: () => getClassScheduleCalendar({ fromBs: monthStart, toBs: monthEnd }),
     enabled: wants("CLASS"),
   });
 
@@ -196,7 +198,7 @@ export function useCalendarEvents({
     { kind: "TERM", query: termQuery, enabled: wants("TERM") },
     { kind: "FEE_DUE", query: installmentQuery, enabled: wants("FEE_DUE") },
     { kind: "EXAM", query: examQuery, enabled: wants("EXAM") },
-    { kind: "CLASS", query: sessionQuery, enabled: wants("CLASS") },
+    { kind: "CLASS", query: classCalendarQuery, enabled: wants("CLASS") },
     { kind: "NOTICE", query: noticeQuery, enabled: wants("NOTICE") },
     {
       kind: "ATTENDANCE",
@@ -368,30 +370,27 @@ export function useCalendarEvents({
       }
     }
 
-    // CLASS (teacher's own sessions)
-    if (!sessionQuery.isError) {
-      for (const row of rowsOf<{
-        id: string;
-        dateBs?: string;
-        teachingAssignment?: {
-          batchTermSubject?: {
-            subject?: { name?: string; code?: string } | null;
-            batchTerm?: { name?: string | null; batch?: { name?: string } | null } | null;
-          } | null;
-        } | null;
-        period?: { name?: string; startTime?: string; endTime?: string } | null;
-      }>(sessionQuery.data)) {
+    // CLASS (teacher's own weekly routine, expanded to dated occurrences
+    // by /class-schedule/calendar — holidays are already skipped server-side)
+    if (!classCalendarQuery.isError) {
+      for (const row of classCalendarQuery.data?.events ?? []) {
         if (!inMonth(row.dateBs)) continue;
-        const subject = row.teachingAssignment?.batchTermSubject?.subject;
-        const batch = row.teachingAssignment?.batchTermSubject?.batchTerm?.batch?.name;
         result.push({
-          id: `session-${row.id}`,
-          title: [subject?.name ?? subject?.code, batch].filter(Boolean).join(" — ") || "Class",
-          startBs: row.dateBs ?? "",
-          startTime: row.period?.startTime,
-          endTime: row.period?.endTime,
+          id: `class-${row.id}-${row.dateBs}-${row.periodId}`,
+          title:
+            [row.subjectName ?? row.subjectCode, row.classLabel]
+              .filter(Boolean)
+              .join(" — ") || "Class",
+          startBs: row.dateBs,
+          startTime: row.startTime,
+          endTime: row.endTime,
           kind: "CLASS",
-          meta: row.period?.name ? { Period: row.period.name } : undefined,
+          href: `/teacher/take-attendance?assignmentId=${row.teachingAssignmentId}&periodId=${row.periodId}&dateBs=${row.dateBs}`,
+          meta: {
+            ...(row.periodName ? { Period: row.periodName } : {}),
+            ...(row.batchName ? { Batch: row.batchName } : {}),
+            ...(row.room ? { Room: row.room } : {}),
+          },
         });
       }
     }
@@ -441,6 +440,8 @@ export function useCalendarEvents({
   }, [
     attendanceQuery.data,
     attendanceQuery.isError,
+    classCalendarQuery.data,
+    classCalendarQuery.isError,
     examQuery.data,
     examQuery.isError,
     examSubjectQuery.data,
@@ -453,8 +454,6 @@ export function useCalendarEvents({
     monthStart,
     noticeQuery.data,
     noticeQuery.isError,
-    sessionQuery.data,
-    sessionQuery.isError,
     termQuery.data,
     termQuery.isError,
   ]);

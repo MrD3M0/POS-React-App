@@ -2,9 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import PageHeader from "@/components/common/page-header";
 import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
-import Badge from "@/components/ui/badge";
+import { StatusPill } from "@/components/ui/status-badge";
 import GenericTable from "@/components/generic-table";
-import Input from "@/components/ui/input";
 import { QUERY_KEYS } from "@/lib/query-keys";
 import { listPayslips, type T_PAYSLIP } from "./service/service";
 import { useState } from "react";
@@ -40,15 +39,17 @@ export default function AccountantPayslipsPage() {
     status: slip.payroll?.status ?? "—",
   }));
 
+  const handleSearch = (value: string) => {
+    setSearch(value);
+    setPage(1);
+  };
+
   return (
     <div className="p-5">
       <PageHeader
         title="Payslips"
         breadCrumbItems={[{ title: "Accountant", link: "/accountant" }, { title: "Payslips", link: "/accountant/payslips" }]}
       />
-      <div className="flex flex-wrap gap-3 w-full max-w-4xl mb-4">
-        <Input placeholder="Search payslips..." onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
-      </div>
 
       <GenericTable
         tableHeads={[
@@ -58,12 +59,13 @@ export default function AccountantPayslipsPage() {
           { key: "grossPay", headName: "Gross", minWidth: 140 },
           { key: "netPay", headName: "Net", minWidth: 140 },
           { key: "paidDate", headName: "Paid Date", minWidth: 160 },
-          { key: "status", headName: "Status", minWidth: 140, render: (p: T_PAYSLIP_ROW) => <Badge variant={p.status === "PAID" ? "success" : p.status === "APPROVED" ? "default" : p.status === "PENDING" ? "warning" : "outline"}>{p.status}</Badge> },
+          { key: "status", headName: "Status", minWidth: 140, render: (p: T_PAYSLIP_ROW) => <StatusPill status={p.status}>{p.status ?? "—"}</StatusPill> },
         ]}
         data={rows}
         emptyTitle="No payslips found."
         pagination={{ page, limit: LIMIT, total: query.data?.data?.pagination?.total ?? 0, onPageChange: setPage }}
         searchPlaceholder="Search payslips..."
+        onSearch={handleSearch}
       />
     </div>
   );

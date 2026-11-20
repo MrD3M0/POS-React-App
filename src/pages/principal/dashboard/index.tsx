@@ -12,6 +12,7 @@ import {
 import PageHeader from "@/components/common/page-header";
 import Button from "@/components/ui/button";
 import Badge from "@/components/ui/badge";
+import StatusBadge from "@/components/ui/status-badge";
 import { useRoleDashboard } from "@/pages/dashboard/hooks/use-role-dashboard";
 import {
   ActionList,
@@ -370,9 +371,7 @@ export default function PrincipalDashboardPage() {
                     {row.examName} · {row.batch} · {row.term}
                   </p>
                 </div>
-                <Badge variant={row.isPassed ? "success" : "destructive"}>
-                  {row.percentage.toFixed(1)}%
-                </Badge>
+                <StatusBadge status={row.isPassed ? "PASS" : "FAIL"}>{row.percentage.toFixed(1)}%</StatusBadge>
               </li>
             ))}
           </ul>

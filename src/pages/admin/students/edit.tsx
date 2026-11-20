@@ -10,7 +10,7 @@ import { QUERY_KEYS } from "@/lib/query-keys";
 import { mapFieldsOnError } from "@/lib/utils";
 import Button from "@/components/ui/button";
 import Input from "@/components/ui/input";
-import Badge from "@/components/ui/badge";
+import StatusBadge from "@/components/ui/status-badge";
 import { Textarea } from "@/components/ui/textarea";
 import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
@@ -180,17 +180,7 @@ export default function EditStudentPage() {
             <div>
               <div className="text-sm font-semibold">Approval Status</div>
               <div className="mt-1 flex items-center gap-2">
-                <Badge
-                  variant={
-                    studentData.approvalStatus === "APPROVED"
-                      ? "default"
-                      : studentData.approvalStatus === "REJECTED"
-                        ? "destructive"
-                        : "secondary"
-                  }
-                >
-                  {studentData.approvalStatus}
-                </Badge>
+                <StatusBadge status={studentData.approvalStatus} />
                 {studentData.rejectionReason && (
                   <span className="text-xs text-destructive">Reason: {studentData.rejectionReason}</span>
                 )}

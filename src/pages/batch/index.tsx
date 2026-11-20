@@ -11,7 +11,7 @@ import PaginationControls from "@/components/common/PaginationControls";
 import ConfirmDeleteDialog from "@/components/dialog/delete-dialog";
 import Button from "@/components/ui/button";
 import Input from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { ActiveStatusBadge } from "@/components/ui/status-badge";
 import {
   Table,
   TableBody,
@@ -115,9 +115,7 @@ export default function BatchListPage() {
                     <TableCell>{batch.startDateBs || "-"}</TableCell>
                     <TableCell>Term {batch.currentTermNumber}</TableCell>
                     <TableCell>
-                      <Badge variant={batch.isActive ? "default" : "secondary"}>
-                        {batch.isActive ? "Active" : "Inactive"}
-                      </Badge>
+                      <ActiveStatusBadge active={batch.isActive} />
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">

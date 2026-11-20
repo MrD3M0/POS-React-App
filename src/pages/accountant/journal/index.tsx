@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import { Plus } from "lucide-react";
 import PageHeader from "@/components/common/page-header";
 import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
@@ -48,10 +49,15 @@ export default function AccountantJournalPage() {
       <PageHeader
         title="Journal Entries"
         breadCrumbItems={[{ title: "Accountant", link: "/accountant" }, { title: "Journal Entries", link: "/accountant/journal" }]}
+        actions={
+          <Button size="sm" onClick={() => setCreateOpen(true)}>
+            <Plus className="size-3.5" />
+            Create Journal Entry
+          </Button>
+        }
       />
-      <div className="mb-4 flex w-full max-w-4xl flex-wrap items-center gap-3">
-        <span className="text-xs text-muted-foreground">Closed FY blocks payments & journal entries.</span>
-        <Button variant="outline" size="sm" onClick={() => setCreateOpen(true)}>New Journal Entry</Button>
+      <div className="mb-4">
+        <span className="text-xs text-muted-foreground">Closed FY blocks payments &amp; journal entries.</span>
       </div>
 
       <GenericTable

@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import PageHeader from "@/components/common/page-header";
 import Button from "@/components/ui/button";
 import RecordPaymentForm from "./components/record-payment-form";
@@ -17,12 +18,15 @@ export default function RecordFeePaymentPage() {
         ]}
         actions={
           <Button asChild variant="outline" size="sm">
-            <Link to="/accountant/billing/payments">Back to payments</Link>
+            <Link to="/accountant/billing/payments">
+              <ArrowLeft className="h-4 w-4" />
+              Back to payments
+            </Link>
           </Button>
         }
       />
 
-      <div className="mt-4 w-full max-w-3xl border border-border bg-background p-4">
+      <div className="mt-3 w-full max-w-2xl">
         <RecordPaymentForm />
       </div>
     </div>

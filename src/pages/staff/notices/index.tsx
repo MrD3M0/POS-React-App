@@ -4,6 +4,7 @@ import PageHeader from "@/components/common/page-header";
 import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
 import Badge from "@/components/ui/badge";
+import StatusBadge from "@/components/ui/status-badge";
 import GenericTable, { type T_TableHead } from "@/components/generic-table";
 import { QUERY_KEYS } from "@/lib/query-keys";
 import { listNotices, type T_NOTICE } from "./service/service";
@@ -41,9 +42,7 @@ export default function StaffNoticesPage() {
       key: "isPublished",
       headName: "Status",
       minWidth: 140,
-      render: (n) => (
-        <Badge variant={n.isPublished ? "default" : "outline"}>{n.isPublished ? "Published" : "Draft"}</Badge>
-      ),
+      render: (n) => <StatusBadge status={n.isPublished ? "PUBLISHED" : "DRAFT"} />,
     },
     {
       key: "isPinned",

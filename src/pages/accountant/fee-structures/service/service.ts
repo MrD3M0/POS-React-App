@@ -26,7 +26,13 @@ export type T_FEE_STRUCTURE = {
   isActive: boolean;
   createdAt?: string;
   items?: T_FEE_STRUCTURE_ITEM[];
-  course?: { id: string; name: string; code?: string } | null;
+  course?: {
+    id: string;
+    name: string;
+    code?: string;
+    system?: "SEMESTER" | "YEARLY";
+    totalTerms?: number;
+  } | null;
   batch?: { id: string; name: string } | null;
 };
 
@@ -111,6 +117,16 @@ export async function assignFeeStructureToStudents(input: {
   return res.data;
 }
 
+export type T_COURSE_OPTION = {
+  id: string;
+  name: string;
+  code?: string;
+  /** SEMESTER = "Semester N" terms, YEARLY = "Year N" terms. */
+  system?: "SEMESTER" | "YEARLY";
+  /** How many terms the course runs — fee items are chosen per term. */
+  totalTerms?: number;
+};
+
 export async function listFeeHeadOptions() {
   const res = await axiosInstance.get(UrlConstants.ADMIN_LOOKUP_FEEHEAD_URL, {
     params: { page: 1, limit: -1 },
@@ -125,8 +141,16 @@ export async function listCourseOptions() {
     params: { page: 1, limit: -1 },
   });
   return res.data as {
-    data?: { data?: { id: string; name: string; code?: string }[] };
+    data?: { data?: T_COURSE_OPTION[] };
   };
+}
+
+/** One fee structure (with items + course + batch) for the full-page form. */
+export async function getFeeStructure(id: string) {
+  const res = await axiosInstance.get(
+    `${UrlConstants.ACCOUNTANT_FEES_STRUCTURE_URL}/${id}`,
+  );
+  return res.data as { data?: T_FEE_STRUCTURE };
 }
 
 export async function listBatchOptions() {

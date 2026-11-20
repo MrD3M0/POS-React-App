@@ -9,6 +9,16 @@ import {
 } from "@/lib/auth-storage";
 
 import ScreenLoader from "@/components/ui/screen-loader";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { getCurrentUser, loginUser, logoutUser, registerUser } from "@/auth/service/service";
 
 interface AuthProviderProps {
@@ -23,6 +33,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     () => readStoredAuth()?.user,
   );
   const [loading, setLoading] = useState<boolean>(true);
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState<boolean>(false);
 
   // Sync auth state across tabs and local storage updates
   useEffect(() => {
@@ -80,7 +91,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, []);
 
+  // Ask for confirmation before logging out; the actual logout runs on confirm.
   const logout = useCallback(async () => {
+    setLogoutConfirmOpen(true);
+  }, []);
+
+  const confirmLogout = useCallback(async () => {
     setLoading(true);
     try {
       await logoutUser();
@@ -121,6 +137,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }}
     >
       {children}
+
+      {/* Confirmation dialog shown for every logout entry point */}
+      <AlertDialog open={logoutConfirmOpen} onOpenChange={setLogoutConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to log out?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You will need to sign in again to access your account.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setLogoutConfirmOpen(false);
+                void confirmLogout();
+              }}
+            >
+              Log out
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AuthContext.Provider>
   );
 }

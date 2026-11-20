@@ -7,6 +7,8 @@ export type T_TERM_SUBJECT = {
   subjectId: string;
   creditHour: number | string;
   isElective: boolean;
+  /** Elective seats — how many students may pick this elective. Null = unlimited. */
+  maxStudents?: number | null;
   createdAt?: string;
   subject?: { id: string; code?: string; name?: string } | null;
   batchTerm?: {
@@ -58,9 +60,38 @@ export async function addTermSubject(input: {
   subjectId: string;
   creditHour: number;
   isElective: boolean;
+  maxStudents?: number | null;
 }) {
   const res = await axiosInstance.post(
     UrlConstants.BATCH_TERM_SUBJECT_URL,
+    input,
+  );
+  return res.data;
+}
+
+/**
+ * Bulk assignment — one atomic request (POST /batch-term-subject/bulk).
+ * Backend validates every row first (unknown subject, duplicate, already
+ * assigned) and rolls back everything on any failure.
+ */
+export async function bulkAddTermSubjects(input: {
+  batchTermId: string;
+  subjects: Array<{ subjectId: string; creditHour: number; isElective: boolean; maxStudents?: number | null }>;
+}) {
+  const res = await axiosInstance.post(
+    `${UrlConstants.BATCH_TERM_SUBJECT_URL}/bulk`,
+    input,
+  );
+  return res.data;
+}
+
+/** Update an already-assigned row (credit hour, elective flag, elective seats). */
+export async function updateTermSubject(
+  id: string,
+  input: { creditHour?: number; isElective?: boolean; maxStudents?: number | null },
+) {
+  const res = await axiosInstance.patch(
+    `${UrlConstants.BATCH_TERM_SUBJECT_URL}/${id}`,
     input,
   );
   return res.data;
@@ -73,7 +104,20 @@ export async function removeTermSubject(id: string) {
   return res.data;
 }
 
+export type T_TERM_DETAIL = {
+  id: string;
+  name?: string;
+  termNumber?: number;
+  batch?: {
+    id: string;
+    name?: string;
+    /** Which term number the batch is currently running (current semester). */
+    currentTermNumber?: number | null;
+    course?: { id: string; code?: string; name?: string; system?: "SEMESTER" | "YEARLY" } | null;
+  } | null;
+};
+
 export async function getTerm(id: string) {
   const res = await axiosInstance.get(`${UrlConstants.BATCH_TERM_URL}/${id}`);
-  return (res.data as { data?: { name?: string; batchId?: string } })?.data;
+  return (res.data as { data?: T_TERM_DETAIL })?.data;
 }

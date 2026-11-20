@@ -62,6 +62,7 @@ import {
 } from "./calendar-types";
 import Button from "@/components/ui/button";
 import Badge from "@/components/ui/badge";
+import StatusBadge from "@/components/ui/status-badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -578,9 +579,7 @@ export function BsEventCalendar({
                   <Badge variant="outline">
                     {CALENDAR_KIND_META[selected.kind].label}
                   </Badge>
-                  {selected.status && (
-                    <Badge variant="secondary">{selected.status}</Badge>
-                  )}
+                  {selected.status && <StatusBadge status={selected.status} />}
                 </div>
                 <div className="grid gap-1.5">
                   <div className="flex gap-2">

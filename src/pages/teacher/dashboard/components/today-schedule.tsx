@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, CalendarOff } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -17,10 +17,39 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import Badge from "@/components/ui/badge";
+import StatusBadge from "@/components/ui/status-badge";
 import Button from "@/components/ui/button";
-import type { T_DashboardScheduleItem } from "@/types/teacher-dashboard";
+import type {
+  T_DashboardScheduleItem,
+  T_DashboardScheduleStatus,
+  T_DashboardTodaySchedule,
+} from "@/types/teacher-dashboard";
 import { periodTimeLabel } from "../dashboard-utils";
 import { WidgetEmpty, WidgetError, WidgetSkeleton } from "@/components/common/widget-state";
+
+const STATUS_LABEL: Record<T_DashboardScheduleStatus, string> = {
+  COMPLETED: "Completed",
+  ONGOING: "Ongoing",
+  UPCOMING: "Upcoming",
+};
+
+const STATUS_VARIANT: Record<
+  T_DashboardScheduleStatus,
+  "secondary" | "warning" | "outline"
+> = {
+  COMPLETED: "secondary",
+  ONGOING: "warning",
+  UPCOMING: "outline",
+};
+
+/** Take-attendance link pre-filled with this schedule row. */
+function takeAttendanceHref(item: T_DashboardScheduleItem, dateBs: string | null) {
+  const params = new URLSearchParams();
+  params.set("assignmentId", item.assignmentId);
+  if (item.periodId) params.set("periodId", item.periodId);
+  if (dateBs) params.set("dateBs", dateBs);
+  return `/teacher/take-attendance?${params.toString()}`;
+}
 
 export default function TodaySchedule({
   data,
@@ -28,19 +57,23 @@ export default function TodaySchedule({
   isError,
   onRetry,
 }: {
-  data: T_DashboardScheduleItem[];
+  data: T_DashboardTodaySchedule | undefined;
   isLoading?: boolean;
   isError?: boolean;
   onRetry: () => void;
 }) {
-  const pending = data.filter((item) => !item.attendanceTaken).length;
+  const items = data?.todaySchedule ?? [];
+  const pending = data?.pendingAttendance ?? 0;
+  const holiday = data?.holiday ?? null;
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Today&apos;s Schedule</CardTitle>
         <CardDescription>
-          Classes scheduled for today ({pending} attendance pending)
+          {holiday
+            ? `Holiday — ${holiday.name}`
+            : `Classes scheduled for today (${pending} attendance pending)`}
         </CardDescription>
       </CardHeader>
       <CardContent className="px-0">
@@ -52,11 +85,21 @@ export default function TodaySchedule({
           <div className="px-6">
             <WidgetError onRetry={onRetry} />
           </div>
-        ) : data.length === 0 ? (
+        ) : holiday ? (
+          <div className="px-6">
+            <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed px-4 py-8 text-center">
+              <CalendarOff className="size-6 text-muted-foreground" />
+              <p className="text-sm font-medium">{holiday.name}</p>
+              <p className="text-xs text-muted-foreground">
+                Today is a holiday, so no classes are scheduled.
+              </p>
+            </div>
+          </div>
+        ) : items.length === 0 ? (
           <div className="px-6">
             <WidgetEmpty
               title="No classes scheduled today"
-              description="Sessions created for today will show up here."
+              description="Add these periods to the weekly routine to see them here."
             />
           </div>
         ) : (
@@ -71,13 +114,15 @@ export default function TodaySchedule({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data.map((item) => (
+              {items.map((item) => (
                 <TableRow
-                  key={
-                    item.sessionId ?? `${item.assignmentId}-${item.periodName}`
-                  }
+                  key={item.scheduleId ?? `${item.assignmentId}-${item.periodId ?? item.periodName}`}
                   className={
-                    item.isNext ? "bg-primary/5 font-medium" : undefined
+                    item.isNext
+                      ? "bg-primary/5 font-medium"
+                      : item.status === "COMPLETED"
+                        ? "text-muted-foreground"
+                        : undefined
                   }
                 >
                   <TableCell className="whitespace-nowrap">
@@ -85,11 +130,9 @@ export default function TodaySchedule({
                     <span className="ml-2 text-xs text-muted-foreground">
                       {item.periodName}
                     </span>
-                    {item.isNext ? (
-                      <Badge variant="success" className="ml-2">
-                        Next
-                      </Badge>
-                    ) : null}
+                    <Badge variant={STATUS_VARIANT[item.status]} className="ml-2">
+                      {item.isNext ? "Next" : STATUS_LABEL[item.status]}
+                    </Badge>
                   </TableCell>
                   <TableCell>{item.subjectName}</TableCell>
                   <TableCell>{item.classLabel || "—"}</TableCell>
@@ -98,10 +141,10 @@ export default function TodaySchedule({
                   </TableCell>
                   <TableCell className="text-right">
                     {item.attendanceTaken ? (
-                      <Badge variant="outline">Taken</Badge>
+                      <StatusBadge status="TAKEN" />
                     ) : (
                       <Button size="sm" variant="outline" asChild>
-                        <Link to="/teacher/take-attendance">
+                        <Link to={takeAttendanceHref(item, data?.dateBs ?? null)}>
                           Take Attendance
                           <ArrowRight className="size-3.5" />
                         </Link>
@@ -115,9 +158,11 @@ export default function TodaySchedule({
         )}
       </CardContent>
       <CardFooter className="text-xs text-muted-foreground">
-        {data.length === 0
-          ? "No sessions were created for today."
-          : `${data.length} session${data.length === 1 ? "" : "s"} today · ${pending} still pending.`}
+        {holiday
+          ? "No classes on holidays."
+          : items.length === 0
+            ? "No periods in the weekly routine for today."
+            : `${items.length} period${items.length === 1 ? "" : "s"} today · ${pending} still pending.`}
       </CardFooter>
     </Card>
   );

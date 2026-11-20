@@ -156,6 +156,13 @@ export const NAV_ITEMS: NavItemType[] = [
     permission: "admin:teachingAssignments:read",
   },
   {
+    key: "class-schedules",
+    label: "Class Schedules",
+    icon: CalendarDays,
+    href: "/admin/class-schedules",
+    permission: "admin:classSchedules:read",
+  },
+  {
     key: "lookups",
     label: "Lookups",
     icon: BookMarked,
@@ -219,6 +226,14 @@ export const NAV_ITEMS: NavItemType[] = [
     icon: Banknote,
     href: "/accountant/billing/payments",
     permission: "accountant:payments:record",
+  },
+  {
+    // Cancellation of a payment/receipt (append-only reversal).
+    key: "receipts",
+    label: "Receipts",
+    icon: Receipt,
+    href: "/accountant/receipts",
+    permission: "accountant:receipt:cancel",
   },
   {
     key: "fee-installments",
@@ -327,6 +342,13 @@ export const NAV_ITEMS: NavItemType[] = [
     href: "/principal/reports",
     permission: "principal:oversight",
   },
+  {
+    key: "principal-settings",
+    label: "College Settings",
+    icon: ShieldCheck,
+    href: "/principal/settings",
+    permission: "principal:settings:read",
+  },
 
   // Teacher Modules
   {
@@ -342,6 +364,13 @@ export const NAV_ITEMS: NavItemType[] = [
     icon: ClipboardList,
     href: "/teacher/take-attendance",
     permission: "teacher:attendance:take",
+  },
+  {
+    key: "teacher-calendar",
+    label: "My Calendar",
+    icon: CalendarDays,
+    href: "/teacher/calendar",
+    permission: "teacher:classes:read",
   },
   {
     key: "exams",
@@ -416,10 +445,17 @@ export const NAV_ITEMS: NavItemType[] = [
     permission: "accountant:notices:manage",
   },
   {
-    key: "scholarships",
-    label: "Scholarships",
+    key: "scholarship-schemes",
+    label: "Scholarship Schemes",
     icon: GraduationCap,
     href: "/accountant/scholarships",
+    permission: "scholarship:read",
+  },
+  {
+    key: "scholarship-grants",
+    label: "Granted Scholarships",
+    icon: GraduationCap,
+    href: "/accountant/scholarships/grants",
     permission: "scholarship:read",
   },
   {
@@ -507,6 +543,7 @@ export const NAV_GROUPS: NavGroupType[] = [
       "terms",
       "subjects",
       "teaching-assignments",
+      "class-schedules",
       "lookups",
     ],
   },
@@ -516,6 +553,7 @@ export const NAV_GROUPS: NavGroupType[] = [
     icon: ClipboardList,
     itemKeys: [
       "take-attendance",
+      "teacher-calendar",
       "attendance-sessions",
       "my-attendance",
       "principal-attendance",
@@ -544,10 +582,16 @@ export const NAV_GROUPS: NavGroupType[] = [
       "fee-payments",
       "fee-installments",
       "payments",
+      "receipts",
       "journal",
       "ledgers",
-      "scholarships",
     ],
+  },
+  {
+    key: "scholarships",
+    label: "Scholarships",
+    icon: GraduationCap,
+    itemKeys: ["scholarship-schemes", "scholarship-grants"],
   },
   {
     key: "payroll",
@@ -605,6 +649,7 @@ const PERMISSION_BY_ROLE: Record<string, Set<string>> = {
     "admin:terms:read",
     "admin:subjects:read",
     "admin:teachingAssignments:read",
+    "admin:classSchedules:read",
     "admin:lookups:read",
     "admin:holidays:read",
     "system:fiscalYear:read",
@@ -626,6 +671,7 @@ const PERMISSION_BY_ROLE: Record<string, Set<string>> = {
     "admin:terms:read",
     "admin:subjects:read",
     "admin:teachingAssignments:read",
+    "admin:classSchedules:read",
     "principal:attendance:mark",
     "principal:attendance:correct",
     "principal:results:read",
@@ -640,6 +686,8 @@ const PERMISSION_BY_ROLE: Record<string, Set<string>> = {
     "admin:notices:read",
     // The principal may look at the scholarships that were granted.
     "scholarship:read",
+    // College identity (logo, contacts, ID card details) is principal-owned.
+    "principal:settings:read",
   ]),
   ACCOUNTANT: new Set([
     "accountant:dashboard:read",

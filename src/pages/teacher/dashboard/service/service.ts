@@ -10,8 +10,9 @@ import type {
   T_DashboardRange,
   T_DashboardRecentResult,
   T_DashboardResultDistribution,
-  T_DashboardScheduleItem,
   T_DashboardStats,
+  T_DashboardTodaySchedule,
+  T_DashboardWeekSchedule,
   T_TeacherDashboardResponse,
 } from "@/types/teacher-dashboard";
 
@@ -70,7 +71,12 @@ export function getDashboardClassAttendance(filters: T_DashboardFilters) {
 }
 
 export function getDashboardTodaySchedule(filters: T_DashboardFilters) {
-  return getCard<T_DashboardScheduleItem[]>("today-schedule", filters);
+  return getCard<T_DashboardTodaySchedule>("today-schedule", filters);
+}
+
+/** This week (Sun–Fri) from the weekly routine, holidays included. */
+export function getDashboardWeekSchedule(filters: T_DashboardFilters) {
+  return getCard<T_DashboardWeekSchedule>("week-schedule", filters);
 }
 
 export function getDashboardExamBatches(filters: T_DashboardFilters) {

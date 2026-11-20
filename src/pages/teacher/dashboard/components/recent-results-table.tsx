@@ -14,7 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import Badge from "@/components/ui/badge";
+import StatusBadge from "@/components/ui/status-badge";
 import type { T_DashboardRecentResult } from "@/types/teacher-dashboard";
 import { formatMarks, formatPercent } from "../dashboard-utils";
 import { WidgetEmpty, WidgetError, WidgetSkeleton } from "@/components/common/widget-state";
@@ -89,9 +89,7 @@ export default function RecentResultsTable({
                     {formatPercent(row.passPercent)}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Badge variant={row.published ? "success" : "outline"}>
-                      {row.published ? "Published" : row.status}
-                    </Badge>
+                    <StatusBadge status={row.published ? "PUBLISHED" : row.status} />
                   </TableCell>
                 </TableRow>
               ))}

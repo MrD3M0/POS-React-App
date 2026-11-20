@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import PageHeader from "@/components/common/page-header";
 import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
-import Input from "@/components/ui/input";
 import GenericTable from "@/components/generic-table";
 import { QUERY_KEYS } from "@/lib/query-keys";
 import { listInstallments, type T_Installment } from "./service/service";
@@ -21,15 +20,13 @@ function rowsFromList(data: unknown): { rows: unknown[]; total: number } {
 /** Installments — the payment plan of a fee item. */
 export default function AccountantInstallmentsPage() {
   const [page, setPage] = useState(1);
-  const [itemId, setItemId] = useState("");
 
   const query = useQuery({
-    queryKey: [QUERY_KEYS.ACCOUNTANT_BILLING_INSTALLMENTS, itemId, page],
+    queryKey: [QUERY_KEYS.ACCOUNTANT_BILLING_INSTALLMENTS, page],
     queryFn: () =>
       listInstallments({
         page,
         limit: LIMIT,
-        ...(itemId ? { studentFeeItemId: itemId } : {}),
       }),
   });
 
@@ -51,17 +48,6 @@ export default function AccountantInstallmentsPage() {
           { title: "Installments", link: "/accountant/billing/installments" },
         ]}
       />
-
-      <div className="mb-4 max-w-md">
-        <Input
-          placeholder="Filter by student fee item ID..."
-          value={itemId}
-          onChange={(event) => {
-            setItemId(event.target.value);
-            setPage(1);
-          }}
-        />
-      </div>
 
       <GenericTable
         tableHeads={[

@@ -4,7 +4,6 @@ import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
 import Badge from "@/components/ui/badge";
 import GenericTable from "@/components/generic-table";
-import Input from "@/components/ui/input";
 import { QUERY_KEYS } from "@/lib/query-keys";
 import { listLedgers, type T_LEDGER } from "./service/service";
 import { useState } from "react";
@@ -31,11 +30,6 @@ export default function AccountantLedgersPage() {
         title="Ledgers"
         breadCrumbItems={[{ title: "Accountant", link: "/accountant" }, { title: "Ledgers", link: "/accountant/ledgers" }]}
       />
-      <div className="flex flex-wrap gap-3 w-full max-w-4xl mb-4">
-        <Input placeholder="Search ledgers..." onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
-        <span className="self-center text-xs text-muted-foreground">Account ledgers with live journal-line totals.</span>
-      </div>
-
       <GenericTable
         tableHeads={[
           { key: "code", headName: "Code", minWidth: 140 },
@@ -48,6 +42,7 @@ export default function AccountantLedgersPage() {
         data={rows}
         emptyTitle="No ledger entries."
         pagination={{ page, limit: LIMIT, total: query.data?.data?.pagination?.total ?? 0, onPageChange: setPage }}
+        onSearch={(value) => { setSearch(value); setPage(1); }}
         searchPlaceholder="Search ledgers..."
       />
     </div>

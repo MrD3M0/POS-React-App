@@ -14,7 +14,7 @@ import { listStudentsForTeacher, type T_STUDENT } from "../students/service/serv
 import { listMarks, bulkMarks, type T_MARK } from "./service/service";
 import { createResult } from "../results/service/service";
 
-type MarkRow = { marks: string; isAbsent: boolean };
+type MarkRow = { marks: string; isPresent: boolean };
 
 function toRows<T>(raw: unknown): T[] {
   const r = raw as { data?: T[] | { data?: T[] } };
@@ -142,7 +142,7 @@ export default function TeacherMarksEntryPage() {
         const raw = m.marks ?? m.obtainedMarks ?? "";
         next.set(sid, {
           marks: raw === "" || raw == null ? "" : String(raw),
-          isAbsent: Boolean((m as Record<string, unknown>).isAbsent),
+          isPresent: !(m as Record<string, unknown>).isAbsent,
         });
       }
       setGrid(next);
@@ -154,12 +154,12 @@ export default function TeacherMarksEntryPage() {
   if (examsQuery.isError) return <AlertHandler variant="error" />;
 
   function rowState(studentId: string): MarkRow {
-    return grid.get(studentId) ?? { marks: "", isAbsent: false };
+    return grid.get(studentId) ?? { marks: "", isPresent: true };
   }
   function patchRow(studentId: string, patch: Partial<MarkRow>) {
     setGrid((prev) => {
       const next = new Map(prev);
-      const cur = next.get(studentId) ?? { marks: "", isAbsent: false };
+      const cur = next.get(studentId) ?? { marks: "", isPresent: true };
       next.set(studentId, { ...cur, ...patch });
       return next;
     });
@@ -167,8 +167,8 @@ export default function TeacherMarksEntryPage() {
   }
 
   function validateRow(studentId: string): string | null {
-    const { marks, isAbsent } = rowState(studentId);
-    if (isAbsent) return null;
+    const { marks, isPresent } = rowState(studentId);
+    if (!isPresent) return null;
     if (marks.trim() === "") return null;
     const n = Number(marks);
     if (!Number.isFinite(n)) return "Enter a valid number.";
@@ -193,7 +193,8 @@ export default function TeacherMarksEntryPage() {
       return;
     }
     const marks = students.map((s) => {
-      const { marks: raw, isAbsent } = rowState(s.id);
+      const { marks: raw, isPresent } = rowState(s.id);
+      const isAbsent = !isPresent;
       const empty = raw.trim() === "";
       const value = isAbsent || empty ? 0 : Number(raw);
       return {
@@ -279,7 +280,7 @@ export default function TeacherMarksEntryPage() {
                   </th>
                   <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide">Student Name</th>
                   <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide">Marks</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide">Absent</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide">Attendance</th>
                 </tr>
               </thead>
               <tbody>
@@ -299,7 +300,7 @@ export default function TeacherMarksEntryPage() {
                           max={fullMarks}
                           step="any"
                           inputMode="decimal"
-                          disabled={row.isAbsent}
+                          disabled={!row.isPresent}
                           className="w-24 rounded border px-2 py-1.5 text-sm disabled:opacity-50 disabled:line-through"
                           value={row.marks}
                           onChange={(e) => patchRow(s.id, { marks: e.target.value })}
@@ -310,9 +311,9 @@ export default function TeacherMarksEntryPage() {
                       </td>
                       <td className="px-3 py-2">
                         <InputWithSwitch
-                          value={row.isAbsent}
-                          onChange={(v) => patchRow(s.id, { isAbsent: v })}
-                          labels={{ on: "Absent", off: "Present" }}
+                          value={row.isPresent}
+                          onChange={(v) => patchRow(s.id, { isPresent: v })}
+                          labels={{ on: "Present", off: "Absent" }}
                         />
                       </td>
                     </tr>

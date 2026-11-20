@@ -1,9 +1,9 @@
-import { useState, type ComponentProps } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import PageHeader from "@/components/common/page-header";
 import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
-import Badge from "@/components/ui/badge";
+import StatusBadge from "@/components/ui/status-badge";
 import GenericTable, { type T_TableHead } from "@/components/generic-table";
 import { QUERY_KEYS } from "@/lib/query-keys";
 import { getOwnStaff } from "../profile/edit/service/service";
@@ -50,7 +50,7 @@ export default function StaffAttendancePage() {
       key: "status",
       headName: "Status",
       minWidth: 140,
-      render: (r) => <Badge variant={mapStatus(r.status)}>{r.status}</Badge>,
+      render: (r) => <StatusBadge status={r.status} />,
     },
     {
       key: "leaveType",
@@ -89,12 +89,4 @@ export default function StaffAttendancePage() {
       />
     </div>
   );
-}
-
-function mapStatus(m: string): ComponentProps<typeof Badge>["variant"] {
-  if (m === "PRESENT") return "default";
-  if (m === "ABSENT") return "destructive";
-  if (m === "LEAVE") return "secondary";
-  if (m === "LATE" || m === "LATE DAY") return "warning";
-  return "outline";
 }

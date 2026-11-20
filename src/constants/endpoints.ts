@@ -58,6 +58,8 @@ export const UrlConstants = {
   SALARY_STRUCTURE_URL: "/salary-structure",
   SALARY_STRUCTURE_ITEM_URL: "/salary-structure-item",
   SETTING_URL: "/setting",
+  // Public college identity (logo, contacts, affiliation) used on ID cards.
+  INSTITUTION_URL: "/setting/institution",
   STAFF_URL: "/staff",
   STUDENT_URL: "/student",
   STUDENT_ATTENDANCE_URL: "/student-attendance",
@@ -68,6 +70,7 @@ export const UrlConstants = {
   TEACHER_URL: "/teacher",
   TEACHER_BATCH_PAY_URL: "/teacher-batch-pay",
   TEACHING_ASSIGNMENT_URL: "/teaching-assignment",
+  CLASS_SCHEDULE_URL: "/class-schedule",
   USER_URL: "/user",
 
   // ── Admin page-area aliases → real flat backend routes ──────────────────

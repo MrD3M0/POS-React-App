@@ -5,6 +5,7 @@ import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Badge from "@/components/ui/badge";
+import { ActiveStatusBadge } from "@/components/ui/status-badge";
 import { Label } from "@/components/ui/label";
 import Button from "@/components/ui/button";
 import { QUERY_KEYS } from "@/lib/query-keys";
@@ -63,9 +64,7 @@ export default function StaffProfilePage() {
           <p className="text-sm text-muted-foreground">{email}</p>
           <div className="flex items-center gap-2 mt-1">
             <Badge variant="outline">{role}</Badge>
-            <Badge variant={isActive ? "success" : "outline"}>
-              {isActive ? "Active" : "Inactive"}
-            </Badge>
+            <ActiveStatusBadge active={isActive} />
           </div>
         </div>
       </div>

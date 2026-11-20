@@ -4,6 +4,7 @@ import PageHeader from "@/components/common/page-header";
 import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
 import Badge from "@/components/ui/badge";
+import StatusBadge from "@/components/ui/status-badge";
 import GenericTable, { type T_TableHead } from "@/components/generic-table";
 import ConfirmDeleteDialog from "@/components/dialog/confirm-delete";
 import { QUERY_KEYS } from "@/lib/query-keys";
@@ -60,11 +61,7 @@ export default function AdminNoticesPage() {
       headName: "Status",
       render: (n) => {
         const pub = n.isPublished ?? n.published ?? false;
-        return (
-          <Badge variant={pub ? "default" : "outline"}>
-            {pub ? "Published" : "Draft"}
-          </Badge>
-        );
+        return <StatusBadge status={pub ? "PUBLISHED" : "DRAFT"} />;
       },
     },
     {

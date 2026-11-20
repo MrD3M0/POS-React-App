@@ -4,6 +4,7 @@ import PageHeader, { type BreadcrumbEntry } from "@/components/common/page-heade
 import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
 import Badge from "@/components/ui/badge";
+import { ActiveStatusBadge } from "@/components/ui/status-badge";
 import GenericTable, { type T_TableHead } from "@/components/generic-table";
 import { QUERY_KEYS } from "@/lib/query-keys";
 
@@ -82,11 +83,7 @@ export default function StaffListPage({
     {
       key: "status",
       headName: "Status",
-      render: (s) => (
-        <Badge variant={s.employee?.isActive ? "default" : "destructive"}>
-          {s.employee?.isActive ? "Active" : "Inactive"}
-        </Badge>
-      ),
+      render: (s) => <ActiveStatusBadge active={s.employee?.isActive ?? false} />,
     },
   ];
 

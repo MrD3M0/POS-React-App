@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,8 +17,10 @@ import {
   createTeachingAssignment,
   listTeachers,
   listBatchTermSubjects,
+  listBatches,
+  listBatchTerms,
+  getTeacherWorkload,
   type T_TEACHER_OPTION,
-  type T_BATCH_TERM_SUBJECT_OPTION,
 } from "./service/service";
 import {
   teachingAssignmentCreateDefaultValues,
@@ -31,13 +34,18 @@ function teacherLabel(t: T_TEACHER_OPTION) {
   return name ? `${name}${e?.employeeCode ? ` (${e.employeeCode})` : ""}` : t.id;
 }
 
-function btsLabel(b: T_BATCH_TERM_SUBJECT_OPTION) {
-  const subject = b.subject ? `${b.subject.code ?? ""}${b.subject.name ? ` - ${b.subject.name}` : ""}`.trim() : "";
-  const term = b.batchTerm ? `Term ${b.batchTerm.termNumber ?? b.batchTerm.name ?? ""}` : "";
-  const batch = b.batchTerm?.batch?.name ? ` • ${b.batchTerm.batch.name}` : "";
-  return [subject, term].filter(Boolean).join(" / ") + batch || b.id;
+/** Subject label without the term/batch suffix — the cascade provides those. */
+function subjectOnlyLabel(b: { subject?: { code?: string; name?: string } }) {
+  const subject = b.subject
+    ? `${b.subject.code ?? ""}${b.subject.name ? ` - ${b.subject.name}` : ""}`.trim()
+    : "";
+  return subject || "Subject";
 }
 
+/**
+ * Create a teaching assignment through a cascading picker:
+ * Batch → Semester (BatchTerm) → Subject (BatchTermSubject) → Teacher → dates.
+ */
 export default function CreateTeachingAssignmentPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -47,25 +55,83 @@ export default function CreateTeachingAssignmentPage() {
     defaultValues: teachingAssignmentCreateDefaultValues,
   });
 
+  // Cascade state — not form fields; batchTermSubjectId is the real payload.
+  const [batchId, setBatchId] = useState("");
+  const [batchTermId, setBatchTermId] = useState("");
+
+  const batchesQuery = useQuery({
+    queryKey: [QUERY_KEYS.ADMIN_BATCH_LIST, "select", "unlimited"],
+    queryFn: () => listBatches({ page: 1, limit: -1 }),
+  });
+  const termsQuery = useQuery({
+    queryKey: [QUERY_KEYS.ADMIN_TERM_LIST, "select", batchId],
+    queryFn: () => listBatchTerms({ page: 1, limit: -1, batchId }),
+    enabled: Boolean(batchId),
+  });
+  const subjectsQuery = useQuery({
+    queryKey: ["admin-batch-term-subjects", "select", batchTermId],
+    queryFn: () =>
+      listBatchTermSubjects({ page: 1, limit: -1, batchTermId }),
+    enabled: Boolean(batchTermId),
+  });
   const teachersQuery = useQuery({
     queryKey: [QUERY_KEYS.ADMIN_TEACHER_LIST, "select", "unlimited"],
     queryFn: () => listTeachers({ page: 1, limit: -1 }),
   });
-  const btsQuery = useQuery({
-    queryKey: ["admin-batch-term-subjects", "select", "unlimited"],
-    queryFn: () => listBatchTermSubjects({ page: 1, limit: -1 }),
+
+  const watchedTeacherId = form.watch("teacherId");
+  const watchedBtsId = form.watch("batchTermSubjectId");
+
+  const workloadQuery = useQuery({
+    queryKey: [QUERY_KEYS.ADMIN_TEACHING_ASSIGNMENT_LIST, "workload", watchedTeacherId],
+    queryFn: () => getTeacherWorkload(watchedTeacherId),
+    enabled: Boolean(watchedTeacherId),
   });
 
+  const batchOptions = (batchesQuery.data?.data?.data ?? []).map((b) => ({
+    label: b.name ?? b.id,
+    value: b.id,
+    searchValues: b.name ?? "",
+  }));
+  const termOptions = (termsQuery.data?.data?.data ?? []).map((t) => ({
+    label: t.name ?? `Term ${t.termNumber ?? ""}`,
+    value: t.id,
+    searchValues: `Term ${t.termNumber ?? ""} ${t.name ?? ""}`,
+  }));
+  const subjectOptions = (subjectsQuery.data?.data?.data ?? []).map((b) => ({
+    label: subjectOnlyLabel(b),
+    value: b.id,
+    searchValues: subjectOnlyLabel(b),
+  }));
   const teacherOptions = (teachersQuery.data?.data?.data ?? []).map((t) => ({
     label: teacherLabel(t),
     value: t.id,
     searchValues: teacherLabel(t),
   }));
-  const btsOptions = (btsQuery.data?.data?.data ?? []).map((b) => ({
-    label: btsLabel(b),
-    value: b.id,
-    searchValues: btsLabel(b),
-  }));
+
+  // Teachers already assigned to the picked subject.
+  const assignedTeachers = useMemo(() => {
+    const row = (subjectsQuery.data?.data?.data ?? []).find((b) => b.id === watchedBtsId);
+    const names = (row?.assignments ?? [])
+      .map((a) => {
+        const e = a.teacher?.employee;
+        return e
+          ? [e.firstName, e.middleName, e.lastName].filter(Boolean).join(" ")
+          : null;
+      })
+      .filter(Boolean) as string[];
+    return names;
+  }, [subjectsQuery.data, watchedBtsId]);
+
+  const pickBatch = (id: string) => {
+    setBatchId(id);
+    setBatchTermId("");
+    form.setValue("batchTermSubjectId", "");
+  };
+  const pickTerm = (id: string) => {
+    setBatchTermId(id);
+    form.setValue("batchTermSubjectId", "");
+  };
 
   const mutation = useMutation({
     mutationFn: (data: TeachingAssignmentCreateFormValues) =>
@@ -86,6 +152,8 @@ export default function CreateTeachingAssignmentPage() {
     },
   });
 
+  const workload = workloadQuery.data;
+
   return (
     <div className="p-5">
       <PageHeader
@@ -101,51 +169,92 @@ export default function CreateTeachingAssignmentPage() {
       <div className="mt-4 w-full">
         <Form {...form}>
           <form onSubmit={form.handleSubmit((data) => mutation.mutate(data))} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="teacherId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Teacher</FormLabel>
-                  <FormControl>
-                    <SelectCommand
-                      value={field.value}
-                      onChange={field.onChange}
-                      options={teacherOptions}
-                      placeholder={teachersQuery.isLoading ? "Loading teachers..." : "Select teacher..."}
-                      searchPlaceholder="Search teachers..."
-                      loading={teachersQuery.isLoading}
-                    />
-                  </FormControl>
-                  <FormDescription>Select the teacher to assign (ID/reference selection).</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="batchTermSubjectId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Batch Term Subject</FormLabel>
-                  <FormControl>
-                    <SelectCommand
-                      value={field.value}
-                      onChange={field.onChange}
-                      options={btsOptions}
-                      placeholder={btsQuery.isLoading ? "Loading subjects..." : "Select subject / term..."}
-                      searchPlaceholder="Search subjects or terms..."
-                      loading={btsQuery.isLoading}
-                    />
-                  </FormControl>
-                  <FormDescription>Select the subject offering for a batch term (ID/reference selection).</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <FormItem>
+                <FormLabel>Batch</FormLabel>
+                <FormControl>
+                  <SelectCommand
+                    value={batchId}
+                    onChange={pickBatch}
+                    options={batchOptions}
+                    placeholder={batchesQuery.isLoading ? "Loading batches..." : "Select batch..."}
+                    searchPlaceholder="Search batches..."
+                    loading={batchesQuery.isLoading}
+                  />
+                </FormControl>
+                <FormDescription>Pick the batch, then the semester, then the subject.</FormDescription>
+              </FormItem>
+
+              <FormItem>
+                <FormLabel>Semester / Year</FormLabel>
+                <FormControl>
+                  <SelectCommand
+                    value={batchTermId}
+                    onChange={pickTerm}
+                    options={termOptions}
+                    placeholder={!batchId ? "Pick a batch first" : termsQuery.isLoading ? "Loading terms..." : "Select term..."}
+                    searchPlaceholder="Search terms..."
+                    loading={termsQuery.isLoading}
+                    disabled={!batchId}
+                  />
+                </FormControl>
+                <FormDescription>Terms of the selected batch.</FormDescription>
+              </FormItem>
+
+              <FormField
+                control={form.control}
+                name="batchTermSubjectId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Subject</FormLabel>
+                    <FormControl>
+                      <SelectCommand
+                        value={field.value}
+                        onChange={field.onChange}
+                        options={subjectOptions}
+                        placeholder={!batchTermId ? "Pick a term first" : subjectsQuery.isLoading ? "Loading subjects..." : "Select subject..."}
+                        searchPlaceholder="Search subjects..."
+                        loading={subjectsQuery.isLoading}
+                        disabled={!batchTermId}
+                      />
+                    </FormControl>
+                    <FormDescription>Subjects assigned to the selected term.</FormDescription>
+                    {assignedTeachers.length > 0 ? (
+                      <FormDescription>
+                        Already assigned: {assignedTeachers.join(", ")}
+                      </FormDescription>
+                    ) : null}
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="teacherId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Teacher</FormLabel>
+                    <FormControl>
+                      <SelectCommand
+                        value={field.value}
+                        onChange={field.onChange}
+                        options={teacherOptions}
+                        placeholder={teachersQuery.isLoading ? "Loading teachers..." : "Select teacher..."}
+                        searchPlaceholder="Search teachers..."
+                        loading={teachersQuery.isLoading}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      {workload
+                        ? `${workload.assignedSubjects} subject${workload.assignedSubjects === 1 ? "" : "s"} assigned · ${workload.weeklyScheduledPeriods} period${workload.weeklyScheduledPeriods === 1 ? "" : "s"} scheduled weekly`
+                        : "Current workload shows after picking a teacher."}
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <FormField
                 control={form.control}
                 name="assignedDateBs"
@@ -167,6 +276,7 @@ export default function CreateTeachingAssignmentPage() {
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={form.control}
                 name="endDateBs"

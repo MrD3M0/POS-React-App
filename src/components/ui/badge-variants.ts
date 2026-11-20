@@ -19,6 +19,13 @@ export const badgeVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
         success: "bg-emerald-500 text-white [a]:hover:bg-emerald-600",
         warning: "bg-amber-500 text-white [a]:hover:bg-amber-600",
+        // Status colors: light border + dark background + light text.
+        // Used by StatusBadge — see components/ui/status-badge.tsx for the
+        // status -> variant mapping.
+        "status-green": "border-green-400 bg-green-900 text-green-300",
+        "status-yellow": "border-yellow-400 bg-yellow-900 text-yellow-300",
+        "status-red": "border-red-400 bg-red-900 text-red-300",
+        "status-neutral": "border-gray-400 bg-gray-800 text-gray-300",
       },
     },
     defaultVariants: {

@@ -20,6 +20,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import Button from "@/components/ui/button";
 import Badge from "@/components/ui/badge";
+import StatusBadge from "@/components/ui/status-badge";
 import AlertHandler from "@/components/common/alert-handler";
 import { QUERY_KEYS } from "@/lib/query-keys";
 import { getCurrentUser } from "@/auth/service/service";
@@ -153,10 +154,10 @@ export function ProfileDialog({
                 <div className="mt-0.5 flex items-center gap-2">
                   <Badge variant="secondary">{roleLabel(user?.role)}</Badge>
                   {user?.isEmailVerified ? (
-                    <Badge variant="success" className="gap-1">
+                    <StatusBadge status="VERIFIED" className="gap-1">
                       <BadgeCheck className="size-3" />
                       Verified
-                    </Badge>
+                    </StatusBadge>
                   ) : null}
                 </div>
               </div>

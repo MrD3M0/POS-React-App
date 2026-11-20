@@ -1,7 +1,8 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useAuth } from "@/auth/context/auth-context";
 import {
   Sidebar,
+  SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
   SidebarMenu,
@@ -13,7 +14,6 @@ import {
   SidebarHeader,
   SidebarFooter,
   SidebarRail,
-
 } from "@/components/ui/sidebar";
 import { useSidebar } from "@/components/ui/sidebar-context";
 import {
@@ -21,15 +21,25 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ChevronRight, LayoutDashboard } from "lucide-react";
+import { ChevronRight, ChevronsDownUp, LayoutDashboard } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import SidebarUserCard from "@/components/sidebar-user-card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import Button from "@/components/ui/button";
 import {
   buildNav,
   isPathActive,
   visibleFor,
   type NavItemType,
+  type T_NavEntry,
 } from "./nav-items";
+import { useSidebarGroups } from "./use-sidebar-groups";
+
+type NavGroupEntry = Extract<T_NavEntry, { type: "group" }>;
 
 function NavItemLink({ item, active }: { item: NavItemType; active: boolean }) {
   const Icon = item.icon;
@@ -49,9 +59,30 @@ export default function AppSidebarMenu() {
   const { state, isMobile } = useSidebar();
   const role = user?.role;
   const entries = useMemo(() => buildNav(role), [role]);
-  // Only stores the modules the user opened/closed explicitly. Modules that
-  // own the current page stay open by default (derived, no effect needed).
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  const { openGroups, toggleGroup, collapseAll } = useSidebarGroups();
+
+  const groupEntries = useMemo(
+    () =>
+      entries.filter(
+        (entry): entry is NavGroupEntry => entry.type === "group",
+      ),
+    [entries],
+  );
+  const groupKeys = useMemo(
+    () => groupEntries.map(({ group }) => group.key),
+    [groupEntries],
+  );
+
+  // A group is open when it was toggled explicitly, or — with no explicit
+  // choice — when it owns the current route. "Collapse all" writes explicit
+  // `false` for every group, so it also closes the active group's parent
+  // (the parent stays highlighted via `isActive={hasActiveChild}`).
+  const anyGroupOpen = groupEntries.some(({ group, items }) => {
+    const hasActiveChild = items.some((item) =>
+      isPathActive(location.pathname, item.href),
+    );
+    return openGroups[group.key] ?? hasActiveChild;
+  });
 
   if (!user?.role) return null;
 
@@ -62,11 +93,13 @@ export default function AppSidebarMenu() {
     [identity?.firstName, identity?.middleName, identity?.lastName]
       .filter(Boolean)
       .join(" ")
-      .trim() || user.username || "User";
+      .trim() ||
+    user.username ||
+    "User";
 
   return (
     <Sidebar variant="sidebar" collapsible="icon">
-      <SidebarHeader>
+      <SidebarHeader className="shrink-0">
         <SidebarMenu>
           <SidebarMenuItem>
             {isCollapsed ? (
@@ -77,17 +110,40 @@ export default function AppSidebarMenu() {
                 <LayoutDashboard className="h-5 w-5" />
               </SidebarMenuButton>
             ) : (
-              <SidebarMenuButton className="w-full">
-                <span className="font-semibold">School Management</span>
-              </SidebarMenuButton>
+              <div className="flex w-full items-center gap-1">
+                <SidebarMenuButton className="min-w-0 flex-1">
+                  <img
+                    src="/ZippyCmsSidebarHeader.png"
+                    alt="Zippy CMS"
+                    className="h-12 w-auto min-w-0 max-w-full object-contain"
+                  />
+                </SidebarMenuButton>
+                {anyGroupOpen && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-7 shrink-0"
+                        onClick={() => collapseAll(groupKeys)}
+                        aria-label="Collapse all menu groups"
+                      >
+                        <ChevronsDownUp className="size-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">Collapse all</TooltipContent>
+                  </Tooltip>
+                )}
+              </div>
             )}
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
 
-      <SidebarGroup>
-        <SidebarGroupContent>
-          <SidebarMenu>
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
             {isCollapsed
               ? // Icon rail: one flat icon per page so nothing is hidden in a submenu.
                 flatItems.map((item) => (
@@ -125,10 +181,7 @@ export default function AppSidebarMenu() {
                       <Collapsible
                         open={isOpen}
                         onOpenChange={(open) =>
-                          setOpenGroups((prev) => ({
-                            ...prev,
-                            [group.key]: open,
-                          }))
+                          toggleGroup(group.key, open)
                         }
                         className="group/collapsible"
                       >
@@ -168,11 +221,12 @@ export default function AppSidebarMenu() {
                     </SidebarMenuItem>
                   );
                 })}
-          </SidebarMenu>
-        </SidebarGroupContent>
-      </SidebarGroup>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
 
-      <SidebarFooter className="mt-auto border-t p-3">
+      <SidebarFooter className="shrink-0 border-t p-3">
         <SidebarUserCard
           user={{
             name: fullName,

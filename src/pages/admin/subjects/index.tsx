@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import PageHeader from "@/components/common/page-header";
 import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
-import Badge from "@/components/ui/badge";
+import { ActiveStatusBadge } from "@/components/ui/status-badge";
 import GenericTable, { type T_TableHead } from "@/components/generic-table";
 import ConfirmDeleteDialog from "@/components/dialog/delete-dialog";
 import { QUERY_KEYS } from "@/lib/query-keys";
@@ -34,11 +34,7 @@ export default function AdminSubjectsPage() {
     {
       key: "isActive",
       headName: "Status",
-      render: (item) => (
-        <Badge variant={item.isActive === false ? "destructive" : "default"}>
-          {item.isActive === false ? "Inactive" : "Active"}
-        </Badge>
-      ),
+      render: (item) => <ActiveStatusBadge active={item.isActive !== false} />,
     },
   ];
 

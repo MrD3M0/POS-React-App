@@ -710,7 +710,7 @@ function RoleQuickLinks({ role }: { role?: T_Role }) {
       });
       links.push({
         key: "batches",
-        label: "Academic Structure",
+        label: "Batches",
         href: "/admin/batches",
         icon: CalendarDays,
       });

@@ -189,7 +189,7 @@ export default function JournalEntryForm({ onClose }: JournalEntryFormProps) {
                         <FormItem>
                           <FormLabel>Amount</FormLabel>
                           <FormControl>
-                            <Input type="number" min={0} step="0.01" value={field.value ?? 0} onChange={(e) => field.onChange(e.target.valueAsNumber || 0)} />
+                            <Input type="number" min={0.01} step="0.01" value={field.value ?? 0} onChange={(e) => field.onChange(e.target.valueAsNumber || 0)} />
                           </FormControl>
                           <FormDescription>Line amount.</FormDescription>
                           <FormMessage />

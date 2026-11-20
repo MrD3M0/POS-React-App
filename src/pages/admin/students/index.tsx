@@ -2,12 +2,15 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
+import { CircleCheck, IdCard } from "lucide-react";
+import { Link } from "react-router-dom";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import type { T_UseQueryError } from "@/types/common";
 import PageHeader from "@/components/common/page-header";
 import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
 import Badge from "@/components/ui/badge";
-import Button from "@/components/ui/button";
+import StatusBadge from "@/components/ui/status-badge";
 import GenericTable, { type T_TableHead } from "@/components/generic-table";
 import ConfirmDeleteDialog from "@/components/dialog/confirm-delete";
 import SelectCommand from "@/components/select-command";
@@ -90,36 +93,12 @@ export default function AdminStudentsPage() {
     {
       key: "status",
       headName: "Status",
-      render: (s) => (
-        <Badge
-          variant={
-            s.status === "ACTIVE"
-              ? "default"
-              : s.status === "GRADUATED"
-              ? "secondary"
-              : "destructive"
-          }
-        >
-          {s.status}
-        </Badge>
-      ),
+      render: (s) => <StatusBadge status={s.status} />,
     },
     {
       key: "approvalStatus",
       headName: "Approval",
-      render: (s) => (
-        <Badge
-          variant={
-            s.approvalStatus === "APPROVED"
-              ? "default"
-              : s.approvalStatus === "REJECTED"
-              ? "destructive"
-              : "outline"
-          }
-        >
-          {s.approvalStatus}
-        </Badge>
-      ),
+      render: (s) => <StatusBadge status={s.approvalStatus} />,
     },
   ];
 
@@ -170,21 +149,27 @@ export default function AdminStudentsPage() {
         onEdit={(s) => `/admin/students/edit/${s.id}`}
         onDelete={(s) => setDeleteId(s.id)}
         renderActions={(s) => (
-          <div className="flex items-center gap-3">
+          <>
             {s.approvalStatus === "PENDING" ? (
-              <Button
-                variant="outline"
-                size="sm"
+              <DropdownMenuItem
                 disabled={approveMut.isPending}
                 onClick={() => approveMut.mutate(s.id)}
+                className="flex w-full items-center gap-2 px-3 py-2 text-sm cursor-pointer"
               >
-                Approve
-              </Button>
+                <CircleCheck className="h-4 w-4" />
+                <span>Approve</span>
+              </DropdownMenuItem>
             ) : null}
-            <a href={`/admin/students/${s.id}/id-card`} className="px-2 text-xs font-medium text-primary underline">
-              ID Card
-            </a>
-          </div>
+            <DropdownMenuItem asChild>
+              <Link
+                to={`/admin/students/${s.id}/id-card`}
+                className="flex w-full items-center gap-2 px-3 py-2 text-sm no-underline hover:no-underline cursor-pointer"
+              >
+                <IdCard className="h-4 w-4" />
+                <span>ID Card</span>
+              </Link>
+            </DropdownMenuItem>
+          </>
         )}
         onSearch={(value) => {
           setSearch(value);

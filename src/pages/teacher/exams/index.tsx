@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { PenSquare } from "lucide-react";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import PageHeader from "@/components/common/page-header";
 import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
 import GenericTable, { type T_TableHead } from "@/components/generic-table";
-import Button from "@/components/ui/button";
 import { QUERY_KEYS } from "@/lib/query-keys";
 import { listExams, type T_EXAM } from "./service/service";
 
@@ -71,7 +72,13 @@ export default function TeacherExamsPage() {
         emptyTitle="No exams yet."
         pagination={{ page, limit: LIMIT, total, onPageChange: setPage }}
         renderActions={(r) => (
-          <Button variant="outline" size="sm" onClick={() => navigate(`/teacher/exams/edit/${r.id}`)}>Edit</Button>
+          <DropdownMenuItem
+            onClick={() => navigate(`/teacher/exams/edit/${r.id}`)}
+            className="flex w-full items-center gap-2 px-3 py-2 text-sm cursor-pointer"
+          >
+            <PenSquare className="h-4 w-4" />
+            <span>Edit</span>
+          </DropdownMenuItem>
         )}
       />
     </div>

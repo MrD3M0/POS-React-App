@@ -7,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import StatusBadge from "@/components/ui/status-badge";
 import Button from "@/components/ui/button";
 import {
   Table,
@@ -85,10 +85,7 @@ export default function OverdueStudentsTable({
                     {student.oldestDueBs}
                   </TableCell>
                   <TableCell>
-                    <Badge variant="destructive">
-                      {student.daysOverdue} day
-                      {student.daysOverdue === 1 ? "" : "s"}
-                    </Badge>
+                    <StatusBadge status="OVERDUE">{student.daysOverdue} day{student.daysOverdue === 1 ? "" : "s"}</StatusBadge>
                   </TableCell>
                   <TableCell className="text-right font-medium">
                     {formatNpr(student.dueAmount)}

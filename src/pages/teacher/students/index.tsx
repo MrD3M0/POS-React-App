@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { IdCard } from "lucide-react";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import PageHeader from "@/components/common/page-header";
 import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
-import Badge from "@/components/ui/badge";
+import StatusBadge from "@/components/ui/status-badge";
 import Button from "@/components/ui/button";
 import GenericTable from "@/components/generic-table";
 import SelectCommand from "@/components/select-command";
@@ -115,19 +117,7 @@ export default function TeacherStudentsPage() {
             key: "approvalStatus",
             headName: "Approval",
             minWidth: 160,
-            render: (s: T_STUDENT) => (
-              <Badge
-                variant={
-                  s.approvalStatus === "APPROVED"
-                    ? "success"
-                    : s.approvalStatus === "REJECTED"
-                      ? "destructive"
-                      : "warning"
-                }
-              >
-                {s.approvalStatus}
-              </Badge>
-            ),
+            render: (s: T_STUDENT) => <StatusBadge status={s.approvalStatus} />,
           },
           { key: "rejectionReason", headName: "Rejection", minWidth: 200, render: (s: T_STUDENT) => s.rejectionReason ?? "—" },
         ]}
@@ -141,9 +131,15 @@ export default function TeacherStudentsPage() {
         pagination={{ page, limit: LIMIT, total, onPageChange: setPage }}
         onEdit={(s) => `/teacher/students/edit/${s.id}`}
         renderActions={(s) => (
-          <a href={`/teacher/students/${s.id}/id-card`} className="px-2 text-xs font-medium text-primary underline">
-            ID Card
-          </a>
+          <DropdownMenuItem asChild>
+            <Link
+              to={`/teacher/students/${s.id}/id-card`}
+              className="flex w-full items-center gap-2 px-3 py-2 text-sm no-underline hover:no-underline cursor-pointer"
+            >
+              <IdCard className="h-4 w-4" />
+              <span>ID Card</span>
+            </Link>
+          </DropdownMenuItem>
         )}
       />
     </div>

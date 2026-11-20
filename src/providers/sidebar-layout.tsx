@@ -7,7 +7,7 @@ export default function SidebarLayout() {
   return (
     <SidebarProvider>
       <SidebarMenu />
-      <SidebarInset>
+      <SidebarInset className="min-w-0">
         <Header />
         <Outlet />
       </SidebarInset>

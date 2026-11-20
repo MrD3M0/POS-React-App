@@ -11,6 +11,7 @@ import {
 import PageHeader from "@/components/common/page-header";
 import Button from "@/components/ui/button";
 import Badge from "@/components/ui/badge";
+import StatusBadge from "@/components/ui/status-badge";
 import { useRoleDashboard } from "@/pages/dashboard/hooks/use-role-dashboard";
 import {
   DashboardPanel,
@@ -97,13 +98,6 @@ const QUICK_LINKS = [
   { key: "leave", label: "Apply for leave", href: "/staff/leave", icon: CalendarDays },
   { key: "notices", label: "Notices", href: "/staff/notices", icon: Megaphone },
 ];
-
-function statusVariant(status: string) {
-  if (status === "PRESENT" || status === "LATE") return "success" as const;
-  if (status === "ABSENT") return "destructive" as const;
-  if (status === "LEAVE") return "warning" as const;
-  return "outline" as const;
-}
 
 function formatTime(value: string | null): string {
   if (!value) return "—";
@@ -325,7 +319,7 @@ export default function StaffDashboardPage() {
                   <tr key={row.id} className="border-b last:border-0">
                     <td className="py-2 pr-3">{row.dateBs}</td>
                     <td className="py-2 pr-3">
-                      <Badge variant={statusVariant(row.status)}>{row.status}</Badge>
+                      <StatusBadge status={row.status} />
                     </td>
                     <td className="py-2 pr-3">{row.leaveType ?? "—"}</td>
                     <td className="py-2 text-muted-foreground">{row.remarks ?? "—"}</td>

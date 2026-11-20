@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { GraduationCap } from "lucide-react";
-import { formatBs, todayBs } from "@/lib/bs-date";
+import { formatBs, isBsDateString, todayBs } from "@/lib/bs-date";
 import PageHeader from "@/components/common/page-header";
 import { AttendanceClassPicker } from "./components/attendance-class-picker";
 import { AttendanceClassSelect } from "./components/attendance-class-select";
@@ -33,12 +34,23 @@ type TMobileScreen = "select" | "mark";
 
 export default function TeacherTakeAttendancePage() {
   const isDesktop = useMediaQuery("(min-width: 768px)");
+  const [searchParams] = useSearchParams();
+
+  // Dashboard / calendar deep links: ?assignmentId=&periodId=&dateBs=
+  const prefilledAssignmentId = searchParams.get("assignmentId") ?? "";
+  const prefilledPeriodId = searchParams.get("periodId") ?? "";
+  const prefilledDateBs = searchParams.get("dateBs");
+
   const [selection, setSelection] = useState<T_AttendanceSelection>({
-    assignmentId: "",
-    periodId: "",
-    dateBs: formatBs(todayBs()),
+    assignmentId: prefilledAssignmentId,
+    periodId: prefilledPeriodId,
+    dateBs: isBsDateString(prefilledDateBs)
+      ? (prefilledDateBs as string)
+      : formatBs(todayBs()),
   });
-  const [mobileScreen, setMobileScreen] = useState<TMobileScreen>("select");
+  const [mobileScreen, setMobileScreen] = useState<TMobileScreen>(
+    prefilledAssignmentId && prefilledPeriodId ? "mark" : "select",
+  );
   const [view, setView] = useState<T_AttendanceView>(readStoredAttendanceView);
   const [showErrors, setShowErrors] = useState(false);
   const [pendingAction, setPendingAction] = useState<{ run: () => void } | null>(null);

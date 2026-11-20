@@ -1,3 +1,4 @@
+import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -22,7 +23,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/form";
-import { createTerm } from "./service/service";
+import { createTerm, listTerms } from "./service/service";
 import { termDefaultValues, termSchema, type TermFormValues } from "./schema/schema";
 import { listBatches } from "@/pages/admin/batches/service/service";
 
@@ -46,6 +47,42 @@ export default function CreateTermPage() {
     resolver: zodResolver(termSchema),
     defaultValues: termDefaultValues,
   });
+
+  // A batch automatically gets ALL of its terms (Semester/Year 1..N) when it
+  // is created, so a manual term number for that batch is almost always a
+  // duplicate. Show the numbers that already exist and flag duplicates inline
+  // instead of letting the backend 409 after submit.
+  const batchId = form.watch("batchId");
+  const termNumber = form.watch("termNumber");
+
+  const termsQuery = useQuery({
+    queryKey: [QUERY_KEYS.ADMIN_TERM_LIST, batchId],
+    queryFn: () => listTerms({ page: 1, limit: -1, batchId }),
+    enabled: !!batchId,
+  });
+
+  const existingNumbers = useMemo(
+    () =>
+      (termsQuery.data?.data?.data ?? [])
+        .map((t) => t.termNumber)
+        .sort((a, b) => a - b),
+    [termsQuery.data],
+  );
+
+  const isDuplicate = termNumber != null && existingNumbers.includes(termNumber);
+
+  useEffect(() => {
+    if (isDuplicate) {
+      form.setError("termNumber", {
+        message: `Term #${termNumber} already exists for this batch — terms are created automatically when the batch is created.`,
+      });
+    } else if (
+      form.getFieldState("termNumber").error?.message?.includes("already exists")
+    ) {
+      form.clearErrors("termNumber");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDuplicate, termNumber, batchId]);
 
   const mutation = useMutation({
     mutationFn: (data: TermFormValues) =>
@@ -117,20 +154,30 @@ export default function CreateTermPage() {
                         type="number"
                         min={1}
                         max={20}
-                        value={field.value}
+                        value={field.value ?? ""}
                         onBlur={field.onBlur}
                         name={field.name}
                         ref={field.ref}
                         onChange={(e) => {
                           const num = Number(e.target.value);
                           field.onChange(num);
-                          if (!form.getValues("name")) {
-                            form.setValue("name", `Semester ${num}`);
+                          // Auto-fill the name from the course system, but
+                          // only for a real number (never "Semester 0").
+                          const system = batches.find(
+                            (b) => b.id === form.getValues("batchId"),
+                          )?.course?.system;
+                          const unit = system === "YEARLY" ? "Year" : "Semester";
+                          if (num >= 1 && !form.getValues("name")) {
+                            form.setValue("name", `${unit} ${num}`);
                           }
                         }}
                       />
                     </FormControl>
-                    <FormDescription>Sequential semester/year number within the batch.</FormDescription>
+                    <FormDescription>
+                      {existingNumbers.length > 0
+                        ? `This batch already has terms #${existingNumbers.join(", #")} — they are created automatically when the batch is created.`
+                        : "Sequential semester/year number within the batch."}
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

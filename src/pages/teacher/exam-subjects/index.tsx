@@ -1,24 +1,25 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { PenSquare } from "lucide-react";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import PageHeader from "@/components/common/page-header";
 import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
+import Button from "@/components/ui/button";
 import GenericTable, { type T_TableHead } from "@/components/generic-table";
 import ConfirmDeleteDialog from "@/components/dialog/confirm-delete";
-import Button from "@/components/ui/button";
 import { toast } from "sonner";
 import { QUERY_KEYS } from "@/lib/query-keys";
 import { listExams, type T_EXAM } from "../exams/service/service";
 import {
   listExamSubjects,
-  createExamSubject,
   updateExamSubject,
   deleteExamSubject,
   listBatchTermSubjects,
   type T_EXAM_SUBJECT,
   type T_BATCH_TERM_SUBJECT,
 } from "./service/service";
-import CreateExamSubjectForm from "./components/create-exam-subject-form";
 import EditExamSubjectForm from "./components/edit-exam-subject-form";
 import {
   classNameLabel,
@@ -73,7 +74,7 @@ function toExamRows(raw: unknown): T_EXAM[] {
 }
 
 export default function TeacherExamSubjectsPage() {
-  const [mode, setMode] = useState<"list" | "create" | "edit">("list");
+  const [mode, setMode] = useState<"list" | "edit">("list");
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [editRecord, setEditRecord] = useState<T_EXAM_SUBJECT | null>(null);
@@ -93,15 +94,6 @@ export default function TeacherExamSubjectsPage() {
     queryFn: () => listBatchTermSubjects({ page: 1, limit: -1 }),
   });
 
-  const createMut = useMutation({
-    mutationFn: (data: Record<string, unknown>) => createExamSubject(data),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: [QUERY_KEYS.TEACHER_EXAM_SUBJECTS] });
-      toast.success("Exam subject created");
-      setMode("list");
-    },
-    onError: () => toast.error("Failed to create exam subject"),
-  });
   const updateMut = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
       updateExamSubject(id, data),
@@ -168,29 +160,14 @@ export default function TeacherExamSubjectsPage() {
           { title: "Teacher", link: "/teacher" },
           { title: "Exam Subjects", link: "/teacher/exam-subjects" },
         ]}
+        actions={
+          <Link to="/teacher/exam-subjects/create">
+            <Button variant="primary" size="sm">
+              + Create
+            </Button>
+          </Link>
+        }
       />
-      <div className="flex justify-between mb-4">
-        <div className="flex gap-2">
-          <button
-            onClick={() => {
-              setMode("list");
-              setEditRecord(null);
-            }}
-            className={`rounded px-3 py-1 text-sm font-medium ${mode === "list" ? "bg-primary text-primary-foreground" : "bg-secondary"}`}
-          >
-            List
-          </button>
-          <button
-            onClick={() => {
-              setMode("create");
-              setEditRecord(null);
-            }}
-            className={`rounded px-3 py-1 text-sm font-medium ${mode === "create" ? "bg-primary text-primary-foreground" : "bg-secondary"}`}
-          >
-            Create Exam Subject
-          </button>
-        </div>
-      </div>
 
       {mode === "list" && (
         <GenericTable
@@ -204,30 +181,18 @@ export default function TeacherExamSubjectsPage() {
           emptyTitle="No exam subjects yet."
           pagination={{ page, limit: LIMIT, total, onPageChange: setPage }}
           renderActions={(r) => (
-            <Button
-              variant="outline"
-              size="sm"
+            <DropdownMenuItem
               onClick={() => {
                 setEditRecord(r);
                 setMode("edit");
               }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-sm cursor-pointer"
             >
-              Edit
-            </Button>
+              <PenSquare className="h-4 w-4" />
+              <span>Edit</span>
+            </DropdownMenuItem>
           )}
           onDelete={(r) => setDeleteId(r.id)}
-        />
-      )}
-
-      {mode === "create" && (
-        <CreateExamSubjectForm
-          exams={exams}
-          btsList={btsList}
-          examsLoading={examsQuery.isLoading}
-          btsLoading={btsQuery.isLoading}
-          isPending={createMut.isPending}
-          onCancel={() => setMode("list")}
-          onSubmit={(payload) => createMut.mutate(payload)}
         />
       )}
 

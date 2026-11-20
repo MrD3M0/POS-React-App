@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import StatusBadge from "@/components/ui/status-badge";
 import Button from "@/components/ui/button";
 import { formatNpr } from "@/lib/money";
 import {
@@ -63,17 +63,7 @@ export default function PayrollSummaryCard({
           <WidgetError onRetry={onRetry} />
         ) : (
           <div className="space-y-3">
-            <Badge
-              variant={
-                status === "REJECTED"
-                  ? "destructive"
-                  : status === "PAID" || status === "APPROVED"
-                    ? "default"
-                    : "secondary"
-              }
-            >
-              {STATUS_LABEL[status] ?? status}
-            </Badge>
+            <StatusBadge status={status}>{STATUS_LABEL[status] ?? status}</StatusBadge>
             <dl className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <dt className="text-muted-foreground">Total gross</dt>

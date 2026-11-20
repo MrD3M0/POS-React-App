@@ -29,6 +29,8 @@ export const QUERY_KEYS = {
   ADMIN_SUBJECT_LIST: "admin-subjects",
   ADMIN_SUBJECT_GET: "admin-subject",
   ADMIN_TEACHING_ASSIGNMENT_LIST: "admin-teaching-assignments",
+  ADMIN_CLASS_SCHEDULE_LIST: "admin-class-schedules",
+  ADMIN_CLASS_SCHEDULE_GET: "admin-class-schedule",
   ADMIN_LOOKUP_LEAVE: "admin-leave-types",
   ADMIN_LOOKUP_PERIOD: "admin-periods",
   ADMIN_LOOKUP_EXAM: "admin-exam-types",
@@ -40,6 +42,8 @@ export const QUERY_KEYS = {
   ADMIN_LOOKUP_ACCOUNT: "admin-chart-accounts",
   ADMIN_SETTING_ALL: "admin-settings",
   ADMIN_SETTING_GET: "admin-setting",
+  // College identity shared by ID cards (logo, contacts, affiliation).
+  INSTITUTION: "institution",
   ADMIN_NOTICE_LIST: "admin-notices",
   ADMIN_NOTICE_GET: "admin-notice-get",
   // Header notification bell (notices + dashboard alerts)

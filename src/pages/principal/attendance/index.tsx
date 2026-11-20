@@ -1,9 +1,9 @@
-import { useState, type ComponentProps } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import PageHeader from "@/components/common/page-header";
 import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
-import Badge from "@/components/ui/badge";
+import StatusBadge from "@/components/ui/status-badge";
 import GenericTable, { type T_TableHead } from "@/components/generic-table";
 import SelectCommand from "@/components/select-command";
 import { BsDatePicker } from "@/components/bs-datepicker";
@@ -158,7 +158,7 @@ export default function PrincipalAttendancePage() {
       minWidth: 160,
       render: (r) => {
         const s = getStatus(r);
-        return <Badge variant={mapStatus(s)}>{s}</Badge>;
+        return <StatusBadge status={s} />;
       },
     },
   ];
@@ -235,12 +235,4 @@ export default function PrincipalAttendancePage() {
       />
     </div>
   );
-}
-
-function mapStatus(s: string): ComponentProps<typeof Badge>["variant"] {
-  if (s === "PRESENT") return "default";
-  if (s === "ABSENT") return "destructive";
-  if (s === "LATE" || s === "LATE DAY") return "warning";
-  if (s === "LEAVE") return "secondary";
-  return "outline";
 }

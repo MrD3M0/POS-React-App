@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   BookOpen,
@@ -9,11 +9,13 @@ import {
   MessageCircleQuestion,
   PlayCircle,
   Rocket,
+  Search,
   Wrench,
 } from "lucide-react";
 import PageHeader from "@/components/common/page-header";
 import Badge from "@/components/ui/badge";
 import Button from "@/components/ui/button";
+import Input from "@/components/ui/input";
 import {
   Collapsible,
   CollapsibleContent,
@@ -27,6 +29,7 @@ import {
   HELP_ROLE_GUIDES,
   HELP_SETUP,
   HELP_SHORTCUTS,
+  type T_HelpFaq,
   type T_HelpRoleGuide,
 } from "./content";
 
@@ -39,6 +42,9 @@ const TABS = [
 ] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
+
+/** Stable empty list so the FAQ memo does not re-run on every render. */
+const EMPTY_FAQ: T_HelpFaq[] = [];
 
 function Keys({ keys }: { keys: string[] }) {
   return (
@@ -65,7 +71,32 @@ export default function HelpPage() {
 
   const guide: T_HelpRoleGuide =
     HELP_ROLE_GUIDES[user?.role ?? ""] ?? HELP_FALLBACK_ROLE;
-  const faq = HELP_FAQ[user?.role ?? ""] ?? [];
+  const faq = HELP_FAQ[user?.role ?? ""] ?? EMPTY_FAQ;
+  const [faqSearch, setFaqSearch] = useState("");
+
+  const faqGroups = useMemo(() => {
+    const query = faqSearch.trim().toLowerCase();
+    const matched = query
+      ? faq.filter((entry) =>
+          [
+            entry.module,
+            entry.question,
+            ...entry.steps.flatMap((step) => [step.title, step.detail]),
+          ]
+            .join(" ")
+            .toLowerCase()
+            .includes(query),
+        )
+      : faq;
+
+    const groups: { module: string; entries: T_HelpFaq[] }[] = [];
+    for (const entry of matched) {
+      const group = groups.find((item) => item.module === entry.module);
+      if (group) group.entries.push(entry);
+      else groups.push({ module: entry.module, entries: [entry] });
+    }
+    return groups;
+  }, [faq, faqSearch]);
 
   return (
     <div className="p-5">
@@ -170,48 +201,78 @@ export default function HelpPage() {
       ) : null}
 
       {tab === "faq" ? (
-        <div className="space-y-3">
-          <p className="text-sm text-muted-foreground">
-            The questions of your role — open one to see the steps.
-          </p>
-          {faq.map((entry) => (
-            <Collapsible
-              key={entry.question}
-              className="group rounded-lg border bg-card transition-colors duration-150"
-            >
-              <CollapsibleTrigger asChild>
-                <button
-                  type="button"
-                  className="flex w-full cursor-pointer items-center justify-between gap-3 px-4 py-3 text-left text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                >
-                  <span>{entry.question}</span>
-                  <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform duration-150 group-data-[state=open]:rotate-180" />
-                </button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="border-t px-4 py-4">
-                <ol className="space-y-3">
-                  {entry.steps.map((step, index) => (
-                    <li key={step.title} className="flex gap-3">
-                      <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold">
-                        {index + 1}
-                      </span>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium">
-                          Step {index + 1}: {step.title}
-                        </p>
-                        <p className="mt-0.5 text-sm text-muted-foreground">
-                          {step.detail}
-                        </p>
-                      </div>
-                    </li>
-                  ))}
-                </ol>
-              </CollapsibleContent>
-            </Collapsible>
+        <div className="space-y-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-muted-foreground">
+              {faq.length} workflows for your role, grouped by module. Open one
+              to see the steps.
+            </p>
+            <div className="relative w-full sm:w-72">
+              <Search className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={faqSearch}
+                onChange={(event) => setFaqSearch(event.target.value)}
+                placeholder="Search workflows…"
+                className="pl-8"
+                aria-label="Search workflows"
+              />
+            </div>
+          </div>
+
+          {faqGroups.map((group) => (
+            <section key={group.module} className="space-y-2">
+              <div className="flex items-center gap-2">
+                <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                  {group.module}
+                </h2>
+                <Badge variant="secondary">{group.entries.length}</Badge>
+              </div>
+
+              <div className="space-y-3">
+                {group.entries.map((entry) => (
+                  <Collapsible
+                    key={`${entry.module}-${entry.question}`}
+                    className="group rounded-lg border bg-card transition-colors duration-150"
+                  >
+                    <CollapsibleTrigger asChild>
+                      <button
+                        type="button"
+                        className="flex w-full cursor-pointer items-center justify-between gap-3 px-4 py-3 text-left text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                      >
+                        <span>{entry.question}</span>
+                        <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform duration-150 group-data-[state=open]:rotate-180" />
+                      </button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="border-t px-4 py-4">
+                      <ol className="space-y-3">
+                        {entry.steps.map((step, index) => (
+                          <li key={step.title} className="flex gap-3">
+                            <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold">
+                              {index + 1}
+                            </span>
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium">
+                                Step {index + 1}: {step.title}
+                              </p>
+                              <p className="mt-0.5 text-sm text-muted-foreground">
+                                {step.detail}
+                              </p>
+                            </div>
+                          </li>
+                        ))}
+                      </ol>
+                    </CollapsibleContent>
+                  </Collapsible>
+                ))}
+              </div>
+            </section>
           ))}
-          {faq.length === 0 ? (
+
+          {faqGroups.length === 0 ? (
             <p className="rounded-lg border p-4 text-sm text-muted-foreground">
-              No question is written for this role yet.
+              {faq.length === 0
+                ? "No question is written for this role yet."
+                : `No workflow matches “${faqSearch}”. Try a module name or a word such as fee, marks or attendance.`}
             </p>
           ) : null}
         </div>

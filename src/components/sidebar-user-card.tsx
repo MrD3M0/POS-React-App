@@ -63,7 +63,7 @@ export default function SidebarUserCard({
   const avatar = (
     <span
       className={cn(
-        "relative flex size-10 shrink-0 items-center justify-center overflow-hidden text-sm font-semibold",
+        "flex size-10 items-center justify-center overflow-hidden text-sm font-semibold",
         isBrand
           ? "rounded-xl bg-white/20 text-primary-foreground"
           : "rounded-full bg-primary/10 text-primary",
@@ -78,14 +78,27 @@ export default function SidebarUserCard({
       ) : (
         initialsOf(user.name)
       )}
-      <span
-        aria-hidden
-        className={cn(
-          "absolute right-0 bottom-0 size-2.5 rounded-full ring-2",
-          STATUS_DOT[status],
-          isBrand ? "ring-primary" : "ring-card",
-        )}
-      />
+    </span>
+  );
+
+  // Presence badge rendered as a sibling of the avatar so it's not clipped by
+  // the avatar's overflow-hidden circle. Absolutely positioned at the
+  // bottom-right corner, offset slightly outward so it overlaps the edge.
+  const statusDot = (
+    <span
+      aria-hidden
+      className={cn(
+        "absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-2 z-10",
+        STATUS_DOT[status],
+        isBrand ? "ring-primary" : "ring-card",
+      )}
+    />
+  );
+
+  const avatarWithStatus = (
+    <span className="relative size-10 shrink-0">
+      {avatar}
+      {statusDot}
     </span>
   );
 
@@ -123,7 +136,7 @@ export default function SidebarUserCard({
               role={withMenu ? "button" : "img"}
               aria-label={`${user.name}${user.role ? ` · ${user.role}` : ""} · ${user.email}`}
             >
-              {avatar}
+              {avatarWithStatus}
             </span>
           </TooltipTrigger>
           <TooltipContent className="max-w-56">
@@ -149,7 +162,7 @@ export default function SidebarUserCard({
         className,
       )}
     >
-      {avatar}
+      {avatarWithStatus}
       <div className="min-w-0 flex-1">
         <p
           className={cn(

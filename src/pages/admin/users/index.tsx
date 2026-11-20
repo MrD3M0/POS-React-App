@@ -1,11 +1,20 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { EllipsisVerticalIcon } from "lucide-react";
 import PageHeader from "@/components/common/page-header";
 import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
 import Badge from "@/components/ui/badge";
+import StatusBadge, { ActiveStatusBadge } from "@/components/ui/status-badge";
 import GenericTable, { type T_TableHead } from "@/components/generic-table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { QUERY_KEYS } from "@/lib/query-keys";
 import {
   deleteUser,
@@ -86,9 +95,9 @@ export default function AdminUsersPage() {
       minWidth: 180,
       render: (r) => (
         <div className="flex gap-1 flex-wrap">
-          <Badge variant={r.isActive ? "default" : "secondary"}>{r.isActive ? "Active" : "Inactive"}</Badge>
-          {r.lockedUntil && new Date(r.lockedUntil) > new Date() ? <Badge variant="destructive">Locked</Badge> : null}
-          {!r.isEmailVerified ? <Badge variant="outline">Unverified</Badge> : null}
+          <ActiveStatusBadge active={r.isActive} />
+          {r.lockedUntil && new Date(r.lockedUntil) > new Date() ? <StatusBadge status="LOCKED" /> : null}
+          {!r.isEmailVerified ? <StatusBadge status="UNVERIFIED" /> : null}
         </div>
       ),
     },
@@ -101,49 +110,64 @@ export default function AdminUsersPage() {
     {
       key: "actions",
       headName: "Actions",
-      minWidth: 320,
+      minWidth: 80,
       render: (r) => (
-        <div className="flex gap-2 flex-wrap">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => {
-              const password = window.prompt("New temporary password (min 8 chars, upper/lower/number/symbol):");
-              if (!password) return;
-              run("Password reset", () => resetUserPassword(r.id, password, "Admin reset"));
-            }}
-          >
-            Reset password
-          </Button>
-          <Button size="sm" variant="outline" onClick={() => run("User unlocked", () => unlockUser(r.id))}>
-            Unlock
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => {
-              const reason = window.prompt("Reason for this change:");
-              if (!reason) return;
-              run(r.isActive ? "User deactivated" : "User activated", () =>
-                updateUser(r.id, { isActive: !r.isActive, reason }),
-              );
-            }}
-          >
-            {r.isActive ? "Deactivate" : "Activate"}
-          </Button>
-          {r.deletedAt ? (
-            <Button size="sm" variant="outline" onClick={() => run("User restored", () => restoreUser(r.id))}>
-              Restore
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              size="sm"
+              variant="outline"
+              mode="icon"
+              aria-label={`Actions for ${r.email || r.username || "user"}`}
+            >
+              <EllipsisVerticalIcon className="size-4" />
             </Button>
-          ) : (
-            <Button size="sm" variant="destructive" onClick={() => {
-              if (!window.confirm("Soft delete this user? This is blocked for linked/last-admin cases.")) return;
-              run("User deleted", () => deleteUser(r.id));
-            }}>
-              Delete
-            </Button>
-          )}
-        </div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-44">
+            <DropdownMenuItem
+              onSelect={() => {
+                const password = window.prompt(
+                  "New temporary password (min 8 chars, upper/lower/number/symbol):",
+                );
+                if (!password) return;
+                run("Password reset", () => resetUserPassword(r.id, password, "Admin reset"));
+              }}
+            >
+              Reset password
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => run("User unlocked", () => unlockUser(r.id))}>
+              Unlock
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={() => {
+                const reason = window.prompt("Reason for this change:");
+                if (!reason) return;
+                run(r.isActive ? "User deactivated" : "User activated", () =>
+                  updateUser(r.id, { isActive: !r.isActive, reason }),
+                );
+              }}
+            >
+              {r.isActive ? "Deactivate" : "Activate"}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            {r.deletedAt ? (
+              <DropdownMenuItem onSelect={() => run("User restored", () => restoreUser(r.id))}>
+                Restore
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem
+                variant="destructive"
+                onSelect={() => {
+                  if (!window.confirm("Soft delete this user? This is blocked for linked/last-admin cases."))
+                    return;
+                  run("User deleted", () => deleteUser(r.id));
+                }}
+              >
+                Delete
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       ),
     },
   ];

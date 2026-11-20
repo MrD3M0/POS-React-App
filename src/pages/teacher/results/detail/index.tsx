@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import PageHeader from "@/components/common/page-header";
 import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
-import Badge from "@/components/ui/badge";
+import StatusBadge from "@/components/ui/status-badge";
 import Button from "@/components/ui/button";
 import GenericTable, { type T_TableHead } from "@/components/generic-table";
 import { QUERY_KEYS } from "@/lib/query-keys";
@@ -167,19 +167,7 @@ export default function TeacherResultDetailPage() {
         </div>
         <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">Status</span>
-          <Badge
-            variant={
-              result.status === "PUBLISHED"
-                ? "success"
-                : result.status === "APPROVED"
-                  ? "default"
-                  : result.status === "REJECTED"
-                    ? "destructive"
-                    : "warning"
-            }
-          >
-            {result.status ?? "—"}
-          </Badge>
+          <StatusBadge status={result.status} />
         </div>
       </div>
 

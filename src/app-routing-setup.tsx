@@ -36,7 +36,7 @@ import AdminStudentIdCardPage from "@/pages/admin/students/id-card/index";
 import AdminCoursesPage from "@/pages/admin/courses/index";
 import AdminCourseCreatePage from "@/pages/admin/courses/create";
 import AdminCourseEditPage from "@/pages/admin/courses/edit";
-import AcademicStructurePage from "@/pages/admin/batches/index";
+import AdminBatchesPage from "@/pages/admin/batches/index";
 import AdminBatchCreatePage from "@/pages/admin/batches/create";
 import AdminBatchEditPage from "@/pages/admin/batches/edit";
 import AdminTermsPage from "@/pages/admin/terms/index";
@@ -48,14 +48,16 @@ import AdminSubjectCreatePage from "@/pages/admin/subjects/create";
 import AdminSubjectEditPage from "@/pages/admin/subjects/edit";
 import AdminTeachingAssignmentsPage from "@/pages/admin/teaching-assignments/index";
 import AdminTeachingAssignmentCreatePage from "@/pages/admin/teaching-assignments/create";
+import AdminTeachingAssignmentEditPage from "@/pages/admin/teaching-assignments/edit";
+import AdminClassSchedulesPage from "@/pages/admin/class-schedule/index";
+import AdminClassScheduleCreatePage from "@/pages/admin/class-schedule/create";
+import AdminClassScheduleEditPage from "@/pages/admin/class-schedule/edit";
 import AdminLookupsPage from "@/pages/admin/lookups/index";
 import AdminLookupCreatePage from "@/pages/admin/lookups/create";
 import AdminNoticesPage from "@/pages/admin/notices/index";
 import AdminNoticeCreatePage from "@/pages/admin/notices/create";
 import AdminNoticeEditPage from "@/pages/admin/notices/edit";
 import AdminSettingsPage from "@/pages/admin/settings/index";
-import AdminSettingCreatePage from "@/pages/admin/settings/create";
-import AdminSettingEditPage from "@/pages/admin/settings/edit";
 import AdminAuditPage from "@/pages/admin/audit/index";
 import AdminHolidaysPage from "@/pages/admin/holidays/index";
 import AdminFiscalYearsPage from "@/pages/admin/fiscal-years/index";
@@ -72,10 +74,13 @@ import CreatePrincipalNoticePage from "@/pages/principal/notices/create";
 import PendingPayrollPage from "@/pages/principal/payroll/pending/index";
 import PrincipalReportsPage from "@/pages/principal/reports/index";
 import PrincipalAccountantsPage from "@/pages/principal/accountants/index";
+import PrincipalSettingsPage from "@/pages/principal/settings/index";
 
 // --- Accountant pages ---
 import AccountantFeeStructuresPage from "@/pages/accountant/fee-structures/index";
+import AccountantFeeStructureFormPage from "@/pages/accountant/fee-structures/form-page";
 import AccountantPaymentsPage from "@/pages/accountant/payments/index";
+import CreateAccountantPaymentPage from "@/pages/accountant/payments/create";
 import AccountantReceiptsPage from "@/pages/accountant/receipts/index";
 import AccountantJournalPage from "@/pages/accountant/journal/index";
 import AccountantLedgersPage from "@/pages/accountant/ledgers/index";
@@ -86,6 +91,7 @@ import AccountantAttendancePage from "@/pages/accountant/attendance/index";
 import AccountantNoticesPage from "@/pages/accountant/notices/index";
 import CreateAccountantNoticePage from "@/pages/accountant/notices/create";
 import AccountantScholarshipsPage from "@/pages/accountant/scholarships/index";
+import AccountantScholarshipGrantsPage from "@/pages/accountant/scholarships/grants/index";
 import AccountantDashboardPage from "@/pages/accountant/dashboard/index";
 import AccountantBillingPage from "@/pages/accountant/billing/index";
 import AccountantFeePaymentsPage from "@/pages/accountant/billing/payments";
@@ -97,6 +103,7 @@ import AccountantBillingReceiptPage from "@/pages/accountant/billing/receipt/ind
 import TeacherDashboardPage from "@/pages/teacher/dashboard/index";
 import TeacherMyClassesPage from "@/pages/teacher/my-classes/index";
 import TeacherTakeAttendancePage from "@/pages/teacher/take-attendance/index";
+import TeacherCalendarPage from "@/pages/teacher/calendar/index";
 import TeacherExamsPage from "@/pages/teacher/exams/index";
 import TeacherExamCreatePage from "@/pages/teacher/exams/create/index";
 import TeacherExamEditPage from "@/pages/teacher/exams/edit/index";
@@ -108,8 +115,10 @@ import TeacherStudentIdCardPage from "@/pages/teacher/students/id-card/index";
 import AddTeacherStudentPage from "@/pages/teacher/students/add/index";
 import EditTeacherStudentPage from "@/pages/teacher/students/edit/index";
 import TeacherExamSubjectsPage from "@/pages/teacher/exam-subjects/index";
+import TeacherExamSubjectCreatePage from "@/pages/teacher/exam-subjects/create/index";
 import TeacherAttendanceSessionsPage from "@/pages/teacher/attendance-sessions/index";
 import TeacherBatchPayPage from "@/pages/teacher/batch-pay/index";
+import BatchPayFormPage from "@/pages/teacher/batch-pay/form-page";
 import TeacherResultDetailPage from "@/pages/teacher/results/detail/index";
 import TeacherNoticesPage from "@/pages/teacher/notices/index";
 import CreateTeacherNoticePage from "@/pages/teacher/notices/create";
@@ -195,7 +204,7 @@ const router = createBrowserRouter([
           { path: "/admin/courses/create", element: <AdminCourseCreatePage /> },
           { path: "/admin/courses/edit/:id", element: <AdminCourseEditPage /> },
 
-          { path: "/admin/batches", element: <AcademicStructurePage /> },
+          { path: "/admin/batches", element: <AdminBatchesPage /> },
           { path: "/admin/batches/create", element: <AdminBatchCreatePage /> },
           { path: "/admin/batches/edit/:id", element: <AdminBatchEditPage /> },
 
@@ -225,6 +234,23 @@ const router = createBrowserRouter([
             path: "/admin/teaching-assignments/create",
             element: <AdminTeachingAssignmentCreatePage />,
           },
+          {
+            path: "/admin/teaching-assignments/edit/:id",
+            element: <AdminTeachingAssignmentEditPage />,
+          },
+
+          {
+            path: "/admin/class-schedules",
+            element: <AdminClassSchedulesPage />,
+          },
+          {
+            path: "/admin/class-schedules/create",
+            element: <AdminClassScheduleCreatePage />,
+          },
+          {
+            path: "/admin/class-schedules/edit/:id",
+            element: <AdminClassScheduleEditPage />,
+          },
 
           { path: "/admin/lookups", element: <AdminLookupsPage /> },
           { path: "/admin/lookups/create", element: <AdminLookupCreatePage /> },
@@ -234,14 +260,6 @@ const router = createBrowserRouter([
           { path: "/admin/notices/edit/:id", element: <AdminNoticeEditPage /> },
 
           { path: "/admin/settings", element: <AdminSettingsPage /> },
-          {
-            path: "/admin/settings/create",
-            element: <AdminSettingCreatePage />,
-          },
-          {
-            path: "/admin/settings/edit/:id",
-            element: <AdminSettingEditPage />,
-          },
 
           { path: "/admin/audit", element: <AdminAuditPage /> },
           { path: "/admin/holidays", element: <AdminHolidaysPage /> },
@@ -304,6 +322,10 @@ const router = createBrowserRouter([
               <StaffListPage root={{ title: "Principal", link: "/principal" }} />
             ),
           },
+          {
+            path: "/principal/settings",
+            element: <PrincipalSettingsPage />,
+          },
 
           // --- Accountant modules ---
           { path: "/accountant", element: (
@@ -314,6 +336,14 @@ const router = createBrowserRouter([
           {
             path: "/accountant/fee-structures",
             element: <AccountantFeeStructuresPage />,
+          },
+          {
+            path: "/accountant/fee-structures/create",
+            element: <AccountantFeeStructureFormPage />,
+          },
+          {
+            path: "/accountant/fee-structures/:id/edit",
+            element: <AccountantFeeStructureFormPage />,
           },
           { path: "/accountant/billing", element: <AccountantBillingPage /> },
           {
@@ -333,6 +363,10 @@ const router = createBrowserRouter([
             element: <AccountantBillingReceiptPage />,
           },
           { path: "/accountant/payments", element: <AccountantPaymentsPage /> },
+  {
+    path: "/accountant/payments/create",
+    element: <CreateAccountantPaymentPage />,
+  },
           { path: "/accountant/receipts", element: <AccountantReceiptsPage /> },
           { path: "/accountant/journal", element: <AccountantJournalPage /> },
           { path: "/accountant/ledgers", element: <AccountantLedgersPage /> },
@@ -353,6 +387,14 @@ const router = createBrowserRouter([
             element: <TeacherBatchPayPage />,
           },
           {
+            path: "/accountant/batch-pay/create",
+            element: <BatchPayFormPage />,
+          },
+          {
+            path: "/accountant/batch-pay/:id/edit",
+            element: <BatchPayFormPage />,
+          },
+          {
             path: "/accountant/notices",
             element: <AccountantNoticesPage />,
           },
@@ -363,6 +405,10 @@ const router = createBrowserRouter([
           {
             path: "/accountant/scholarships",
             element: <AccountantScholarshipsPage />,
+          },
+          {
+            path: "/accountant/scholarships/grants",
+            element: <AccountantScholarshipGrantsPage />,
           },
           {
             path: "/accountant/dashboard",
@@ -401,6 +447,10 @@ const router = createBrowserRouter([
                 element: <TeacherTakeAttendancePage />,
               },
               {
+                path: "/teacher/calendar",
+                element: <TeacherCalendarPage />,
+              },
+              {
                 path: "/teacher/exams/create",
                 element: <TeacherExamCreatePage />,
               },
@@ -422,6 +472,10 @@ const router = createBrowserRouter([
               {
                 path: "/teacher/exam-subjects",
                 element: <TeacherExamSubjectsPage />,
+              },
+              {
+                path: "/teacher/exam-subjects/create",
+                element: <TeacherExamSubjectCreatePage />,
               },
               {
                 path: "/teacher/attendance-sessions",

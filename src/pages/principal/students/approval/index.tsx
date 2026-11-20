@@ -4,11 +4,12 @@ import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { AxiosError } from "axios";
-import { Check, X } from "lucide-react";
+import { CircleCheck, CircleX, X } from "lucide-react";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import PageHeader from "@/components/common/page-header";
 import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
-import Badge from "@/components/ui/badge";
+import { StatusPill } from "@/components/ui/status-badge";
 import GenericTable, { type T_TableHead } from "@/components/generic-table";
 import Button from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -88,22 +89,7 @@ export default function PrincipalStudentApprovalPage() {
     { key: "batch", headName: "Batch", minWidth: 180, render: (s) => (s.batch ? s.batch.name ?? s.batch.course?.code ?? "—" : "—") },
     { key: "phone", headName: "Phone", minWidth: 150, render: (s) => s.phone ?? "—" },
     { key: "email", headName: "Email", minWidth: 200, render: (s) => s.email ?? "—" },
-    { key: "approvalStatus", headName: "Approval", minWidth: 140, render: (s) => <Badge variant={s.approvalStatus === "APPROVED" ? "default" : "warning"}>{s.approvalStatus}</Badge> },
-    {
-      key: "action",
-      headName: "Action",
-      minWidth: 190,
-      render: (s) => (
-        <div className="flex gap-2">
-          <Button variant="primary" size="sm" disabled={approveMut.isPending || rejectMut.isPending} onClick={() => approveMut.mutate(s.id)}>
-            <Check className="h-3.5 w-3.5" /> Approve
-          </Button>
-          <Button variant="destructive" size="sm" disabled={approveMut.isPending || rejectMut.isPending} onClick={() => { setRejectId(s.id); rejectForm.reset({ reason: "" }); }}>
-            <X className="h-3.5 w-3.5" /> Reject
-          </Button>
-        </div>
-      ),
-    },
+    { key: "approvalStatus", headName: "Approval", minWidth: 140, render: (s) => <StatusPill status={s.approvalStatus} /> },
   ];
 
   return (
@@ -124,6 +110,27 @@ export default function PrincipalStudentApprovalPage() {
         pagination={{ page, limit: LIMIT, total, onPageChange: setPage }}
         emptyTitle="No pending students."
         renderRow={(s) => ({ universityRegNo: s.universityRegNo, name: fullName(s), phone: s.phone ?? "—", email: s.email ?? "—" } as Record<string, React.ReactNode>)}
+        renderActions={(s) => (
+          <>
+            <DropdownMenuItem
+              disabled={approveMut.isPending || rejectMut.isPending}
+              onClick={() => approveMut.mutate(s.id)}
+              className="flex w-full items-center gap-2 px-3 py-2 text-sm cursor-pointer"
+            >
+              <CircleCheck className="h-4 w-4" />
+              <span>Approve</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              variant="destructive"
+              disabled={approveMut.isPending || rejectMut.isPending}
+              onClick={() => { setRejectId(s.id); rejectForm.reset({ reason: "" }); }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-sm cursor-pointer"
+            >
+              <CircleX className="h-4 w-4" />
+              <span>Reject</span>
+            </DropdownMenuItem>
+          </>
+        )}
       />
 
       {rejectId && (

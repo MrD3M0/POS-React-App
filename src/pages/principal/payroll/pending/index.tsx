@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import PageHeader from "@/components/common/page-header";
 import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
-import Badge from "@/components/ui/badge";
+import { StatusPill } from "@/components/ui/status-badge";
 import GenericTable, { type T_TableHead } from "@/components/generic-table";
 import { toast } from "sonner";
 import { QUERY_KEYS } from "@/lib/query-keys";
@@ -47,7 +47,7 @@ export default function PrincipalPendingPayrollPage() {
   const head: T_TableHead<T_PENDING_PAYROLL>[] = [
     { key: "employeeName", headName: "Employee", minWidth: 200 },
     { key: "month", headName: "Month", minWidth: 160 },
-    { key: "status", headName: "Status", minWidth: 180, render: (p) => <Badge variant={p.status === "APPROVED" ? "success" : p.status === "REJECTED" ? "destructive" : "warning"}>{p.status}</Badge> },
+    { key: "status", headName: "Status", minWidth: 180, render: (p) => <StatusPill status={p.status}>{p.status ?? "—"}</StatusPill> },
     {
       key: "action",
       headName: "Action",

@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import PageHeader from "@/components/common/page-header";
 import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
-import Badge from "@/components/ui/badge";
+import { StatusPill } from "@/components/ui/status-badge";
 import GenericTable, { type T_TableHead } from "@/components/generic-table";
 import Button from "@/components/ui/button";
 import { QUERY_KEYS } from "@/lib/query-keys";
@@ -68,7 +68,7 @@ export default function AccountantReceiptsPage() {
       key: "status",
       headName: "Status",
       minWidth: 120,
-      render: (r) => <Badge variant={r.status === "CANCELLED" ? "destructive" : "default"}>{r.status}</Badge>,
+      render: (r) => <StatusPill status={r.status}>{r.status ?? "—"}</StatusPill>,
     },
     {
       key: "action",

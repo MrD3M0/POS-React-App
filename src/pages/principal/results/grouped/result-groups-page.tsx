@@ -13,7 +13,7 @@ import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
 import SelectCommand from "@/components/common/select-command";
 import NoData from "@/components/common/no-data";
-import Badge from "@/components/ui/badge";
+import StatusBadge from "@/components/ui/status-badge";
 import Button from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -58,13 +58,6 @@ const STATUS_LABEL: Record<TResultGroupStatus, string> = {
   APPROVED: "Approved",
   REJECTED: "Rejected",
 };
-
-function statusVariant(status: TResultGroupStatus) {
-  if (status === "APPROVED") return "success" as const;
-  if (status === "PENDING") return "warning" as const;
-  if (status === "REJECTED") return "destructive" as const;
-  return "outline" as const;
-}
 
 function toErrorMessage(error: unknown): string {
   const message = (error as { response?: { data?: { message?: string } } })
@@ -526,9 +519,7 @@ export default function ResultGroupsPage({ mode }: { mode: TMode }) {
                             {row.passPercent.toFixed(1)}%
                           </td>
                           <td className="px-4 py-2">
-                            <Badge variant={statusVariant(row.status)}>
-                              {STATUS_LABEL[row.status]}
-                            </Badge>
+                            <StatusBadge status={row.status}>{STATUS_LABEL[row.status]}</StatusBadge>
                             {row.status === "REJECTED" &&
                             row.rejectionReason ? (
                               <p className="mt-1 max-w-56 text-xs text-destructive">

@@ -152,7 +152,7 @@ const SelectCommand: FC<SelectCommandProps> = ({
                       key={item.value}
                       onSelect={() => handleSelect(item.value)}
                       className={cn(
-                        "hover:bg-accent",
+                        "hover:bg-accent mb-1 last:mb-0",
                         selectedValue === item.value && "bg-accent",
                       )}
                       disabled={item.disabled}
@@ -258,7 +258,7 @@ const SelectCommand: FC<SelectCommandProps> = ({
             ) : (
               <CommandGroup>
                 {filteredOptions.map((item) => (
-                  <div className="relative" key={item.value}>
+                  <div className="relative mb-1 last:mb-0" key={item.value}>
                     <CommandItem
                       key={item.value}
                       onSelect={() => handleSelect(item.value)}

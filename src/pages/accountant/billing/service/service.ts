@@ -7,6 +7,15 @@ export type T_BillingStudent = {
   firstName: string;
   middleName?: string | null;
   lastName: string;
+  batchId?: string;
+  batch?: { name?: string | null; course?: { code?: string; name?: string } | null } | null;
+};
+
+export type T_BatchTerm = {
+  id: string;
+  batchId: string;
+  termNumber: number;
+  name: string;
 };
 
 export type T_FiscalYear = { id: string; name: string; isCurrent?: boolean };
@@ -16,6 +25,7 @@ export type T_StudentFeeItem = {
   id: string;
   studentFeeId: string;
   feeHeadId?: string;
+  termNumber?: number | null;
   amount?: string | number;
   discountAmount?: string | number;
   netAmount?: string | number;
@@ -99,8 +109,14 @@ export async function listStudentFees(params: { page: number; limit: number; sea
   return res.data;
 }
 
-export async function listStudents(params: { page: number; limit: number; search?: string }) {
+export async function listStudents(params: { page: number; limit: number; search?: string; approvalStatus?: string }) {
   const res = await axiosInstance.get(`${UrlConstants.STUDENT_URL}`, { params });
+  return res.data;
+}
+
+/** Batch terms of a batch (BatchTerm: termNumber + name like "Semester 1"). */
+export async function listBatchTerms(params: { page: number; limit: number; batchId?: string }) {
+  const res = await axiosInstance.get(`${UrlConstants.BATCH_TERM_URL}`, { params });
   return res.data;
 }
 
@@ -131,7 +147,7 @@ export async function getFeePaymentById(id: string): Promise<{ data: T_FeePaymen
 
 export async function createFeePayment(input: {
   studentId: string;
-  fiscalYearId: string;
+  fiscalYearId?: string;
   paymentDateBs: string;
   totalAmount: string;
   receiptNo?: string;

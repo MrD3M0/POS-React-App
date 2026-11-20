@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import PageHeader from "@/components/common/page-header";
 import ScreenLoader from "@/components/ui/screen-loader";
 import AlertHandler from "@/components/common/alert-handler";
-import Badge from "@/components/ui/badge";
+import StatusBadge from "@/components/ui/status-badge";
 import Button from "@/components/ui/button";
 import GenericTable, { type T_TableHead } from "@/components/generic-table";
 import { QUERY_KEYS } from "@/lib/query-keys";
@@ -57,7 +57,7 @@ export default function PrincipalNoticesPage() {
       headName: "Status",
       minWidth: 140,
       render: (n) => (
-        <Badge variant={n.isPublished ? "default" : "outline"}>{n.isPublished ? "Published" : "Draft"}</Badge>
+        <StatusBadge status={n.isPublished ? "PUBLISHED" : "DRAFT"} />
       ),
     },
     { key: "createdAt", headName: "Created At", minWidth: 160, render: (n) => (n.createdAt ? n.createdAt.slice(0, 10) : "—") },

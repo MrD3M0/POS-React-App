@@ -17,6 +17,9 @@ type Props = Omit<
  * A read-only text input that mirrors a boolean, with a switch on its right.
  * Click anywhere on it (or press Space / Enter) to toggle.
  *
+ * Active   -> light green border, translucent dark-green bg, green text
+ * Inactive -> light red border,   translucent dark-red bg,   red text
+ *
  * Extra props (id, name, onBlur, aria-*, ref ...) go to the <Input>, so it
  * works inside react-hook-form's <FormControl>.
  */
@@ -58,8 +61,20 @@ export const InputWithSwitch = ({
         onKeyDown={handleKeyDown}
         className={cn(
           // `readOnly` normally greys the field out; this one is interactive.
-          "pr-14 caret-transparent select-none [&[readonly]]:cursor-pointer [&[readonly]]:bg-background",
-          value && "border-primary/80 [&[readonly]]:bg-primary/10",
+          "pr-14 caret-transparent select-none font-medium transition-colors [&[readonly]]:cursor-pointer",
+          value
+            ? [
+                // ACTIVE — green
+                "border-green-400/70 text-green-600 dark:border-green-500/50 dark:text-green-400",
+                "[&[readonly]]:bg-green-600/10 dark:[&[readonly]]:bg-green-500/15",
+                "focus-visible:border-green-500 focus-visible:ring-0",
+              ]
+            : [
+                // INACTIVE — red
+                "border-red-400/70 text-red-600 dark:border-red-500/50 dark:text-red-400",
+                "[&[readonly]]:bg-red-600/10 dark:[&[readonly]]:bg-red-500/15",
+                "focus-visible:border-red-500 focus-visible:ring-0",
+              ],
           disabled && "[&[readonly]]:cursor-not-allowed",
           className,
         )}
@@ -71,7 +86,11 @@ export const InputWithSwitch = ({
         // The input is the keyboard target; keep the tab order to one stop.
         tabIndex={-1}
         aria-label={value ? labels.on : labels.off}
-        className="absolute top-1/2 right-3 -translate-y-1/2"
+        className={cn(
+          "absolute top-1/2 right-3 -translate-y-1/2",
+          "data-[state=checked]:bg-green-600 data-[state=unchecked]:bg-red-500",
+          "dark:data-[state=checked]:bg-green-500 dark:data-[state=unchecked]:bg-red-500/80",
+        )}
       />
     </div>
   );
